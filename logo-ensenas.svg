@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#EF4444"/>
+    </linearGradient>
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <style>
+    .brand-text { font-family: 'Montserrat', 'Inter', sans-serif; font-size: 58px; font-weight: 300; fill: #1E293B; }
+    .highlight-text { font-weight: 900; fill: url(#brandGradient); }
+    .tagline { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 2.5px; fill: #64748B; text-transform: uppercase; }
+  </style>
+
+  <rect width="600" height="200" rx="16" fill="#FFFFFF"/>
+
+  <g transform="translate(30, 20)">
+    <!-- Visor de RA + Mano LSC -->
+    <g transform="translate(20, 25)" filter="url(#dropShadow)">
+      <path d="M 10 35 L 10 15 A 5 5 0 0 1 15 10 L 35 10" fill="none" stroke="#7C3AED" stroke-width="4" stroke-linecap="round"/>
+      <path d="M 85 10 L 105 10 A 5 5 0 0 1 110 15 L 110 35" fill="none" stroke="#7C3AED" stroke-width="4" stroke-linecap="round"/>
+      <path d="M 110 85 L 110 105 A 5 5 0 0 1 105 110 L 85 110" fill="none" stroke="#7C3AED" stroke-width="4" stroke-linecap="round"/>
+      <path d="M 35 110 L 15 110 A 5 5 0 0 1 10 105 L 10 85" fill="none" stroke="#7C3AED" stroke-width="4" stroke-linecap="round"/>
+
+      <path d="M 42 85 C 38 85 35 82 35 78 L 35 55 C 35 52 38 49 41 49 C 44 49 47 52 47 55 L 47 75" fill="none" stroke="url(#brandGradient)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M 52 75 L 52 45 C 52 42 55 39 58 39 C 61 39 64 42 64 45 L 64 75" fill="none" stroke="url(#brandGradient)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M 69 75 L 69 50 C 69 47 72 44 75 44 C 78 44 81 47 81 50 L 81 75" fill="none" stroke="url(#brandGradient)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M 86 75 L 86 60 C 86 57 89 54 92 54 C 95 54 98 57 98 60 L 98 80 C 98 92 88 100 76 100 L 60 100 C 48 100 42 92 42 85 Z" fill="url(#brandGradient)" opacity="0.15"/>
+      <path d="M 86 75 L 86 60 C 86 57 89 54 92 54 C 95 54 98 57 98 60 L 98 80 C 98 92 88 100 76 100 L 60 100" fill="none" stroke="url(#brandGradient)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M 85 25 L 88 32 L 95 35 L 88 38 L 85 45 L 82 38 L 75 35 L 82 32 Z" fill="url(#accentGradient)"/>
+    </g>
+
+    <!-- Texto con resalte "enseñas" -->
+    <text x="160" y="95" class="brand-text">
+      en<tspan class="highlight-text">señas</tspan>
+    </text>
+    <text x="163" y="125" class="tagline">
+      Aprende en RA + LSC
+    </text>
+  </g>
+</svg>

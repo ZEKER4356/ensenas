@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>enseñas | Plataforma Educativa Inclusiva (RA + LSC)</title>
+  <meta name="description" content="Plataforma educativa inclusiva con modelos 3D interactivos en Realidad Aumentada, explicaciones en audio y traducción oficial en Lengua de Señas Colombiana (LSC).">
+
+  <!-- Favicon e Identidad Visual Oficial -->
+  <link rel="icon" type="image/png" href="ensenas%20logo.png">
+
+  <!-- Open Graph / Redes Sociales y Compartir -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="enseñas">
+  <meta property="og:title" content="enseñas | Educación Inclusiva con Realidad Aumentada y LSC">
+  <meta property="og:description" content="Explora objetos educativos interactivos en 3D/RA con explicaciones accesibles y señas en Lengua de Señas Colombiana.">
+  <meta property="og:image" content="ensenas%20logo.png">
+
+  <!-- Tipografía Oficial -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <!-- Salto accesible directo para lectores de pantalla y teclado -->
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
+  <!-- Encabezado Principal Semántico -->
+  <header class="site-header" role="banner">
+    <div class="header-container">
+      <div class="brand-group">
+        <a href="index.html" class="brand-link" aria-label="Inicio enseñas - Plataforma de Realidad Aumentada y LSC">
+          <img src="ensenas%20logo.png" alt="Logotipo oficial de la plataforma enseñas" class="brand-official-logo" width="180" height="52">
+        </a>
+        <span class="brand-badge" aria-hidden="true">RA + LSC</span>
+      </div>
+
+      <nav aria-label="Navegación principal del sitio" class="header-nav">
+        <a href="#catalogo" class="btn btn-secondary btn-sm" aria-label="Explorar el catálogo de objetos educativos">
+          Explorar Catálogo
+        </a>
+        <a href="admin.html" class="btn btn-primary btn-sm" aria-label="Acceder al panel de administración de modelos y códigos QR">
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Panel Admin</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal Semántico -->
+  <main id="main-content" role="main">
+
+    <!-- Sección Hero de Presentación Educativa -->
+    <section class="catalog-hero" aria-labelledby="hero-title">
+      <div class="header-title-inner">
+        <h1 id="hero-title" class="catalog-title">
+          Educación Inclusiva con <span class="highlight-inline">Realidad Aumentada</span> y <span class="highlight-inline">LSC</span>
+        </h1>
+        <p class="catalog-lead">
+          Interactúa con modelos 3D en tu propio entorno mediante Realidad Aumentada en el navegador, escucha y lee descripciones pedagógicas accesibles y aprende la seña oficial de cada objeto en <strong>Lengua de Señas Colombiana (LSC)</strong>.
+        </p>
+      </div>
+    </section>
+
+    <!-- Catálogo Público de Objetos Educativos con Tarjetas de Previsualización -->
+    <section id="catalogo" class="main-layout" aria-labelledby="catalogo-heading">
+      <div class="section-title-wrap">
+        <h2 id="catalogo-heading" class="section-title">
+          Objetos y Partes Educativas
+        </h2>
+        <p class="section-subtitle">
+          Selecciona una tarjeta para interactuar con su modelo 3D en Realidad Aumentada, escuchar su explicación en audio o consultar su ficha educativa completa en LSC.
+        </p>
+      </div>
+
+      <!-- Cuadrícula Dinámica de Tarjetas (Previsualizaciones Limpias sin Códigos QR) -->
+      <div class="objects-grid" id="objects-grid-container" aria-live="polite">
+        <!-- Tarjetas dinámicas inyectadas mediante JavaScript -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Pie de Página Institucional y Accesibilidad -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-container">
+      <div class="footer-col brand-col">
+        <a href="index.html" class="footer-brand" aria-label="Inicio enseñas">
+          en<strong class="highlight-inline">señas</strong>
+        </a>
+        <p class="footer-text">
+          Plataforma educativa para la integración de la Realidad Aumentada y la Lengua de Señas Colombiana (LSC). Diseñada para aulas inclusivas y accesibilidad universal.
+        </p>
+      </div>
+
+      <div class="footer-col accessibility-col">
+        <h3 class="footer-subheading">Estándares y Accesibilidad</h3>
+        <ul class="accessibility-checklist">
+          <li>HTML5 Semántico y accesibilidad auditada bajo WCAG 2.1 AA</li>
+          <li>Visualizador WebXR y Three.js con soporte inmersivo</li>
+          <li>Overlay de video con intérprete en Lengua de Señas Colombiana (LSC)</li>
+          <li>Audio explicativo nativo y síntesis de voz (Text-to-Speech)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 enseñas - Plataforma Educativa RA + LSC. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Cargar Capa de Datos y Renderizador del Catálogo -->
+  <script src="assets/js/data.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const container = document.getElementById('objects-grid-container');
+      if (!container) return;
+
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 48px 20px; color: #64748B;">
+          <div class="spinner" style="margin: 0 auto 16px;" aria-hidden="true"></div>
+          <p>Cargando objetos educativos...</p>
+        </div>
+      `;
+
+      let objects = [];
+      try {
+        objects = await fetchAllObjectsAsync();
+      } catch (e) {
+        console.warn('Fallback a catálogo local:', e);
+        objects = getAllObjects();
+      }
+
+      function renderCatalog() {
+        if (!objects || objects.length === 0) {
+          container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 48px 20px; color: #64748B;">
+              <p>No hay objetos activos disponibles en este momento.</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '';
+        objects.forEach(item => {
+          const itemTitle = item.titulo || item.nombre || item.id;
+          const itemCategory = item.categoria_lsc || 'Ciencia y Tecnología';
+          const itemDesc = item.descripcion || 'Objeto interactivo para aprendizaje con Realidad Aumentada y LSC.';
+          
+          // Comprobar si tiene imagen de previa válida
+          const hasImage = item.icono_preview_url && 
+            !item.icono_preview_url.endsWith('.glb') && 
+            !item.icono_preview_url.endsWith('.gltf') && 
+            !item.icono_preview_url.endsWith('.usdz');
+
+          html += `
+            <article class="object-card preview-card" aria-labelledby="obj-title-${item.id}">
+              <!-- Cabecera de Tarjeta: Miniatura / Previsualización Visual del Modelo 3D -->
+              <div class="object-card-media-wrapper">
+                ${hasImage ? `
+                  <img 
+                    src="${item.icono_preview_url}" 
+                    alt="Fotografía o render 3D de ${itemTitle}" 
+                    class="card-preview-thumb" 
+                    loading="lazy">
+                ` : `
+                  <div class="card-preview-hologram" aria-hidden="true">
+                    <div class="hologram-cube">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                        <polyline points="2 17 12 22 22 17"/>
+                        <polyline points="2 12 12 17 22 12"/>
+                      </svg>
+                    </div>
+                    <span class="hologram-label">Modelo 3D Interactivo</span>
+                  </div>
+                `}
+                <span class="preview-badge-category" aria-label="Categoría: ${itemCategory}">
+                  ${itemCategory}
+                </span>
+                <span class="preview-badge-ra" title="Compatible con cámara y Realidad Aumentada">
+                  <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  <span>Cámara RA</span>
+                </span>
+              </div>
+
+              <!-- Contenido Textual Accesible -->
+              <div class="object-card-content">
+                <h3 id="obj-title-${item.id}" class="object-card-title">
+                  ${itemTitle}
+                </h3>
+                <p class="object-card-desc">
+                  ${itemDesc}
+                </p>
+
+                <div class="card-features-pills" aria-label="Características accesibles disponibles">
+                  <span class="pill-feature ${item.archivo_audio_url || item.explicacion_texto ? 'pill-active' : ''}">
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                    Audio
+                  </span>
+                  <span class="pill-feature ${item.video_lsc_url ? 'pill-active' : ''}">
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+                    Seña LSC
+                  </span>
+                  <span class="pill-feature pill-active">
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+                    3D 360°
+                  </span>
+                </div>
+              </div>
+
+              <!-- Acciones de Navegación Accesibles -->
+              <div class="object-card-actions">
+                <a 
+                  href="objeto.html?id=${encodeURIComponent(item.id)}&ar=true" 
+                  class="btn btn-primary" 
+                  aria-label="Abrir cámara y ver ${itemTitle} en Realidad Aumentada">
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  <span>Abrir en Realidad Aumentada</span>
+                </a>
+                <a 
+                  href="objeto.html?id=${encodeURIComponent(item.id)}" 
+                  class="btn btn-secondary btn-sm" 
+                  aria-label="Ver ficha educativa, explicaciones y pasos de la seña en LSC de ${itemTitle}">
+                  <span>Ficha Educativa y Seña LSC</span>
+                </a>
+              </div>
+            </article>
+          `;
+        });
+
+        container.innerHTML = html;
+      }
+
+      renderCatalog();
+    });
+  </script>
+</body>
+</html>

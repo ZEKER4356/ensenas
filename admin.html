@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración | enseñas (RA + LSC)</title>
+  <meta name="description" content="Panel de administración de partes y modelos 3D educativos con accesibilidad y Lengua de Señas Colombiana">
+  
+  <!-- Favicon e Identidad Visual -->
+  <link rel="icon" type="image/png" href="ensenas%20logo.png">
+  
+  <!-- Tipografías -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="admin-body">
+
+  <!-- ========================================================================
+       1. ENCABEZADO DE ADMINISTRACIÓN
+       ======================================================================== -->
+  <header class="site-header admin-header" role="banner">
+    <div class="header-container">
+      <div class="brand-group">
+        <a href="index.html" class="brand-link" aria-label="Ir al portal público de enseñas">
+          <img src="ensenas%20logo.png" alt="Logotipo oficial enseñas" class="brand-official-logo" width="170" height="50">
+        </a>
+        <span class="brand-badge admin-badge">Admin Studio</span>
+      </div>
+
+      <nav aria-label="Navegación de administración" class="header-nav admin-nav">
+        <a href="index.html" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+          <span>Ver Portal Público</span>
+        </a>
+        <div id="admin-user-menu" class="admin-user-menu is-hidden">
+          <span id="admin-user-name" class="admin-user-label">Administrador</span>
+          <button type="button" id="btn-logout" class="btn btn-outline btn-sm">Cerrar Sesión</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       2. VISTA DE INICIO DE SESIÓN (LOGIN)
+       ======================================================================== -->
+  <main id="auth-view" class="admin-auth-container" role="main">
+    <div class="auth-card">
+      <div class="auth-header">
+        <img src="ensenas%20logo.png" alt="enseñas" class="auth-logo">
+        <h1 class="auth-title">Acceso de Administración</h1>
+        <p class="auth-subtitle">Gestiona modelos 3D, audios y traducciones en Lengua de Señas Colombiana (LSC).</p>
+      </div>
+
+      <form id="form-login" class="auth-form" novalidate>
+        <div id="auth-alert" class="auth-alert is-hidden" role="alert" aria-live="polite"></div>
+
+        <div class="form-group">
+          <label for="login-email" class="form-label">Correo Institucional</label>
+          <input 
+            type="email" 
+            id="login-email" 
+            class="form-input" 
+            placeholder="admin@ensenas.edu.co" 
+            value="admin@ensenas.edu.co" 
+            required 
+            autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="login-password" class="form-label">Contraseña</label>
+          <input 
+            type="password" 
+            id="login-password" 
+            class="form-input" 
+            placeholder="••••••••••••" 
+            value="EnsenasAdmin2026!" 
+            required 
+            autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="btn-submit-login" class="btn btn-primary btn-block">
+          <span>Ingresar al Panel de Control</span>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+
+        <div class="auth-help-box">
+          <p><strong>Credenciales maestras predeterminadas:</strong></p>
+          <code>admin@ensenas.edu.co / EnsenasAdmin2026!</code>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       3. PANEL DE CONTROL PRINCIPAL (DASHBOARD)
+       ======================================================================== -->
+  <main id="dashboard-view" class="admin-dashboard-container is-hidden" role="main">
+    
+    <!-- Encabezado del Dashboard -->
+    <section class="dashboard-header-section">
+      <div class="dashboard-title-group">
+        <h1 class="dashboard-title">Panel de Partes y Modelos 3D</h1>
+        <p class="dashboard-subtitle">Administra los objetos educativos en Realidad Aumentada, audios explicativos y señas en LSC.</p>
+      </div>
+      <div class="dashboard-actions">
+        <button type="button" id="btn-open-new-modal" class="btn btn-primary btn-lg">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Registrar Nueva Parte / Modelo</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Métricas y Estadísticas Rápidas -->
+    <section class="stats-grid" aria-label="Métricas del sistema">
+      <div class="stat-card">
+        <div class="stat-icon icon-purple">
+          <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-label">Modelos Registrados</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon icon-green">
+          <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value" id="stat-active">0</span>
+          <span class="stat-label">Partes Activas en Catálogo</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon icon-blue">
+          <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value" id="stat-audio">0</span>
+          <span class="stat-label">Con Audio Grabado (.mp3)</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon icon-amber">
+          <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value" id="stat-lsc">0</span>
+          <span class="stat-label">Con Video LSC Overlay</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tabla de Modelos y Partes -->
+    <section class="table-section">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="filter-search" class="search-input" placeholder="Buscar por título, ID o categoría...">
+        </div>
+        <div class="filter-actions">
+          <button type="button" id="btn-batch-qrs" class="btn btn-primary btn-sm" title="Regenerar y actualizar Códigos QR de todos los objetos registrados">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="3" height="3"/><rect x="14" y="7" width="3" height="3"/><rect x="7" y="14" width="3" height="3"/></svg>
+            <span>Regenerar Códigos QR</span>
+          </button>
+          <button type="button" id="btn-refresh-list" class="btn btn-secondary btn-sm" title="Actualizar lista">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <span>Refrescar</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th scope="col">Objeto / Parte</th>
+              <th scope="col">Categoría LSC</th>
+              <th scope="col">Medios Disponibles</th>
+              <th scope="col">Estado</th>
+              <th scope="col" class="text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="objects-table-body">
+            <!-- Inyectado dinámicamente con JavaScript -->
+            <tr>
+              <td colspan="5" class="table-loading">Cargando modelos...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       4. MODAL DE REGISTRO / EDICIÓN (FORMULARIO CON CAMPOS AMPLIADOS)
+       ======================================================================== -->
+  <div id="modal-object-form" class="admin-modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="modal-form-title">
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <span class="modal-badge">Catálogo Inclusivo RA</span>
+          <h2 id="modal-form-title" class="modal-title">Registrar Nueva Parte Educativa</h2>
+        </div>
+        <button type="button" id="btn-close-modal" class="btn-close-circle" aria-label="Cerrar modal">&times;</button>
+      </div>
+
+      <form id="form-upsert-object" class="modal-body" novalidate>
+        <input type="hidden" id="field-is-edit" value="false">
+        <div id="modal-alert" class="modal-alert is-hidden" role="alert"></div>
+
+        <!-- Pestaña 1: Datos Generales -->
+        <fieldset class="form-section">
+          <legend class="section-legend">
+            <span class="legend-number">1</span>
+            <span>Datos Generales del Objeto</span>
+          </legend>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="field-titulo" class="form-label">Título del Objeto / Seña *</label>
+              <input type="text" id="field-titulo" class="form-input" placeholder="Ej: Tarjeta Programable Micro:bit" required>
+            </div>
+            <div class="form-group">
+              <label for="field-categoria" class="form-label">Categoría en LSC *</label>
+              <input type="text" id="field-categoria" class="form-input" list="lsc-categories-list" placeholder="Ej: Tecnología y Programación" required>
+              <datalist id="lsc-categories-list">
+                <option value="Tecnología y Programación">
+                <option value="Astronomía y Ciencias">
+                <option value="Biología y Laboratorio">
+                <option value="Matemáticas y Geometría">
+                <option value="Anatomía y Salud">
+                <option value="Geografía y Entorno">
+              </datalist>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="field-id" class="form-label">Identificador Slug (Código QR) *</label>
+              <input type="text" id="field-id" class="form-input" placeholder="ej: microbit (sin espacios)">
+              <small class="field-hint">Se generará la URL: <code>objeto.html?id=identificador</code></small>
+            </div>
+            <div class="form-group">
+              <label for="field-activo" class="form-label">Estado Inicial</label>
+              <select id="field-activo" class="form-select">
+                <option value="true" selected>Activo (Visible en Catálogo y QR)</option>
+                <option value="false">Inactivo (Oculto para revisión)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="field-descripcion" class="form-label">Descripción Pedagógica Breve</label>
+            <textarea id="field-descripcion" class="form-textarea" rows="2" placeholder="Resumen corto de la función del objeto..."></textarea>
+          </div>
+        </fieldset>
+
+        <!-- Pestaña 2: Archivos 3D y Previsualización -->
+        <fieldset class="form-section">
+          <legend class="section-legend">
+            <span class="legend-number">2</span>
+            <span>Archivos 3D y Previsualización</span>
+          </legend>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="field-modelo-url" class="form-label">Archivo de Modelo 3D (.glb / .gltf / .usdz) *</label>
+              <div class="input-upload-group">
+                <input type="text" id="field-modelo-url" class="form-input" placeholder="URL o subir archivo..." required>
+                <label class="btn-file-upload">
+                  <input type="file" id="file-upload-3d" accept=".glb,.gltf,.usdz" class="sr-only">
+                  <span>Subir 3D</span>
+                </label>
+              </div>
+              <small class="field-hint">Ejemplo: <code>assets/models/microbit.glb</code> o URL de Cloud Storage.</small>
+            </div>
+
+            <div class="form-group">
+              <label for="field-preview-url" class="form-label">Icono o Miniatura de Previa</label>
+              <div class="input-upload-group">
+                <input type="text" id="field-preview-url" class="form-input" placeholder="URL de imagen...">
+                <label class="btn-file-upload">
+                  <input type="file" id="file-upload-preview" accept="image/*" class="sr-only">
+                  <span>Subir Imagen</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Pestaña 3: Explicación Accesible (Audio y Texto) -->
+        <fieldset class="form-section">
+          <legend class="section-legend">
+            <span class="legend-number">3</span>
+            <span>Explicación Accesible (Audio / Text-to-Speech)</span>
+          </legend>
+
+          <div class="form-group">
+            <div class="label-with-badge">
+              <label for="field-explicacion-texto" class="form-label">Texto Explicativo Accesible (Voz Sintética TTS) *</label>
+              <button type="button" id="btn-test-tts" class="btn btn-secondary btn-xs" title="Escuchar síntesis de voz">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                <span>Probar Lectura por Voz</span>
+              </button>
+            </div>
+            <textarea 
+              id="field-explicacion-texto" 
+              class="form-textarea" 
+              rows="4" 
+              placeholder="Texto descriptivo y pedagógico del objeto y su función. Si no se sube un audio grabado, el navegador leerá automáticamente este texto al abrir la RA." 
+              required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="field-audio-url" class="form-label">Archivo de Audio Grabado (.mp3 / .wav) (Opcional)</label>
+            <div class="input-upload-group">
+              <input type="text" id="field-audio-url" class="form-input" placeholder="assets/audio/objeto-audio.mp3 o URL Cloud">
+              <label class="btn-file-upload">
+                <input type="file" id="file-upload-audio" accept="audio/mp3,audio/wav,audio/*" class="sr-only">
+                <span>Subir Audio</span>
+              </label>
+            </div>
+            <small class="field-hint">Si se asigna este archivo, tendrá prioridad sobre la voz sintética en la experiencia de RA.</small>
+          </div>
+        </fieldset>
+
+        <!-- Pestaña 4: Traducción en Lengua de Señas Colombiana (LSC) -->
+        <fieldset class="form-section">
+          <legend class="section-legend">
+            <span class="legend-number">4</span>
+            <span>Traducción en Lengua de Señas Colombiana (LSC)</span>
+          </legend>
+
+          <div class="form-group">
+            <label for="field-video-lsc" class="form-label">Video de la Seña en LSC (.mp4 / .webm) (Para Overlay RA)</label>
+            <div class="input-upload-group">
+              <input type="text" id="field-video-lsc" class="form-input" placeholder="assets/videos/objeto-lsc.mp4 o URL Cloud">
+              <label class="btn-file-upload">
+                <input type="file" id="file-upload-video-lsc" accept="video/mp4,video/webm,video/*" class="sr-only">
+                <span>Subir Video</span>
+              </label>
+            </div>
+            <small class="field-hint">Este video se mostrará como ventana superpuesta sincronizada con el modelo 3D y el audio.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="field-instrucciones-lsc" class="form-label">Pasos Pedagógicos para Realizar la Seña</label>
+            <textarea 
+              id="field-instrucciones-lsc" 
+              class="form-textarea" 
+              rows="3" 
+              placeholder="1. Configuración manual: ...&#10;2. Movimiento: ...&#10;3. Orientación y gesto: ..."></textarea>
+            <small class="field-hint">Escribe un paso por cada línea para la sección 'Aprender seña en LSC'.</small>
+          </div>
+        </fieldset>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-modal" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" id="btn-save-object" class="btn btn-primary btn-lg">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span id="btn-save-text">Guardar Objeto Educativo</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       5. MODAL DE PREVISUALIZACIÓN Y DESCARGA DE CÓDIGO QR PERSONALIZADO
+       ======================================================================== -->
+  <div id="modal-qr-preview" class="admin-modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="modal-qr-title">
+    <div class="modal-backdrop" id="modal-qr-backdrop"></div>
+    <div class="modal-content modal-qr-content">
+      <div class="modal-header">
+        <div>
+          <span class="modal-badge">Código QR Oficial con Marca</span>
+          <h2 id="modal-qr-title" class="modal-title">Código QR Personalizado</h2>
+        </div>
+        <button type="button" id="btn-close-qr-modal" class="btn-close-circle" aria-label="Cerrar modal">&times;</button>
+      </div>
+
+      <div class="modal-body qr-modal-body">
+        <div class="qr-preview-card">
+          <!-- Contenedor donde se dibuja el QR con logo y gradiente institucional -->
+          <div id="qr-canvas-target" class="qr-canvas-holder" aria-label="Vista previa del código QR personalizado"></div>
+          
+          <div class="qr-details-group">
+            <h3 id="qr-object-name-heading" class="qr-obj-title">Nombre del Objeto</h3>
+            <span id="qr-object-category-badge" class="badge-category">Categoría</span>
+            
+            <div class="qr-url-box">
+              <label for="qr-target-url-display" class="form-label">Destino de Escaneo Directo (Cámara RA):</label>
+              <div class="input-upload-group">
+                <input type="text" id="qr-target-url-display" class="form-input" readonly>
+                <button type="button" id="btn-copy-qr-url" class="btn btn-secondary btn-sm" title="Copiar URL al portapapeles">
+                  <span>Copiar</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="qr-brand-notice">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>Generado con paleta institucional (#7C3AED / #2563EB), imagotipo oficial y nivel de corrección de error 'H' (30%).</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="qr-actions-toolbar">
+          <button type="button" id="btn-download-qr-png" class="btn btn-primary" aria-label="Descargar código QR en formato PNG de alta resolución">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Descargar PNG (1024px Alta Res)</span>
+          </button>
+          <button type="button" id="btn-download-qr-svg" class="btn btn-secondary" aria-label="Descargar código QR en formato vectorial SVG">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            <span>Descargar SVG (Vectorial)</span>
+          </button>
+          <button type="button" id="btn-print-qr-card" class="btn btn-accent" aria-label="Abrir ficha imprimible para recortar y pegar en el aula física">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <span>Imprimir Ficha para Aula</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pie de página institucional del Admin -->
+  <footer class="admin-footer" role="contentinfo">
+    <p>&copy; 2026 <strong>enseñas</strong> - Panel de Administración Cloud (Vercel + PostgreSQL + InsForge/Supabase Storage)</p>
+  </footer>
+
+  <!-- Capa de Datos de Objetos Educativos -->
+  <script src="assets/js/data.js"></script>
+
+  <!-- Librería qr-code-styling para Códigos QR Personalizados con Imagotipo -->
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
+  
+  <!-- Módulo Oficial de Códigos QR de enseñas -->
+  <script src="assets/js/qr-generator.js"></script>
+
+  <!-- Script del Panel de Administración -->
+  <script src="assets/js/admin.js"></script>
+
+</body>
+</html>
