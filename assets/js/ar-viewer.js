@@ -25,7 +25,6 @@
   const surfaceScanOverlay = document.getElementById('ar-surface-scan-overlay');
   const btnAnchorHere = document.getElementById('btn-anchor-here');
   const btnReanchorView = document.getElementById('btn-reanchor-view');
-  const btnReanchorFloating = document.getElementById('btn-reanchor-floating');
   const btnToggleLscOverlay = document.getElementById('btn-toggle-lsc-overlay');
   const btnOpenSignLearning = document.getElementById('btn-open-sign-learning');
 
@@ -42,8 +41,7 @@
   // Referencias al Overlay LSC en RA
   const lscOverlay = document.getElementById('ar-floating-lsc');
   const lscVideo = document.getElementById('ar-overlay-video-lsc');
-  const btnLscOverlayMin = document.getElementById('btn-lsc-overlay-min');
-  const btnLscOverlayDock = document.getElementById('btn-lsc-overlay-dock');
+  const lscPlaceholder = document.getElementById('lsc-overlay-placeholder');
   const lscLearningPanel = document.getElementById('lsc-steps-panel');
   const signLearningVideo = document.getElementById('sign-learning-video');
   const signLearningEmpty = document.getElementById('sign-learning-empty');
@@ -463,10 +461,6 @@
     if (btnReanchorView) {
       btnReanchorView.addEventListener('click', startSurfaceScanning);
     }
-    if (btnReanchorFloating) {
-      btnReanchorFloating.addEventListener('click', startSurfaceScanning);
-    }
-
     // El intérprete es una ayuda independiente: solo se abre a petición de la persona.
     if (btnToggleLscOverlay) {
       btnToggleLscOverlay.addEventListener('click', () => {
@@ -491,7 +485,6 @@
     // Activar retícula y panel de escaneo
     if (reticleGroup) reticleGroup.visible = !isWebXrAr;
     if (surfaceScanOverlay) surfaceScanOverlay.classList.remove('is-hidden');
-    if (btnReanchorFloating) btnReanchorFloating.classList.add('is-hidden');
     if (btnReanchorView) btnReanchorView.classList.add('is-hidden');
     setAnchorActionAvailability(!isWebXrAr);
     setInterpreterVisibility(false);
@@ -547,7 +540,6 @@
     }
 
     // Mostrar botones de re-anclar
-    if (btnReanchorFloating) btnReanchorFloating.classList.remove('is-hidden');
     if (btnReanchorView) btnReanchorView.classList.remove('is-hidden');
 
     if (arStatusText) {
@@ -840,11 +832,15 @@
 
     // Restaurar objeto para vista normal 3D
     if (objectGroup) objectGroup.visible = true;
+    if (objectGroup) {
+      objectGroup.position.set(0, 0, 0);
+      objectGroup.quaternion.identity();
+      objectGroup.scale.set(1, 1, 1);
+    }
     if (groundShadow) groundShadow.visible = true;
     if (reticleGroup) reticleGroup.visible = false;
     if (surfaceScanOverlay) surfaceScanOverlay.classList.add('is-hidden');
     setInterpreterVisibility(false);
-    if (btnReanchorFloating) btnReanchorFloating.classList.add('is-hidden');
     if (btnReanchorView) btnReanchorView.classList.add('is-hidden');
 
     const grid = scene.getObjectByName('ar-reference-grid');
@@ -1103,37 +1099,30 @@
   function setupLscOverlay() {
     if (!lscOverlay) return;
 
-    if (btnLscOverlayMin) {
-      btnLscOverlayMin.addEventListener('click', () => {
-        lscOverlay.classList.toggle('is-minimized');
-        const isMin = lscOverlay.classList.contains('is-minimized');
-        btnLscOverlayMin.setAttribute('aria-expanded', !isMin);
-      });
-    }
-
-    const corners = ['pos-bottom-right', 'pos-bottom-left', 'pos-top-left', 'pos-top-right'];
-    let currentCornerIndex = 0;
-
-    if (btnLscOverlayDock) {
-      btnLscOverlayDock.addEventListener('click', () => {
-        lscOverlay.classList.remove(corners[currentCornerIndex]);
-        currentCornerIndex = (currentCornerIndex + 1) % corners.length;
-        lscOverlay.classList.add(corners[currentCornerIndex]);
-      });
-    }
-
     const curObj = window.CURRENT_OBJETO || {};
     activeVideoLsc = curObj.video_lsc_url || videoLscUrl;
     if (lscVideo && activeVideoLsc) {
       lscVideo.src = activeVideoLsc;
       lscVideo.load();
+      lscVideo.addEventListener('loadeddata', () => {
+        if (lscPlaceholder) lscPlaceholder.classList.add('is-hidden');
+      }, { once: true });
+      lscVideo.addEventListener('error', () => {
+        activeVideoLsc = '';
+        if (lscPlaceholder) lscPlaceholder.classList.remove('is-hidden');
+        setInterpreterVisibility(false);
+        updateLscAvailability();
+      }, { once: true });
     }
-    if (btnToggleLscOverlay) {
-      btnToggleLscOverlay.disabled = !activeVideoLsc;
-      btnToggleLscOverlay.title = activeVideoLsc
-        ? 'Abrir intérprete LSC'
-        : 'Este objeto aún no tiene video de intérprete LSC.';
-    }
+    updateLscAvailability();
+  }
+
+  function updateLscAvailability() {
+    if (!btnToggleLscOverlay) return;
+    btnToggleLscOverlay.disabled = !activeVideoLsc;
+    btnToggleLscOverlay.title = activeVideoLsc
+      ? 'Abrir intérprete LSC'
+      : 'Este objeto aún no tiene video de intérprete LSC.';
   }
 
   function setupSignLearning() {

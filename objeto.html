@@ -176,8 +176,9 @@
             <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
             <span class="btn-text">Intérprete LSC</span>
           </button>
-          <button type="button" id="btn-reanchor-view" class="btn-ar-action btn-icon-only is-hidden" aria-label="Re-escanear plano y anclar en otro lugar" title="Re-anclar plano de suelo">
+          <button type="button" id="btn-reanchor-view" class="btn-ar-action is-hidden" aria-label="Re-escanear plano y cambiar la ubicación del objeto" title="Cambiar ubicación">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span>Cambiar ubicación</span>
           </button>
           <button type="button" id="btn-flip-camera" class="btn-ar-action btn-icon-only" aria-label="Cambiar entre cámara trasera y frontal" title="Cambiar cámara">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/><path d="M4 8V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><circle cx="12" cy="12" r="3"/></svg>
@@ -224,12 +225,6 @@
           </div>
         </div>
 
-        <!-- Botón flotante para re-anclar -->
-        <button type="button" id="btn-reanchor-floating" class="btn-reanchor-floating is-hidden" aria-label="Re-anclar objeto en otra superficie">
-          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-          <span>Cambiar Ubicación</span>
-        </button>
-
         <!-- Overlay 1: Cargador de Modelo 3D -->
         <div id="ar-loading-overlay" class="ar-loading-overlay" aria-live="polite">
           <div class="spinner" aria-hidden="true"></div>
@@ -268,15 +263,6 @@
             <div class="lsc-overlay-badge">
               <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
               <span>Intérprete LSC</span>
-            </div>
-            <div class="lsc-overlay-controls">
-              <button type="button" id="btn-lsc-overlay-dock" class="btn-overlay-ctrl" title="Cambiar esquina" aria-label="Cambiar esquina de posición">
-                <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-              </button>
-              <button type="button" id="btn-lsc-overlay-min" class="btn-overlay-ctrl" title="Minimizar intérprete" aria-expanded="true" aria-label="Minimizar o expandir intérprete LSC">
-                <svg class="icon-minimize" aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                <svg class="icon-expand is-hidden" aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              </button>
             </div>
           </div>
           <div class="lsc-overlay-body">

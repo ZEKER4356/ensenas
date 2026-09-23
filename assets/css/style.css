@@ -1343,6 +1343,10 @@ input:focus-visible {
   color: #FFFFFF;
 }
 
+.lsc-overlay-placeholder.is-hidden {
+  display: none;
+}
+
 .lsc-interpreter-silhouette {
   width: 50px;
   height: 50px;
@@ -2768,8 +2772,8 @@ input:checked + .slider:before {
   .ar-section:not(.ar-immersive) .ar-canvas-wrapper {
     min-height: 0;
     height: auto;
-    max-height: 520px;
-    aspect-ratio: 4 / 5;
+    max-height: 420px;
+    aspect-ratio: 1 / 1;
   }
   .ar-gesture-hints { display: none; }
 
@@ -2793,11 +2797,12 @@ input:checked + .slider:before {
   .ar-floating-lsc.pos-top-left {
     top: auto;
     right: 12px;
-    bottom: 92px;
-    left: 12px;
-    width: auto;
+    bottom: 86px;
+    left: auto;
+    width: min(52vw, 210px);
   }
-  .lsc-overlay-body { height: min(34svh, 260px); }
+  .lsc-overlay-body { height: min(28svh, 185px); }
+  .overlay-lsc-video { object-fit: contain; }
 
   .ar-section.ar-immersive {
     min-height: 100svh;
@@ -2817,11 +2822,7 @@ input:checked + .slider:before {
   .ar-section.ar-immersive #btn-open-sign-learning { display: none; }
   .ar-section.ar-immersive #btn-toggle-ar-mode { grid-column: auto; }
   .ar-section.ar-immersive .ar-action-buttons { grid-template-columns: 1fr 1fr; }
-  .ar-section.ar-immersive .btn-reanchor-floating {
-    top: auto;
-    bottom: 96px;
-    left: 12px;
-  }
+  .ar-section.ar-immersive #btn-reanchor-view { grid-column: 1 / -1; }
   .ar-section.ar-immersive .scan-instruction-card { margin-top: 104px; }
 
   .lsc-learning-panel { padding: 0 4px; }
