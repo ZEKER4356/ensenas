@@ -70,29 +70,23 @@ async function authenticateUser(email, password) {
   if (pool) {
     try {
       const res = await pool.query(
-        'SELECT id, email, password_hash, nombre, rol, activo FROM administradores WHERE email = $1 AND activo = true LIMIT 1',
-        [email.toLowerCase().trim()]
+        `SELECT id, email, nombre, rol, activo
+         FROM administradores
+         WHERE email = $1
+           AND activo = true
+           AND password_hash = crypt($2, password_hash)
+         LIMIT 1`,
+        [email.toLowerCase().trim(), password]
       );
       if (res.rows.length > 0) {
         const user = res.rows[0];
-        let match = false;
-        try {
-          const bcrypt = require('bcryptjs');
-          match = await bcrypt.compare(password, user.password_hash);
-        } catch (err) {
-          console.error('No fue posible verificar el hash de contraseña:', err.message);
-          return null;
-        }
-
-        if (match) {
-          await pool.query('UPDATE administradores SET ultimo_acceso = NOW() WHERE id = $1', [user.id]);
-          return {
-            id: user.id,
-            email: user.email,
-            nombre: user.nombre,
-            rol: user.rol
-          };
-        }
+        await pool.query('UPDATE administradores SET ultimo_acceso = NOW() WHERE id = $1', [user.id]);
+        return {
+          id: user.id,
+          email: user.email,
+          nombre: user.nombre,
+          rol: user.rol
+        };
       }
     } catch (err) {
       console.warn('Error en auth de PostgreSQL:', err.message);
