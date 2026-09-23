@@ -2765,7 +2765,12 @@ input:checked + .slider:before {
   #btn-reset-view,
   #btn-toggle-fullscreen,
   #btn-close-ar-mode { display: none; }
-  .ar-canvas-wrapper { min-height: min(64svh, 540px); height: min(64svh, 540px); }
+  .ar-section:not(.ar-immersive) .ar-canvas-wrapper {
+    min-height: 0;
+    height: auto;
+    max-height: 520px;
+    aspect-ratio: 4 / 5;
+  }
   .ar-gesture-hints { display: none; }
 
   .ar-floating-audio {
@@ -2807,10 +2812,16 @@ input:checked + .slider:before {
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.62));
   }
   .ar-section.ar-immersive .ar-canvas-wrapper { height: 100%; min-height: 0; }
+  .ar-section.ar-immersive .ar-canvas-wrapper,
+  .ar-section.ar-immersive .ar-canvas-wrapper canvas { background: transparent; }
   .ar-section.ar-immersive #btn-open-sign-learning { display: none; }
   .ar-section.ar-immersive #btn-toggle-ar-mode { grid-column: auto; }
   .ar-section.ar-immersive .ar-action-buttons { grid-template-columns: 1fr 1fr; }
-  .ar-section.ar-immersive .btn-reanchor-floating { top: 108px; }
+  .ar-section.ar-immersive .btn-reanchor-floating {
+    top: auto;
+    bottom: 96px;
+    left: 12px;
+  }
   .ar-section.ar-immersive .scan-instruction-card { margin-top: 104px; }
 
   .lsc-learning-panel { padding: 0 4px; }

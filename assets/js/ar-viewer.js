@@ -56,7 +56,7 @@
   const objectId = data.objectId || 'microbit';
   const objectName = data.objectName || 'Objeto Educativo';
   const modelUrl = data.modelUrl || `assets/models/${objectId}.glb`;
-  const audioUrl = data.audioUrl || `assets/audio/${objectId}-audio.wav`;
+  const audioUrl = data.audioUrl || '';
   const audioTexto = data.audioTexto || '';
   const videoLscUrl = data.videoLscUrl || '';
 
@@ -115,6 +115,7 @@
     // Renderizador WebGL con transparencia alpha para ver la cámara de fondo
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
+    renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.xr.enabled = true;
     renderer.xr.setReferenceSpaceType('local');
@@ -297,7 +298,9 @@
 
     let scale = 1.0;
     if (maxAxis > 0) {
-      scale = 1.6 / maxAxis;
+      // En la vista previa móvil, un objetivo más contenido evita que un modelo
+      // correcto parezca "estirado" o invada toda la pantalla vertical.
+      scale = 1.25 / maxAxis;
       model.scale.set(scale, scale, scale);
     }
 
@@ -495,7 +498,7 @@
 
     if (arStatusText) {
       arStatusText.textContent = isWebXrAr
-        ? 'Detección de plano activa: mueve el teléfono hacia una mesa o el suelo'
+        ? 'Busca una mesa o el suelo'
         : 'Vista 3D manual: este navegador no dispone de detección WebXR';
     }
   }
@@ -528,12 +531,15 @@
 
       // Animación suave de aparición y anclaje
       objectGroup.visible = true;
-      objectGroup.scale.set(0.1, 0.1, 0.1);
-      let s = 0.1;
+      // Three.js usa metros en WebXR. Un modelo normalizado para la vista 3D
+      // sería enorme en el mundo real, por eso se presenta a escala de mesa.
+      const targetArScale = isWebXrAr ? 0.32 : 1;
+      let s = isWebXrAr ? 0.03 : 0.1;
+      objectGroup.scale.set(s, s, s);
       const scaleInterval = setInterval(() => {
-        s += 0.15;
-        if (s >= 1.0) {
-          s = 1.0;
+        s += targetArScale / 7;
+        if (s >= targetArScale) {
+          s = targetArScale;
           clearInterval(scaleInterval);
         }
         objectGroup.scale.set(s, s, s);
@@ -545,7 +551,7 @@
     if (btnReanchorView) btnReanchorView.classList.remove('is-hidden');
 
     if (arStatusText) {
-      arStatusText.textContent = 'Objeto anclado al suelo';
+      arStatusText.textContent = isWebXrAr ? 'Objeto ubicado' : 'Objeto ubicado manualmente';
     }
 
     showMultimediaControls();
@@ -1182,9 +1188,14 @@
   }
 
   function showMultimediaControls() {
-    // El audio puede estar disponible de inmediato; el intérprete no se abre solo
-    // para no cubrir el modelo ni confundirlo con el modo de práctica de señas.
-    if (floatingAudio) floatingAudio.classList.remove('is-hidden');
+    // Solo se muestra audio cuando el objeto tiene una explicación configurada.
+    const curObj = window.CURRENT_OBJETO || {};
+    const targetAudio = curObj.archivo_audio_url || curObj.audio_url || audioUrl;
+    const targetText = curObj.explicacion_texto || curObj.audio_texto || audioTexto;
+    if (floatingAudio) floatingAudio.classList.toggle('is-hidden', !(targetAudio || targetText));
+    // LSC se habilita por defecto cuando hay un video real. Quien no lo necesite
+    // puede cerrarlo con el mismo botón, pero nunca se muestra un recuadro vacío.
+    if (activeVideoLsc) setInterpreterVisibility(true);
   }
 
   /* ========================================================================
