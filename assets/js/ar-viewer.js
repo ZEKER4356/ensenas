@@ -27,6 +27,7 @@
   const btnReanchorView = document.getElementById('btn-reanchor-view');
   const btnReanchorFloating = document.getElementById('btn-reanchor-floating');
   const btnToggleLscOverlay = document.getElementById('btn-toggle-lsc-overlay');
+  const btnOpenSignLearning = document.getElementById('btn-open-sign-learning');
 
   // Referencias al Audio Explicativo en RA
   const audioElement = document.getElementById('ar-audio-element');
@@ -43,6 +44,10 @@
   const lscVideo = document.getElementById('ar-overlay-video-lsc');
   const btnLscOverlayMin = document.getElementById('btn-lsc-overlay-min');
   const btnLscOverlayDock = document.getElementById('btn-lsc-overlay-dock');
+  const lscLearningPanel = document.getElementById('lsc-steps-panel');
+  const signLearningVideo = document.getElementById('sign-learning-video');
+  const signLearningEmpty = document.getElementById('sign-learning-empty');
+  const btnCloseSignLearning = document.getElementById('btn-close-lsc-mode');
 
   if (!canvasHost) return;
 
@@ -67,6 +72,8 @@
   let xrReferenceSpace = null;
   let xrViewerSpace = null;
   let isWebXrAr = false;
+  let hasSurfaceHit = false;
+  let activeVideoLsc = '';
 
   // Estados de escaneo y anclaje (Floor Tracking)
   let isScanningSurface = false;
@@ -88,6 +95,7 @@
   initThreeScene();
   setupAudioController();
   setupLscOverlay();
+  setupSignLearning();
   showMultimediaControls();
   setupFloorTrackingUI();
   setupArDirectFlow();
@@ -456,15 +464,11 @@
       btnReanchorFloating.addEventListener('click', startSurfaceScanning);
     }
 
-    // Alternar visibilidad de Overlay LSC con el botón superior
+    // El intérprete es una ayuda independiente: solo se abre a petición de la persona.
     if (btnToggleLscOverlay) {
       btnToggleLscOverlay.addEventListener('click', () => {
-        if (!lscOverlay) return;
-        lscOverlay.classList.toggle('is-hidden');
-        const isHidden = lscOverlay.classList.contains('is-hidden');
-        btnToggleLscOverlay.classList.toggle('is-active-overlay', !isHidden);
-        const textSpan = btnToggleLscOverlay.querySelector('.btn-text');
-        if (textSpan) textSpan.textContent = isHidden ? 'Aprender seña' : 'Cerrar seña';
+        if (!lscOverlay || !activeVideoLsc) return;
+        setInterpreterVisibility(lscOverlay.classList.contains('is-hidden'));
       });
     }
   }
@@ -475,16 +479,19 @@
   function startSurfaceScanning() {
     isScanningSurface = true;
     isAnchored = false;
+    hasSurfaceHit = false;
 
     // Desactivar aparición del objeto flotante
     if (objectGroup) objectGroup.visible = false;
     if (groundShadow) groundShadow.visible = false;
 
     // Activar retícula y panel de escaneo
-    if (reticleGroup) reticleGroup.visible = true;
+    if (reticleGroup) reticleGroup.visible = !isWebXrAr;
     if (surfaceScanOverlay) surfaceScanOverlay.classList.remove('is-hidden');
     if (btnReanchorFloating) btnReanchorFloating.classList.add('is-hidden');
     if (btnReanchorView) btnReanchorView.classList.add('is-hidden');
+    setAnchorActionAvailability(!isWebXrAr);
+    setInterpreterVisibility(false);
 
     if (arStatusText) {
       arStatusText.textContent = isWebXrAr
@@ -498,6 +505,7 @@
    */
   function confirmObjectAnchor() {
     if (!isScanningSurface && isAnchored) return;
+    if (isWebXrAr && !hasSurfaceHit) return;
 
     isScanningSurface = false;
     isAnchored = true;
@@ -543,6 +551,17 @@
     showMultimediaControls();
   }
 
+  function setAnchorActionAvailability(canAnchor) {
+    if (!btnAnchorHere) return;
+    btnAnchorHere.disabled = !canAnchor;
+    const textSpan = btnAnchorHere.querySelector('span');
+    if (textSpan) {
+      textSpan.textContent = canAnchor
+        ? (isWebXrAr ? 'Ubicar objeto aquí' : 'Ubicar objeto manualmente')
+        : 'Busca una superficie...';
+    }
+  }
+
   /* ========================================================================
      4. Gestos Multitáctiles y Control Táctil
      ======================================================================== */
@@ -551,7 +570,7 @@
 
     // Toque en pantalla para anclar si estamos en modo escaneo
     el.addEventListener('click', (e) => {
-      if (isArMode && isScanningSurface) {
+      if (isArMode && isScanningSurface && (!isWebXrAr || hasSurfaceHit)) {
         confirmObjectAnchor();
       }
     });
@@ -604,7 +623,7 @@
     el.addEventListener('touchstart', (e) => {
       const now = Date.now();
       if (e.touches.length === 1) {
-        if (isArMode && isScanningSurface) {
+        if (isArMode && isScanningSurface && (!isWebXrAr || hasSurfaceHit)) {
           confirmObjectAnchor();
           return;
         }
@@ -732,6 +751,7 @@
 
       isArMode = true;
       sceneContainer.classList.add('ar-mode-active');
+      sceneContainer.classList.add('ar-immersive');
       document.body.classList.add('ar-active-body');
 
       const grid = scene.getObjectByName('ar-reference-grid');
@@ -768,6 +788,7 @@
 
     isArMode = true;
     sceneContainer.classList.add('ar-mode-active');
+    sceneContainer.classList.add('ar-immersive');
     document.body.classList.add('ar-active-body');
     const grid = scene.getObjectByName('ar-reference-grid');
     if (grid) grid.visible = false;
@@ -816,6 +837,7 @@
     if (groundShadow) groundShadow.visible = true;
     if (reticleGroup) reticleGroup.visible = false;
     if (surfaceScanOverlay) surfaceScanOverlay.classList.add('is-hidden');
+    setInterpreterVisibility(false);
     if (btnReanchorFloating) btnReanchorFloating.classList.add('is-hidden');
     if (btnReanchorView) btnReanchorView.classList.add('is-hidden');
 
@@ -1095,19 +1117,74 @@
     }
 
     const curObj = window.CURRENT_OBJETO || {};
-    const activeVideoLsc = curObj.video_lsc_url || videoLscUrl;
+    activeVideoLsc = curObj.video_lsc_url || videoLscUrl;
     if (lscVideo && activeVideoLsc) {
       lscVideo.src = activeVideoLsc;
       lscVideo.load();
     }
+    if (btnToggleLscOverlay) {
+      btnToggleLscOverlay.disabled = !activeVideoLsc;
+      btnToggleLscOverlay.title = activeVideoLsc
+        ? 'Abrir intérprete LSC'
+        : 'Este objeto aún no tiene video de intérprete LSC.';
+    }
+  }
+
+  function setupSignLearning() {
+    if (signLearningVideo && activeVideoLsc) {
+      signLearningVideo.src = activeVideoLsc;
+      signLearningVideo.load();
+    }
+    if (signLearningEmpty) signLearningEmpty.hidden = Boolean(activeVideoLsc);
+
+    if (btnOpenSignLearning) {
+      btnOpenSignLearning.addEventListener('click', openSignLearning);
+    }
+    if (btnCloseSignLearning) {
+      btnCloseSignLearning.addEventListener('click', closeSignLearning);
+    }
+  }
+
+  function openSignLearning() {
+    if (!lscLearningPanel) return;
+    lscLearningPanel.hidden = false;
+    if (btnOpenSignLearning) btnOpenSignLearning.setAttribute('aria-expanded', 'true');
+    if (signLearningVideo && activeVideoLsc) {
+      signLearningVideo.currentTime = 0;
+      signLearningVideo.play().catch(() => {});
+    }
+    lscLearningPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function closeSignLearning() {
+    if (!lscLearningPanel) return;
+    if (signLearningVideo) signLearningVideo.pause();
+    lscLearningPanel.hidden = true;
+    if (btnOpenSignLearning) {
+      btnOpenSignLearning.setAttribute('aria-expanded', 'false');
+      btnOpenSignLearning.focus();
+    }
+  }
+
+  function setInterpreterVisibility(shouldShow) {
+    if (!lscOverlay) return;
+    lscOverlay.classList.toggle('is-hidden', !shouldShow);
+    if (btnToggleLscOverlay) {
+      btnToggleLscOverlay.classList.toggle('is-active-overlay', shouldShow);
+      btnToggleLscOverlay.setAttribute('aria-expanded', String(shouldShow));
+      const textSpan = btnToggleLscOverlay.querySelector('.btn-text');
+      if (textSpan) textSpan.textContent = shouldShow ? 'Cerrar intérprete' : 'Intérprete LSC';
+    }
+    if (lscVideo) {
+      if (shouldShow && activeVideoLsc) lscVideo.play().catch(() => {});
+      if (!shouldShow) lscVideo.pause();
+    }
   }
 
   function showMultimediaControls() {
-    // Los controles están disponibles desde la carga del visor; la reproducción
-    // queda bajo control explícito de la persona usuaria por las políticas móviles.
+    // El audio puede estar disponible de inmediato; el intérprete no se abre solo
+    // para no cubrir el modelo ni confundirlo con el modo de práctica de señas.
     if (floatingAudio) floatingAudio.classList.remove('is-hidden');
-    if (lscOverlay) lscOverlay.classList.remove('is-hidden');
-    if (btnToggleLscOverlay) btnToggleLscOverlay.classList.add('is-active-overlay');
   }
 
   /* ========================================================================
@@ -1140,6 +1217,8 @@
       if (hit) {
         const pose = hit.getPose(xrReferenceSpace);
         if (pose && reticleGroup) {
+          hasSurfaceHit = true;
+          setAnchorActionAvailability(true);
           reticleGroup.visible = isScanningSurface;
           reticleGroup.matrix.fromArray(pose.transform.matrix);
           reticleGroup.matrix.decompose(reticleGroup.position, reticleGroup.quaternion, reticleGroup.scale);

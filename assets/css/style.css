@@ -2676,3 +2676,143 @@ input:checked + .slider:before {
   .form-row-2, .input-upload-group { grid-template-columns: 1fr; display: grid; }
   .btn-file-upload { min-height: 48px; }
 }
+
+/* ===========================================================================
+   Experiencia móvil: vista 3D, práctica de seña e intérprete son flujos distintos
+   ========================================================================== */
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-ar-action:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.btn-anchor-action:disabled {
+  opacity: 0.65;
+  cursor: wait;
+  box-shadow: none;
+}
+
+.lsc-learning-panel {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.lsc-learning-video-wrap {
+  width: min(100%, 680px);
+  margin: 20px auto;
+  background: #020617;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.lsc-learning-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #020617;
+}
+
+.lsc-learning-empty {
+  margin: 0;
+  padding: 18px;
+  color: #E2E8F0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+  .site-header { position: static; }
+  .header-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .brand-badge { display: none; }
+  .brand-official-logo { height: 36px; max-width: 132px; }
+  .header-nav { gap: 6px; }
+  .header-nav .btn { min-height: 42px; padding: 7px 9px; font-size: 0.78rem; }
+  .header-nav .btn svg { display: none; }
+  .header-title-bar { padding: 18px 20px; }
+  .object-main-title { font-size: 1.75rem; }
+
+  .ar-section { min-height: 0; }
+  .ar-section:not(.ar-immersive) { margin-inline: -12px; border-radius: 0; }
+  .ar-header-bar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .ar-status-indicator { font-size: 0.78rem; }
+  .ar-action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 8px;
+    overflow: visible;
+    padding: 0;
+  }
+  .btn-ar-action { justify-content: center; min-width: 0; padding: 8px; font-size: 0.8rem; }
+  #btn-toggle-ar-mode { grid-column: 1 / -1; }
+  #btn-flip-camera,
+  #btn-reset-view,
+  #btn-toggle-fullscreen,
+  #btn-close-ar-mode { display: none; }
+  .ar-canvas-wrapper { min-height: min(64svh, 540px); height: min(64svh, 540px); }
+  .ar-gesture-hints { display: none; }
+
+  .ar-floating-audio {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    gap: 8px;
+    padding: 6px 8px 6px 6px;
+  }
+  .ar-audio-info { min-width: 0; flex: 1; }
+  .ar-audio-tag { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.68rem; }
+  .ar-audio-wave,
+  #btn-ar-audio-replay { display: none; }
+
+  .ar-floating-lsc,
+  .ar-floating-lsc.pos-bottom-right,
+  .ar-floating-lsc.pos-bottom-left,
+  .ar-floating-lsc.pos-top-right,
+  .ar-floating-lsc.pos-top-left {
+    top: auto;
+    right: 12px;
+    bottom: 92px;
+    left: 12px;
+    width: auto;
+  }
+  .lsc-overlay-body { height: min(34svh, 260px); }
+
+  .ar-section.ar-immersive {
+    min-height: 100svh;
+    margin: 0;
+  }
+  .ar-section.ar-immersive .ar-header-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 45;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.62));
+  }
+  .ar-section.ar-immersive .ar-canvas-wrapper { height: 100%; min-height: 0; }
+  .ar-section.ar-immersive #btn-open-sign-learning { display: none; }
+  .ar-section.ar-immersive #btn-toggle-ar-mode { grid-column: auto; }
+  .ar-section.ar-immersive .ar-action-buttons { grid-template-columns: 1fr 1fr; }
+  .ar-section.ar-immersive .btn-reanchor-floating { top: 108px; }
+  .ar-section.ar-immersive .scan-instruction-card { margin-top: 104px; }
+
+  .lsc-learning-panel { padding: 0 4px; }
+  .lsc-learning-video-wrap { margin: 16px 0; }
+}
