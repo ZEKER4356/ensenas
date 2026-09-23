@@ -267,10 +267,11 @@
               <div class="input-upload-group">
                 <input type="text" id="field-modelo-url" class="form-input" placeholder="URL o subir archivo..." required>
                 <label class="btn-file-upload">
-                  <input type="file" id="file-upload-3d" accept=".glb,.gltf,.usdz" class="sr-only">
+                  <input type="file" id="file-upload-3d" accept=".glb,.gltf,.usdz,.bin,image/*" multiple class="sr-only">
                   <span>Subir 3D</span>
                 </label>
               </div>
+              <p class="form-hint">Si usas un archivo <code>.gltf</code>, selecciónalo junto con su <code>.bin</code> y sus texturas, si las tiene. Un <code>.glb</code> se sube solo.</p>
               <small class="field-hint">Ejemplo: <code>assets/models/microbit.glb</code> o URL de Cloud Storage.</small>
             </div>
 

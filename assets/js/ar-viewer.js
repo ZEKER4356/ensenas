@@ -266,14 +266,13 @@
         },
         null,
         (err) => {
-          console.warn('Cargando modelo procedimental interactivo para:', objectId, err);
-          createProceduralModel(objectId);
-          hideLoading();
+          console.error('No se pudo cargar el modelo 3D:', err);
+          showModelLoadError();
         }
       );
     } else {
-      createProceduralModel(objectId);
-      hideLoading();
+      console.error('GLTFLoader no está disponible.');
+      showModelLoadError();
     }
   }
 
@@ -425,6 +424,15 @@
       setTimeout(() => {
         if (loadingOverlay.parentNode) loadingOverlay.style.display = 'none';
       }, 350);
+    }
+  }
+
+  function showModelLoadError() {
+    if (arStatusText) arStatusText.textContent = 'No se pudo cargar el modelo 3D';
+    if (loadingOverlay) {
+      loadingOverlay.classList.remove('fade-out');
+      loadingOverlay.style.display = 'flex';
+      loadingOverlay.innerHTML = '<div class="ar-model-error"><strong>No se pudo cargar este modelo.</strong><p>Vuelve al panel Admin y súbelo de nuevo. Si es un archivo .gltf, selecciónalo junto con su archivo .bin y sus texturas.</p></div>';
     }
   }
 

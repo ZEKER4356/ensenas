@@ -503,36 +503,93 @@
       if (label) label.textContent = 'Subiendo...';
 
       try {
-        // Leer archivo como DataURL (Base64)
-        const base64 = await readFileAsBase64(file);
-
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${getToken()}`
-          },
-          body: JSON.stringify({
-            filename: file.name,
-            fileData: base64,
-            fileType: file.type,
-            folder: folder
-          })
-        });
-
-        const data = await res.json();
-        if (res.ok && data.url) {
-          targetField.value = data.url;
-          if (label) label.textContent = '¡Listo!';
-          setTimeout(() => { if (label) label.textContent = originalText; }, 2000);
-        } else {
-          throw new Error(data.error || 'Error en subida');
-        }
+        targetField.value = await uploadFileToStorage(file, folder);
+        if (label) label.textContent = '¡Listo!';
+        setTimeout(() => { if (label) label.textContent = originalText; }, 2000);
       } catch (err) {
         console.error('Error subiendo archivo:', err);
         if (label) label.textContent = 'Error al subir';
-        showModalAlert('El archivo no se guardó. Corrige la configuración de Storage e intenta de nuevo.');
+        showModalAlert(err.message || 'El archivo no se guardó. Corrige la configuración de Storage e intenta de nuevo.');
         setTimeout(() => { if (label) label.textContent = originalText; }, 2500);
+      }
+    });
+  }
+
+  async function uploadFileToStorage(file, folder, filename = file.name) {
+    const base64 = await readFileAsBase64(file);
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getToken()}`
+      },
+      body: JSON.stringify({
+        filename,
+        fileData: base64,
+        fileType: file.type || 'application/octet-stream',
+        folder
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.url) {
+      throw new Error(data.error || 'Error en subida');
+    }
+    return data.url;
+  }
+
+  function setupModelUpload(inputElement, targetField) {
+    if (!inputElement) return;
+
+    inputElement.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      const modelFile = files.find((file) => /\.(glb|gltf|usdz)$/i.test(file.name));
+      if (!modelFile) return;
+
+      const label = inputElement.parentElement.querySelector('span');
+      const originalText = label ? label.textContent : '';
+      if (label) label.textContent = 'Preparando modelo...';
+
+      try {
+        if (/\.gltf$/i.test(modelFile.name)) {
+          const gltf = JSON.parse(await modelFile.text());
+          const resourceUris = [
+            ...(gltf.buffers || []).map((buffer) => buffer.uri),
+            ...(gltf.images || []).map((image) => image.uri)
+          ].filter((uri) => uri && !uri.startsWith('data:'));
+
+          for (const resourceUri of resourceUris) {
+            const resourceName = decodeURIComponent(resourceUri.split('/').pop().split('?')[0]);
+            const resourceFile = files.find((file) => file.name === resourceName);
+            if (!resourceFile) {
+              throw new Error(`Selecciona también el archivo auxiliar \"${resourceName}\" junto al .gltf.`);
+            }
+            if (label) label.textContent = `Subiendo ${resourceName}...`;
+            const publicUrl = await uploadFileToStorage(resourceFile, 'models');
+            (gltf.buffers || []).forEach((buffer) => {
+              if (buffer.uri === resourceUri) buffer.uri = publicUrl;
+            });
+            (gltf.images || []).forEach((image) => {
+              if (image.uri === resourceUri) image.uri = publicUrl;
+            });
+          }
+
+          if (label) label.textContent = 'Subiendo modelo...';
+          const updatedGltf = new Blob([JSON.stringify(gltf)], { type: 'model/gltf+json' });
+          targetField.value = await uploadFileToStorage(updatedGltf, 'models', modelFile.name);
+        } else {
+          if (label) label.textContent = 'Subiendo modelo...';
+          targetField.value = await uploadFileToStorage(modelFile, 'models');
+        }
+
+        if (label) label.textContent = '¡Listo!';
+        setTimeout(() => { if (label) label.textContent = originalText; }, 2500);
+      } catch (err) {
+        console.error('Error subiendo modelo 3D:', err);
+        if (label) label.textContent = 'Error al subir';
+        showModalAlert(err.message || 'El modelo no se guardó. Intenta subir un .glb o selecciona todos los archivos del .gltf.');
+        setTimeout(() => { if (label) label.textContent = originalText; }, 3000);
+      } finally {
+        inputElement.value = '';
       }
     });
   }
@@ -546,7 +603,7 @@
     });
   }
 
-  setupFileUpload(upload3D, fieldModeloUrl, 'models');
+  setupModelUpload(upload3D, fieldModeloUrl);
   setupFileUpload(uploadPreview, fieldPreviewUrl, 'previews');
   setupFileUpload(uploadAudio, fieldAudioUrl, 'audio');
   setupFileUpload(uploadVideoLsc, fieldVideoLsc, 'videos');
