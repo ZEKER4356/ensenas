@@ -16,7 +16,7 @@ const DEFAULT_SEED_OBJECTS = [
     activo: true,
     modelo_3d_url: 'assets/models/microbit.glb',
     icono_preview_url: 'assets/models/microbit.glb',
-    qr_code_url: '/ra/microbit',
+    qr_code_url: '/objeto.html?id=microbit',
     explicacion_texto: 'Bienvenido a enseñas. Estás observando la tarjeta programable Micro:bit en Realidad Aumentada. Este dispositivo cuenta con una matriz de 25 luces LED, sensores de movimiento, brújula y botones interactivos. Es una herramienta pedagógica diseñada para aprender programación, electrónica y robótica de manera práctica e inclusiva.',
     archivo_audio_url: 'assets/audio/microbit-audio.wav',
     video_lsc_url: 'assets/videos/microbit-lsc.mp4',
@@ -37,7 +37,7 @@ const DEFAULT_SEED_OBJECTS = [
     activo: true,
     modelo_3d_url: 'assets/models/telescopio.glb',
     icono_preview_url: 'assets/models/telescopio.glb',
-    qr_code_url: '/ra/telescopio',
+    qr_code_url: '/objeto.html?id=telescopio',
     explicacion_texto: 'Bienvenido a enseñas. Este es el telescopio astronómico en Realidad Aumentada. Es un instrumento óptico compuesto por lentes y espejos diseñado para observar cuerpos celestes lejanos como la Luna, planetas y nebulosas. Permite acercar el fascinante estudio de la astronomía al aula de clase.',
     archivo_audio_url: 'assets/audio/telescopio-audio.wav',
     video_lsc_url: 'assets/videos/telescopio-lsc.mp4',
@@ -58,7 +58,7 @@ const DEFAULT_SEED_OBJECTS = [
     activo: true,
     modelo_3d_url: 'assets/models/microscopio.glb',
     icono_preview_url: 'assets/models/microscopio.glb',
-    qr_code_url: '/ra/microscopio',
+    qr_code_url: '/objeto.html?id=microscopio',
     explicacion_texto: 'Bienvenido a enseñas. Estás viendo el microscopio óptico en Realidad Aumentada. Esta herramienta de laboratorio utiliza lentes de gran aumento para observar muestras y microorganismos invisibles a simple vista, como células y bacterias, facilitando el aprendizaje en ciencias y biología.',
     archivo_audio_url: 'assets/audio/microscopio-audio.wav',
     video_lsc_url: 'assets/videos/microscopio-lsc.mp4',
@@ -75,6 +75,10 @@ const DEFAULT_SEED_OBJECTS = [
 
 // Almacén en memoria compartido en el ciclo de vida del contenedor
 let memoryObjects = [...DEFAULT_SEED_OBJECTS];
+
+function hasPersistentStoreConfig() {
+  return Boolean(process.env.DATABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.INSFORGE_API_URL);
+}
 
 /**
  * Inicializar cliente de conexión a PostgreSQL
@@ -106,8 +110,9 @@ function getPgPool() {
 function getSupabase() {
   if (supabaseClient) return supabaseClient;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.INSFORGE_API_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.INSFORGE_API_URL;
+  // La clave secreta solo existe en las funciones de Vercel, nunca en el navegador.
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !key) return null;
 
@@ -189,6 +194,7 @@ async function queryObjetoById(id) {
  * Crear o actualizar objeto
  */
 async function saveObjeto(objeto) {
+  const persistenceErrors = [];
   const pool = getPgPool();
   if (pool) {
     try {
@@ -223,7 +229,7 @@ async function saveObjeto(objeto) {
         objeto.activo !== false,
         objeto.modelo_3d_url,
         objeto.icono_preview_url || '',
-        objeto.qr_code_url || `/ra/${objeto.id}`,
+        objeto.qr_code_url || `/objeto.html?id=${encodeURIComponent(objeto.id)}`,
         objeto.explicacion_texto,
         objeto.archivo_audio_url || '',
         objeto.video_lsc_url || '',
@@ -234,7 +240,7 @@ async function saveObjeto(objeto) {
       const res = await pool.query(query, values);
       return res.rows[0];
     } catch (err) {
-      console.warn('Error al guardar en PostgreSQL, guardando en memoria:', err.message);
+      persistenceErrors.push(`PostgreSQL: ${err.message}`);
     }
   }
 
@@ -243,9 +249,15 @@ async function saveObjeto(objeto) {
     try {
       const { data, error } = await sb.from('objetos').upsert(objeto).select().single();
       if (!error && data) return data;
+      if (error) persistenceErrors.push(`Supabase: ${error.message}`);
     } catch (err) {
-      console.warn('Error al guardar en Supabase:', err.message);
+      persistenceErrors.push(`Supabase: ${err.message}`);
     }
+  }
+
+  // Nunca confirmar un guardado en memoria si el despliegue tiene BD configurada.
+  if (hasPersistentStoreConfig()) {
+    throw new Error(`No fue posible persistir el objeto. ${persistenceErrors.join(' | ') || 'La conexión no está disponible.'}`);
   }
 
   // Guardar en memoria
@@ -264,24 +276,30 @@ async function saveObjeto(objeto) {
  * Eliminar objeto
  */
 async function deleteObjeto(id) {
+  const persistenceErrors = [];
   const pool = getPgPool();
   if (pool) {
     try {
       await pool.query('DELETE FROM objetos WHERE id = $1', [id]);
       return true;
     } catch (err) {
-      console.warn('Error al eliminar en PostgreSQL:', err.message);
+      persistenceErrors.push(`PostgreSQL: ${err.message}`);
     }
   }
 
   const sb = getSupabase();
   if (sb) {
     try {
-      await sb.from('objetos').delete().eq('id', id);
+      const { error } = await sb.from('objetos').delete().eq('id', id);
+      if (error) throw error;
       return true;
     } catch (err) {
-      console.warn('Error al eliminar en Supabase:', err.message);
+      persistenceErrors.push(`Supabase: ${err.message}`);
     }
+  }
+
+  if (hasPersistentStoreConfig()) {
+    throw new Error(`No fue posible eliminar el objeto. ${persistenceErrors.join(' | ') || 'La conexión no está disponible.'}`);
   }
 
   memoryObjects = memoryObjects.filter((o) => o.id !== id);
@@ -291,6 +309,7 @@ async function deleteObjeto(id) {
 module.exports = {
   getPgPool,
   getSupabase,
+  hasPersistentStoreConfig,
   queryObjetos,
   queryObjetoById,
   saveObjeto,

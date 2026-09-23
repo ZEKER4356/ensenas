@@ -88,7 +88,7 @@ function normalizeObjectData(item) {
     explicacion_texto: item.explicacion_texto || item.audio_texto || '',
     audio_url: item.archivo_audio_url || item.audio_url || '',
     archivo_audio_url: item.archivo_audio_url || item.audio_url || '',
-    qr_code_url: item.qr_code_url || `/ra/${item.id}`,
+    qr_code_url: item.qr_code_url || `/objeto.html?id=${encodeURIComponent(item.id)}`,
     activo: item.activo !== false
   };
 }

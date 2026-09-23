@@ -2621,4 +2621,58 @@ input:checked + .slider:before {
   }
 }
 
+/* ===========================================================================
+   Ajustes mobile-first del visor: controles alcanzables y overlays contenidos
+   ========================================================================== */
+.ar-section {
+  min-height: min(760px, 100svh);
+}
 
+.ar-canvas-wrapper {
+  min-height: clamp(420px, 62svh, 720px);
+  overflow: hidden;
+}
+
+.ar-floating-audio,
+.ar-floating-lsc {
+  max-width: calc(100% - 24px);
+}
+
+.btn,
+.btn-ar-action,
+.btn-anchor-action,
+.btn-reanchor-floating,
+.btn-audio-circle,
+.btn-audio-mini,
+.btn-overlay-ctrl {
+  min-height: 48px;
+}
+
+@media (max-width: 700px) {
+  .main-layout { padding-inline: 12px; }
+  .ar-section { margin-inline: -12px; border-radius: 0; min-height: 100svh; }
+  .ar-header-bar { align-items: flex-start; gap: 10px; padding: 10px 12px; }
+  .ar-action-buttons { gap: 8px; width: 100%; overflow-x: auto; padding-bottom: 2px; }
+  .btn-ar-action { flex: 0 0 auto; min-height: 48px; }
+  .ar-canvas-wrapper { min-height: 64svh; height: 64svh; }
+  .ar-floating-audio {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+  }
+  .ar-floating-lsc {
+    right: 12px;
+    bottom: 96px;
+    width: min(220px, calc(100vw - 24px));
+  }
+  .ar-floating-lsc.pos-bottom-left { left: 12px; right: auto; }
+  .ar-floating-lsc.pos-top-left { left: 12px; right: auto; top: 12px; bottom: auto; }
+  .ar-floating-lsc.pos-top-right { right: 12px; top: 12px; bottom: auto; }
+  .ar-gesture-hints { grid-template-columns: 1fr; gap: 8px; padding: 12px; }
+  .direct-start-card { width: min(100% - 24px, 520px); padding: 20px; }
+  .direct-start-button { min-height: 52px; width: 100%; }
+  .modal-content { width: calc(100% - 20px); max-height: calc(100svh - 20px); }
+  .form-row-2, .input-upload-group { grid-template-columns: 1fr; display: grid; }
+  .btn-file-upload { min-height: 48px; }
+}

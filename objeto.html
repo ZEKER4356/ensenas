@@ -75,6 +75,28 @@
         };
         window.CURRENT_OBJETO = objeto;
       }
+
+      // La API es la fuente de verdad: evita inicializar el visor con el modelo
+      // local de demostración cuando ya existe un objeto persistido en Supabase.
+      window.ENSENAS_OBJECT_READY = id
+        ? fetchObjectByIdAsync(id).then((remote) => {
+            const resolved = remote || objeto;
+            if (resolved) {
+              window.CURRENT_OBJETO = resolved;
+              window.ENSENAS_DATA = {
+                objectId: resolved.id,
+                objectName: resolved.titulo || resolved.nombre,
+                modelUrl: resolved.modelo_3d_url,
+                audioUrl: resolved.archivo_audio_url || resolved.audio_url || '',
+                audioTexto: resolved.explicacion_texto || resolved.audio_texto || '',
+                videoUsoUrl: resolved.video_uso_url || '',
+                videoLscUrl: resolved.video_lsc_url || '',
+                isArDirect: params.get('ar') === 'true' || params.get('ar') === '1' || params.get('direct') === '1'
+              };
+            }
+            return resolved;
+          })
+        : Promise.resolve(objeto);
     })();
   </script>
 
@@ -86,7 +108,7 @@
     <div class="header-container">
       <div class="brand-group">
         <a href="index.html" class="brand-link" aria-label="Ir al inicio de enseñas">
-          <img src="ensenas%20logo.png" alt="Logotipo oficial enseñas" class="brand-official-logo" width="160" height="46">
+          <img src="ensenas%20imagotipo.png" alt="Logotipo oficial enseñas" class="brand-official-logo" width="160" height="46">
         </a>
         <span class="brand-badge" aria-hidden="true">RA + LSC</span>
       </div>
@@ -146,9 +168,9 @@
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <span class="btn-text">Ver en mi entorno (RA)</span>
           </button>
-          <button type="button" id="btn-toggle-lsc-overlay" class="btn-ar-action" aria-label="Mostrar u ocultar intérprete en Lengua de Señas" title="Mostrar/Ocultar Intérprete LSC">
+          <button type="button" id="btn-toggle-lsc-overlay" class="btn-ar-action" aria-label="Abrir o cerrar el video para aprender la seña en Lengua de Señas" title="Aprender seña en LSC">
             <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
-            <span class="btn-text">Overlay LSC</span>
+            <span class="btn-text">Aprender seña</span>
           </button>
           <button type="button" id="btn-reanchor-view" class="btn-ar-action btn-icon-only is-hidden" aria-label="Re-escanear plano y anclar en otro lugar" title="Re-anclar plano de suelo">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
@@ -293,8 +315,8 @@
       </div>
     </section>
 
-    <!-- SECCIÓN 2: Reproductores de Video Paralelos y Sincronizados -->
-    <section id="media-container" class="media-section" aria-labelledby="media-heading">
+    <!-- Controles multimedia retirados: el audio y el video LSC viven solo en el visor. -->
+    <section id="media-container" class="media-section" aria-labelledby="media-heading" hidden>
       <div class="section-title-wrap">
         <h2 id="media-heading" class="section-title">
           Explicación del Objeto y Lengua de Señas Colombiana (LSC)
@@ -310,7 +332,7 @@
         <!-- Video 1 (Izquierda): Uso y Funcionalidad del Objeto -->
         <figure class="video-figure" id="figure-video-uso">
           <div class="video-player-wrapper">
-            <video 
+            <template
               id="video-uso" 
               class="sync-video"
               preload="metadata" 
@@ -319,7 +341,7 @@
               <source id="src-video-uso" src="" type="video/mp4">
               <track kind="subtitles" label="Español" srclang="es" default>
               Tu navegador no soporta la reproducción de video HTML5.
-            </video>
+            </template>
             <div class="video-badge">Uso del Objeto</div>
           </div>
           <figcaption class="video-caption">
@@ -331,7 +353,7 @@
         <!-- Video 2 (Derecha): Intérprete en Lengua de Señas Colombiana (LSC) -->
         <figure class="video-figure" id="figure-video-lsc">
           <div class="video-player-wrapper lsc-wrapper">
-            <video 
+            <template
               id="video-lsc" 
               class="sync-video"
               preload="metadata" 
@@ -341,7 +363,7 @@
               <source id="src-video-lsc" src="" type="video/mp4">
               <track kind="captions" label="LSC Descripción" srclang="es" default>
               Tu navegador no soporta la reproducción de video HTML5.
-            </video>
+            </template>
             <div class="video-badge badge-lsc">Intérprete LSC</div>
           </div>
           <figcaption class="video-caption">
@@ -411,7 +433,7 @@
       </div>
     </section>
 
-    <!-- SECCIÓN 3: Módulo de Aprendizaje de Seña en LSC (CA4) -->
+    <!-- Los pasos siguen disponibles como metadatos del objeto; no se muestra un reproductor duplicado. -->
     <aside id="lsc-steps-panel" class="lsc-learning-panel" aria-labelledby="lsc-steps-heading" hidden>
       <div class="panel-card">
         <div class="panel-header">
@@ -478,7 +500,7 @@
       const params = new URLSearchParams(window.location.search);
       const id = params.get('id');
 
-      let obj = window.CURRENT_OBJETO || getObjectById(id);
+      let obj = await (window.ENSENAS_OBJECT_READY || Promise.resolve(null));
       if (!obj && id) {
         try {
           obj = await fetchObjectByIdAsync(id);
@@ -487,6 +509,7 @@
         }
       }
 
+      if (!obj) obj = getObjectById(id);
       if (!obj) {
         window.location.href = '404.html' + (id ? '?id=' + encodeURIComponent(id) : '');
         return;
@@ -556,17 +579,6 @@
       const directTitle = document.getElementById('direct-object-title');
       if (directTitle) directTitle.textContent = obj.titulo || obj.nombre;
 
-      if (obj.video_uso_url) {
-        document.getElementById('src-video-uso').src = obj.video_uso_url;
-        const videoUso = document.getElementById('video-uso');
-        if (videoUso) videoUso.load();
-      }
-      if (obj.video_lsc_url) {
-        document.getElementById('src-video-lsc').src = obj.video_lsc_url;
-        const videoLsc = document.getElementById('video-lsc');
-        if (videoLsc) videoLsc.load();
-      }
-
       const stepsList = document.getElementById('lsc-steps-list');
       if (stepsList && obj.instrucciones_lsc) {
         let html = '';
@@ -584,8 +596,13 @@
   </script>
 
   <!-- Controladores Frontend -->
-  <script src="assets/js/video-sync.js"></script>
-  <script src="assets/js/ar-viewer.js"></script>
+  <script>
+    (window.ENSENAS_OBJECT_READY || Promise.resolve()).finally(() => {
+      const script = document.createElement('script');
+      script.src = 'assets/js/ar-viewer.js';
+      document.body.appendChild(script);
+    });
+  </script>
 
 </body>
 </html>

@@ -62,6 +62,11 @@
   let isFullscreen = false;
   let currentFacingMode = 'environment'; // Cámara trasera por defecto
   let mediaStream = null;
+  let xrSession = null;
+  let xrHitTestSource = null;
+  let xrReferenceSpace = null;
+  let xrViewerSpace = null;
+  let isWebXrAr = false;
 
   // Estados de escaneo y anclaje (Floor Tracking)
   let isScanningSurface = false;
@@ -83,6 +88,7 @@
   initThreeScene();
   setupAudioController();
   setupLscOverlay();
+  showMultimediaControls();
   setupFloorTrackingUI();
   setupArDirectFlow();
 
@@ -102,6 +108,8 @@
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.xr.enabled = true;
+    renderer.xr.setReferenceSpaceType('local');
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -144,7 +152,7 @@
     setupGestureControls();
 
     // Bucle de animación
-    animate();
+    renderer.setAnimationLoop(renderFrame);
 
     // Redimensionamiento
     window.addEventListener('resize', onWindowResize);
@@ -448,7 +456,7 @@
         const isHidden = lscOverlay.classList.contains('is-hidden');
         btnToggleLscOverlay.classList.toggle('is-active-overlay', !isHidden);
         const textSpan = btnToggleLscOverlay.querySelector('.btn-text');
-        if (textSpan) textSpan.textContent = isHidden ? 'Ver LSC' : 'Ocultar LSC';
+        if (textSpan) textSpan.textContent = isHidden ? 'Aprender seña' : 'Cerrar seña';
       });
     }
   }
@@ -471,7 +479,9 @@
     if (btnReanchorView) btnReanchorView.classList.add('is-hidden');
 
     if (arStatusText) {
-      arStatusText.textContent = 'Detección de Plano: Mueve el teléfono hacia el suelo';
+      arStatusText.textContent = isWebXrAr
+        ? 'Detección de plano activa: mueve el teléfono hacia una mesa o el suelo'
+        : 'Vista 3D manual: este navegador no dispone de detección WebXR';
     }
   }
 
@@ -490,10 +500,13 @@
 
     // Ubicar objeto exactamente sobre la retícula
     if (objectGroup && reticleGroup) {
-      objectGroup.position.set(reticleGroup.position.x, 0, reticleGroup.position.z);
+      // La pose de la retícula procede del hit-test WebXR; se copia completa para
+      // conservar posición y orientación del plano físico detectado.
+      objectGroup.position.copy(reticleGroup.position);
+      objectGroup.quaternion.copy(reticleGroup.quaternion);
       if (groundShadow) {
-        groundShadow.position.x = reticleGroup.position.x;
-        groundShadow.position.z = reticleGroup.position.z;
+        groundShadow.position.copy(reticleGroup.position);
+        groundShadow.quaternion.copy(reticleGroup.quaternion);
         groundShadow.visible = true;
       }
 
@@ -519,13 +532,7 @@
       arStatusText.textContent = 'Objeto anclado al suelo';
     }
 
-    // Mostrar controles multimedia
-    if (floatingAudio) floatingAudio.classList.remove('is-hidden');
-    if (lscOverlay) lscOverlay.classList.remove('is-hidden');
-    if (btnToggleLscOverlay) btnToggleLscOverlay.classList.add('is-active-overlay');
-
-    // Iniciar reproducción de la explicación (Audio o Web Speech API)
-    playExplanationAudio();
+    showMultimediaControls();
   }
 
   /* ========================================================================
@@ -681,6 +688,13 @@
      ======================================================================== */
   async function startArMode() {
     try {
+      if (navigator.xr && await navigator.xr.isSessionSupported('immersive-ar')) {
+        await startWebXrSession();
+        return;
+      }
+
+      // Alternativa sin WebXR: cámara de fondo y controles manuales, sin afirmar
+      // detección real de superficies.
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         alert('Tu navegador o dispositivo no soporta acceso a cámara en tiempo real.');
         return;
@@ -731,7 +745,47 @@
     }
   }
 
+  async function startWebXrSession() {
+    xrSession = await navigator.xr.requestSession('immersive-ar', {
+      requiredFeatures: ['hit-test'],
+      optionalFeatures: ['dom-overlay'],
+      domOverlay: { root: sceneContainer }
+    });
+    isWebXrAr = true;
+    xrSession.addEventListener('end', endWebXrSession);
+    await renderer.xr.setSession(xrSession);
+    xrViewerSpace = await xrSession.requestReferenceSpace('viewer');
+    xrReferenceSpace = await xrSession.requestReferenceSpace('local');
+    xrHitTestSource = await xrSession.requestHitTestSource({ space: xrViewerSpace });
+
+    isArMode = true;
+    sceneContainer.classList.add('ar-mode-active');
+    document.body.classList.add('ar-active-body');
+    const grid = scene.getObjectByName('ar-reference-grid');
+    if (grid) grid.visible = false;
+    if (btnToggleAr) {
+      const textSpan = btnToggleAr.querySelector('.btn-text');
+      if (textSpan) textSpan.textContent = 'Salir de RA';
+    }
+    startSurfaceScanning();
+  }
+
+  function endWebXrSession() {
+    if (xrHitTestSource) xrHitTestSource.cancel();
+    xrSession = null;
+    xrHitTestSource = null;
+    xrViewerSpace = null;
+    xrReferenceSpace = null;
+    isWebXrAr = false;
+    if (isArMode) stopArMode();
+  }
+
   function stopArMode() {
+    if (xrSession) {
+      const session = xrSession;
+      xrSession = null;
+      session.end().catch(() => {});
+    }
     if (mediaStream) {
       mediaStream.getTracks().forEach(track => track.stop());
       mediaStream = null;
@@ -812,8 +866,7 @@
     btnCloseArMode.addEventListener('click', () => {
       if (isFullscreen) toggleImmersiveFullscreen();
       stopArMode();
-      const ficha = document.getElementById('media-container');
-      if (ficha) ficha.scrollIntoView({ behavior: 'smooth' });
+      sceneContainer.scrollIntoView({ behavior: 'smooth' });
     });
   }
 
@@ -1041,6 +1094,14 @@
     }
   }
 
+  function showMultimediaControls() {
+    // Los controles están disponibles desde la carga del visor; la reproducción
+    // queda bajo control explícito de la persona usuaria por las políticas móviles.
+    if (floatingAudio) floatingAudio.classList.remove('is-hidden');
+    if (lscOverlay) lscOverlay.classList.remove('is-hidden');
+    if (btnToggleLscOverlay) btnToggleLscOverlay.classList.add('is-active-overlay');
+  }
+
   /* ========================================================================
      9. Bucle de Renderizado y Animaciones de Escaneo
      ======================================================================== */
@@ -1061,12 +1122,24 @@
     renderer.setSize(width, height);
   }
 
-  function animate() {
-    requestAnimationFrame(animate);
+  function renderFrame(time, frame) {
 
     scanningTime += 0.04;
 
-    // Animación de la retícula durante el escaneo de superficie
+    // Actualiza la retícula con un hit-test de WebXR sobre una superficie real.
+    if (isWebXrAr && frame && xrHitTestSource && xrReferenceSpace) {
+      const hit = frame.getHitTestResults(xrHitTestSource)[0];
+      if (hit) {
+        const pose = hit.getPose(xrReferenceSpace);
+        if (pose && reticleGroup) {
+          reticleGroup.visible = isScanningSurface;
+          reticleGroup.matrix.fromArray(pose.transform.matrix);
+          reticleGroup.matrix.decompose(reticleGroup.position, reticleGroup.quaternion, reticleGroup.scale);
+        }
+      }
+    }
+
+    // Animación de apoyo solo para el estado visual de escaneo en modo alternativo.
     if (isArMode && isScanningSurface && reticleGroup && reticleGroup.visible) {
       // Pulso suave del anillo exterior
       const pulseScale = 1.0 + Math.sin(scanningTime * 2.5) * 0.12;
@@ -1079,13 +1152,7 @@
         item.mesh.material.opacity = Math.max(0.1, dotAlpha);
       });
 
-      // Movimiento suave horizontal simulando hit-testing del plano
-      reticleGroup.position.x = Math.sin(scanningTime * 0.8) * 0.15;
-    }
-
-    // Rotación suave del objeto anclado cuando está inactivo
-    if (objectGroup && objectGroup.visible && !isScanningSurface && !isPointerDown && !isDraggingTwoFingers && !initialTouchDist) {
-      objectGroup.rotation.y += 0.003;
+      if (!isWebXrAr) reticleGroup.position.x = Math.sin(scanningTime * 0.8) * 0.15;
     }
 
     renderer.render(scene, camera);

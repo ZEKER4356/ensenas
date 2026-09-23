@@ -4,16 +4,19 @@
  */
 
 const crypto = require('crypto');
-const { getPgPool } = require('./db');
+const { getPgPool, getSupabase } = require('./db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ensenas_jwt_secret_key_2026_educacion_inclusiva_secure';
-const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_DEFAULT_EMAIL || 'admin@ensenas.edu.co';
-const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_DEFAULT_PASSWORD || 'EnsenasAdmin2026!';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+function hasJwtSecret() {
+  return typeof JWT_SECRET === 'string' && JWT_SECRET.length >= 32;
+}
 
 /**
  * Generar Token JWT seguro
  */
 function createToken(payload) {
+  if (!hasJwtSecret()) throw new Error('JWT_SECRET no está configurado o es demasiado corto.');
   try {
     const jwt = require('jsonwebtoken');
     return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
@@ -30,7 +33,7 @@ function createToken(payload) {
  * Verificar Token JWT
  */
 function verifyToken(token) {
-  if (!token) return null;
+  if (!token || !hasJwtSecret()) return null;
   try {
     const jwt = require('jsonwebtoken');
     return jwt.verify(token, JWT_SECRET);
@@ -52,8 +55,12 @@ function verifyToken(token) {
   }
 }
 
+function isAdminUser(user) {
+  return Boolean(user && ['admin', 'superadmin'].includes(user.rol));
+}
+
 /**
- * Validar credenciales de usuario contra PostgreSQL o credenciales maestras
+ * Validar credenciales exclusivamente contra la tabla administradores.
  */
 async function authenticateUser(email, password) {
   if (!email || !password) return null;
@@ -72,8 +79,9 @@ async function authenticateUser(email, password) {
         try {
           const bcrypt = require('bcryptjs');
           match = await bcrypt.compare(password, user.password_hash);
-        } catch {
-          match = user.password_hash === password;
+        } catch (err) {
+          console.error('No fue posible verificar el hash de contraseña:', err.message);
+          return null;
         }
 
         if (match) {
@@ -91,17 +99,25 @@ async function authenticateUser(email, password) {
     }
   }
 
-  // 2. Validar contra credenciales de entorno o predeterminadas
-  if (
-    email.toLowerCase().trim() === DEFAULT_ADMIN_EMAIL.toLowerCase().trim() &&
-    password === DEFAULT_ADMIN_PASSWORD
-  ) {
-    return {
-      id: '00000000-0000-0000-0000-000000000001',
-      email: DEFAULT_ADMIN_EMAIL,
-      nombre: 'Administrador enseñas',
-      rol: 'superadmin'
-    };
+  // Supabase usa la misma tabla definida en schema.sql cuando no hay DATABASE_URL.
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data: user, error } = await sb
+        .from('administradores')
+        .select('id, email, password_hash, nombre, rol, activo')
+        .eq('email', email.toLowerCase().trim())
+        .eq('activo', true)
+        .maybeSingle();
+      if (error || !user) return null;
+
+      const bcrypt = require('bcryptjs');
+      if (!await bcrypt.compare(password, user.password_hash)) return null;
+      await sb.from('administradores').update({ ultimo_acceso: new Date().toISOString() }).eq('id', user.id);
+      return { id: user.id, email: user.email, nombre: user.nombre, rol: user.rol };
+    } catch (err) {
+      console.warn('Error en auth de Supabase:', err.message);
+    }
   }
 
   return null;
@@ -119,6 +135,9 @@ module.exports = async function handler(req, res) {
   const action = req.query.action || (req.body && req.body.action) || (req.url && req.url.includes('/login') ? 'login' : 'verify');
 
   if (req.method === 'POST' && (action === 'login' || !req.query.action)) {
+    if (!hasJwtSecret()) {
+      return res.status(503).json({ error: 'El acceso administrativo no está configurado.' });
+    }
     const { email, password } = req.body || {};
     if (!email || !password) {
       return res.status(400).json({ error: 'Debes ingresar email y contraseña.' });
@@ -169,3 +188,4 @@ module.exports = async function handler(req, res) {
 };
 
 module.exports.verifyToken = verifyToken;
+module.exports.isAdminUser = isAdminUser;

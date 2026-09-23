@@ -25,7 +25,7 @@
    * Construye la URL canónica de destino directo a RA
    * @param {string} objectId - Identificador slug del objeto
    * @param {string} [customBaseUrl] - Dominio base opcional
-   * @returns {string} URL absoluta https://midominio.com/ra/[id]
+   * @returns {string} URL absoluta https://midominio.com/objeto.html?id=[id]
    */
   function buildTargetUrl(objectId, customBaseUrl) {
     let base = customBaseUrl;
@@ -33,7 +33,7 @@
       base = window.location.origin;
     }
     base = (base || '').replace(/\/$/, '');
-    return `${base}/ra/${encodeURIComponent(objectId)}`;
+    return `${base}/objeto.html?id=${encodeURIComponent(objectId)}`;
   }
 
   /**
@@ -461,7 +461,7 @@
       });
 
       // Asegurar referencia canónica
-      item.qr_code_url = `/ra/${item.id}`;
+      item.qr_code_url = `/objeto.html?id=${encodeURIComponent(item.id)}`;
       updated.push(item);
 
       if (typeof onProgress === 'function') {

@@ -114,10 +114,9 @@
         showLoginView();
       }
     } catch (err) {
-      console.warn('Fallo de red verificando auth, usando sesión local si existe:', err);
-      const user = JSON.parse(localStorage.getItem(USER_KEY) || '{}');
-      showDashboardView(user);
-      loadObjects();
+      clearSession();
+      showLoginView();
+      showAuthAlert('No se pudo verificar la sesión. Intenta de nuevo.');
     }
   }
 
@@ -160,17 +159,9 @@
         } else {
           showAuthAlert(data.error || 'Credenciales inválidas.');
         }
-      } catch (err) {
-        console.error('Error al iniciar sesión:', err);
-        // Fallback demo local si no hay servidor API disponible
-        if (email === 'admin@ensenas.edu.co' && password === 'EnsenasAdmin2026!') {
-          const fakeUser = { nombre: 'Administrador Demo', email, rol: 'admin' };
-          setSession('demo-token-local', fakeUser);
-          showDashboardView(fakeUser);
-          loadObjects();
-        } else {
-          showAuthAlert('Error al conectar con el servicio de autenticación.');
-        }
+    } catch (err) {
+      console.error('Error al iniciar sesión:', err);
+      showAuthAlert('Error al conectar con el servicio de autenticación.');
       }
     });
   }
@@ -204,12 +195,9 @@
         throw new Error('API respondió con estado ' + res.status);
       }
     } catch (err) {
-      console.warn('Cargando catálogo estático fallback:', err);
-      if (window.getAllObjects) {
-        allObjects = window.getAllObjects();
-      } else {
-        allObjects = [];
-      }
+      console.error('No se pudo cargar el catálogo administrativo:', err);
+      allObjects = [];
+      showAuthAlert('No se pudo cargar la información persistida.');
     }
 
     renderTable(allObjects);
@@ -311,13 +299,16 @@
             },
             body: JSON.stringify({ id, activo })
           });
+          if (!res.ok) throw new Error('No se pudo actualizar el estado.');
         } catch (err) {
-          console.warn('Actualizado estado en modo local:', err);
+          e.target.checked = !activo;
+          if (label) label.textContent = activo ? 'Inactivo' : 'Activo';
+          showModalAlert('No se pudo guardar el cambio.');
+          return;
         }
 
         const obj = allObjects.find(o => o.id === id);
         if (obj) obj.activo = activo;
-        localStorage.setItem('ensenas_local_objects', JSON.stringify(allObjects));
         updateStats(allObjects);
       });
     });
@@ -481,28 +472,14 @@
           await loadObjects();
           return;
         }
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'No se pudo guardar el objeto.');
       } catch (err) {
-        console.warn('API backend no disponible en localhost, guardando en catálogo local:', err);
+        console.error('Error guardando objeto:', err);
+        showModalAlert(err.message || 'No se pudo guardar el objeto de forma permanente.');
+        btnSaveText.textContent = isEdit ? 'Guardar Cambios' : 'Guardar Objeto Educativo';
+        return;
       }
-
-      // Guardado local (Modo Localhost / Demostración)
-      const normalized = {
-        ...payload,
-        qr_code_url: `/ra/${payload.id}`,
-        activo: payload.activo !== false,
-        orden: allObjects.length + 1
-      };
-      const idx = allObjects.findIndex(o => o.id === payload.id);
-      if (idx >= 0) {
-        allObjects[idx] = { ...allObjects[idx], ...normalized };
-      } else {
-        allObjects.push(normalized);
-      }
-      localStorage.setItem('ensenas_local_objects', JSON.stringify(allObjects));
-      closeModal();
-      renderTable(allObjects);
-      updateStats(allObjects);
-      btnSaveText.textContent = isEdit ? 'Guardar Cambios' : 'Guardar Objeto Educativo';
     });
   }
 
@@ -553,10 +530,9 @@
         }
       } catch (err) {
         console.error('Error subiendo archivo:', err);
-        // Fallback: usar nombre local referencial
-        targetField.value = `assets/${folder}/${file.name}`;
-        if (label) label.textContent = 'Asignado local';
-        setTimeout(() => { if (label) label.textContent = originalText; }, 2000);
+        if (label) label.textContent = 'Error al subir';
+        showModalAlert('El archivo no se guardó. Corrige la configuración de Storage e intenta de nuevo.');
+        setTimeout(() => { if (label) label.textContent = originalText; }, 2500);
       }
     });
   }
@@ -715,7 +691,7 @@
         let updatedCount = 0;
         for (let i = 0; i < allObjects.length; i++) {
           const item = allObjects[i];
-          const canonicalQrTarget = `/ra/${item.id}`;
+          const canonicalQrTarget = `/objeto.html?id=${encodeURIComponent(item.id)}`;
           item.qr_code_url = canonicalQrTarget;
 
           // Guardar en la base de datos a través del endpoint /api/objetos

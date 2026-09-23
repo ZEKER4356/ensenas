@@ -3,7 +3,7 @@
  * de Códigos QR Personalizados en todos los objetos educativos registrados.
  */
 
-const { queryObjetos, saveObjeto } = require('../api/db');
+const { queryObjetos, saveObjeto, hasPersistentStoreConfig } = require('../api/db');
 
 async function runBatchRegeneration() {
   console.log('====================================================');
@@ -11,12 +11,18 @@ async function runBatchRegeneration() {
   console.log('====================================================\n');
 
   try {
+    if (!hasPersistentStoreConfig()) {
+      throw new Error('No hay una base de datos persistente configurada; se canceló la actualización.');
+    }
     const objetos = await queryObjetos({ soloActivos: false });
     console.log(`Objetos encontrados en base de datos: ${objetos.length}`);
 
     let procesados = 0;
+    const baseUrl = (process.env.PUBLIC_APP_URL || process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}` || '').replace(/\/$/, '');
+    if (!baseUrl) throw new Error('Define PUBLIC_APP_URL o VERCEL_URL para generar URLs QR absolutas.');
+
     for (const obj of objetos) {
-      const canonicalQrTarget = `/ra/${obj.id}`;
+      const canonicalQrTarget = `${baseUrl}/objeto.html?id=${encodeURIComponent(obj.id)}`;
       const necesitaActualizacion = obj.qr_code_url !== canonicalQrTarget;
 
       obj.qr_code_url = canonicalQrTarget;

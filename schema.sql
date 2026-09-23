@@ -57,6 +57,20 @@ CREATE INDEX IF NOT EXISTS idx_objetos_categoria ON objetos(categoria_lsc);
 CREATE INDEX IF NOT EXISTS idx_objetos_orden ON objetos(orden ASC);
 
 -- ==============================================================================
+-- 2.1 SUPABASE STORAGE: bucket público para medios que se referencian desde objetos
+-- Ejecutar con una clave de propietario/service_role. El backend usa service_role;
+-- la lectura pública se limita a objetos publicados en este bucket.
+-- ==============================================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('ensenas-media', 'ensenas-media', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Lectura pública de medios enseñas" ON storage.objects;
+CREATE POLICY "Lectura pública de medios enseñas"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'ensenas-media');
+
+-- ==============================================================================
 -- 3. POLÍTICAS DE ACCESO Y SEGURIDAD (Row Level Security - RLS)
 -- ==============================================================================
 ALTER TABLE objetos ENABLE ROW LEVEL SECURITY;
@@ -68,10 +82,11 @@ CREATE POLICY "Lectura pública de objetos activos"
     ON objetos FOR SELECT 
     USING (activo = true);
 
--- Política para administradores autenticados o backend mediante service_role
+-- Las mutaciones las realiza exclusivamente la API con SUPABASE_SERVICE_ROLE_KEY.
+-- No se concede INSERT/UPDATE/DELETE a visitantes ni a la clave anónima.
 DROP POLICY IF EXISTS "Gestión completa de objetos para administradores" ON objetos;
 CREATE POLICY "Gestión completa de objetos para administradores" 
-    ON objetos FOR ALL 
+    ON objetos FOR ALL TO service_role
     USING (true) 
     WITH CHECK (true);
 
@@ -128,12 +143,5 @@ INSERT INTO objetos (
     '["1. Configuración manual: Mano no dominante como base plana (platina). Mano dominante forma un ángulo sobre la base representando el tubo ocular.", "2. Movimiento: Con los dedos índice y pulgar de la mano derecha, realizar giros leves simulando el tornillo micrométrico de enfoque.", "3. Orientación y gesto: Acercar el rostro en ademán de mirar a través del ocular con un ojo cerrado o enfocado."]'::jsonb,
     3
 )
-ON CONFLICT (id) DO UPDATE SET
-    titulo = EXCLUDED.titulo,
-    categoria_lsc = EXCLUDED.categoria_lsc,
-    descripcion = EXCLUDED.descripcion,
-    modelo_3d_url = EXCLUDED.modelo_3d_url,
-    explicacion_texto = EXCLUDED.explicacion_texto,
-    archivo_audio_url = EXCLUDED.archivo_audio_url,
-    video_lsc_url = EXCLUDED.video_lsc_url,
-    instrucciones_lsc = EXCLUDED.instrucciones_lsc;
+-- En producción preserva cualquier objeto ya editado desde el panel Admin.
+ON CONFLICT (id) DO NOTHING;

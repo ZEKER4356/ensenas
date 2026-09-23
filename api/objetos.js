@@ -3,7 +3,7 @@
  */
 
 const { queryObjetos, queryObjetoById, saveObjeto, deleteObjeto } = require('./db');
-const { verifyToken } = require('./auth');
+const { verifyToken, isAdminUser } = require('./auth');
 
 module.exports = async function handler(req, res) {
   // Manejo de CORS preflight
@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace(/^Bearer\s+/i, '');
   const user = verifyToken(token);
-  const isAdmin = !!user;
+  const isAdmin = isAdminUser(user);
 
   const { id } = req.query;
 
@@ -32,7 +32,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Listado: si es admin o solicita explícitamente all=true con token, incluir inactivos
-    const incluirTodos = isAdmin || req.query.all === 'true';
+    const incluirTodos = isAdmin;
     const objetos = await queryObjetos({ soloActivos: !incluirTodos });
     return res.status(200).json(objetos);
   }
@@ -77,7 +77,7 @@ module.exports = async function handler(req, res) {
       activo: data.activo !== false,
       modelo_3d_url: data.modelo_3d_url.trim(),
       icono_preview_url: data.icono_preview_url ? data.icono_preview_url.trim() : '',
-      qr_code_url: data.qr_code_url ? data.qr_code_url.trim() : `/ra/${objectId}`,
+      qr_code_url: `/objeto.html?id=${encodeURIComponent(objectId)}`,
       explicacion_texto: data.explicacion_texto.trim(),
       archivo_audio_url: data.archivo_audio_url ? data.archivo_audio_url.trim() : '',
       video_lsc_url: data.video_lsc_url ? data.video_lsc_url.trim() : '',
@@ -130,7 +130,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (!objetoActualizado.qr_code_url) {
-      objetoActualizado.qr_code_url = `/ra/${targetId}`;
+      objetoActualizado.qr_code_url = `/objeto.html?id=${encodeURIComponent(targetId)}`;
     }
 
     try {
