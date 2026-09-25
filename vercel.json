@@ -17,15 +17,11 @@
     },
     {
       "source": "/ra-8th",
-      "destination": "/objeto.html?id=microbit&ar=true&engine=8th"
+      "destination": "/ra-8th.html"
     },
     {
-      "source": "/ra-8th.html",
-      "destination": "/objeto.html?id=microbit&ar=true&engine=8th"
-    },
-    {
-      "source": "/ra-8th/:id",
-      "destination": "/objeto.html?id=:id&ar=true&engine=8th"
+      "source": "/ra-8th/:path*",
+      "destination": "/ra-8th.html"
     }
   ],
   "headers": [

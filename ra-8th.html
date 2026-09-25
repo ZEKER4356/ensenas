@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Abriendo experiencia RA | enseñas</title>
+</head>
+<body>
+  <p>Abriendo la experiencia de realidad aumentada…</p>
+  <script>
+    // Vercel conserva la URL visible en un rewrite. Leemos el identificador
+    // directamente desde la ruta, sin depender de parámetros que se pierdan.
+    (function () {
+      const pieces = window.location.pathname.split('/').filter(Boolean);
+      const last = pieces[pieces.length - 1];
+      const objectId = last && last !== 'ra-8th' && last !== 'ra-8th.html' ? last : 'microbit';
+      const target = `/objeto.html?id=${encodeURIComponent(objectId)}&ar=true&engine=8th`;
+      window.location.replace(target);
+    })();
+  </script>
+</body>
+</html>
