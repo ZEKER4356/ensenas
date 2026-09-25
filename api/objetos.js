@@ -81,6 +81,7 @@ module.exports = async function handler(req, res) {
       explicacion_texto: data.explicacion_texto.trim(),
       archivo_audio_url: data.archivo_audio_url ? data.archivo_audio_url.trim() : '',
       video_lsc_url: data.video_lsc_url ? data.video_lsc_url.trim() : '',
+      video_aprender_lsc_url: data.video_aprender_lsc_url ? data.video_aprender_lsc_url.trim() : '',
       video_uso_url: data.video_uso_url ? data.video_uso_url.trim() : '',
       instrucciones_lsc: Array.isArray(data.instrucciones_lsc)
         ? data.instrucciones_lsc

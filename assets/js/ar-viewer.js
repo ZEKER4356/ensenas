@@ -57,6 +57,7 @@
   const audioUrl = data.audioUrl || '';
   const audioTexto = data.audioTexto || '';
   const videoLscUrl = data.videoLscUrl || '';
+  const videoAprenderLscUrl = data.videoAprenderLscUrl || '';
 
   // Variables Three.js y estado de la experiencia
   let scene, camera, renderer, objectGroup, modelRoot, groundShadow;
@@ -72,6 +73,7 @@
   let isWebXrAr = false;
   let hasSurfaceHit = false;
   let activeVideoLsc = '';
+  let activeSignLearningVideo = '';
 
   // Estados de escaneo y anclaje (Floor Tracking)
   let isScanningSurface = false;
@@ -588,7 +590,7 @@
         const deltaX = e.clientX - previousPointerPos.x;
         const deltaY = e.clientY - previousPointerPos.y;
         objectGroup.rotation.y += deltaX * 0.01;
-        if (!(isArMode && isAnchored)) objectGroup.rotation.x += deltaY * 0.01;
+        objectGroup.rotation.x += deltaY * 0.01;
         previousPointerPos = { x: e.clientX, y: e.clientY };
       } else if (isDraggingTwoFingers && objectGroup && objectGroup.visible && !(isArMode && isAnchored)) {
         const deltaX = e.clientX - touchStartPosTwo.x;
@@ -610,10 +612,11 @@
     el.addEventListener('wheel', (e) => {
       e.preventDefault();
       if (!objectGroup || !objectGroup.visible) return;
-      if (isArMode && isAnchored) return;
       const zoomFactor = e.deltaY > 0 ? 0.92 : 1.08;
       const newScale = objectGroup.scale.x * zoomFactor;
-      if (newScale >= 0.25 && newScale <= 3.8) {
+      const minScale = isArMode && isAnchored ? 0.08 : 0.25;
+      const maxScale = isArMode && isAnchored ? 5 : 3.8;
+      if (newScale >= minScale && newScale <= maxScale) {
         objectGroup.scale.set(newScale, newScale, newScale);
       }
     }, { passive: false });
@@ -653,25 +656,31 @@
         const deltaY = e.touches[0].clientY - previousPointerPos.y;
 
         objectGroup.rotation.y += deltaX * 0.012;
-        if (!(isArMode && isAnchored)) objectGroup.rotation.x += deltaY * 0.012;
+        objectGroup.rotation.x += deltaY * 0.012;
         previousPointerPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      } else if (e.touches.length === 2 && objectGroup && objectGroup.visible && !(isArMode && isAnchored)) {
+      } else if (e.touches.length === 2 && objectGroup && objectGroup.visible) {
         const currentDist = getTouchDist(e.touches[0], e.touches[1]);
         if (initialTouchDist && currentDist > 0) {
           const scaleMultiplier = currentDist / initialTouchDist;
-          const newScale = Math.min(Math.max(initialScale * scaleMultiplier, 0.3), 3.8);
+          const minScale = isArMode && isAnchored ? 0.08 : 0.3;
+          const maxScale = isArMode && isAnchored ? 5 : 3.8;
+          const newScale = Math.min(Math.max(initialScale * scaleMultiplier, minScale), maxScale);
           objectGroup.scale.set(newScale, newScale, newScale);
         }
 
-        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        const deltaX = midX - touchStartPosTwo.x;
-        const deltaY = midY - touchStartPosTwo.y;
+        // En RA el anclaje debe mantenerse en el lugar que la persona eligió:
+        // el gesto de dos dedos solo escala, nunca arrastra el objeto.
+        if (!(isArMode && isAnchored)) {
+          const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          const deltaX = midX - touchStartPosTwo.x;
+          const deltaY = midY - touchStartPosTwo.y;
 
-        objectGroup.position.x += deltaX * 0.004;
-        objectGroup.position.y -= deltaY * 0.004;
-        if (groundShadow) groundShadow.position.x = objectGroup.position.x;
-        touchStartPosTwo = { x: midX, y: midY };
+          objectGroup.position.x += deltaX * 0.004;
+          objectGroup.position.y -= deltaY * 0.004;
+          if (groundShadow) groundShadow.position.x = objectGroup.position.x;
+          touchStartPosTwo = { x: midX, y: midY };
+        }
       }
     }, { passive: true });
 
@@ -695,13 +704,15 @@
   function reset3DView() {
     if (!objectGroup) return;
     objectGroup.rotation.set(0, 0, 0);
-    objectGroup.position.set(0, 0, 0);
     objectGroup.scale.set(1, 1, 1);
+    // Una vez anclado en RA, ni siquiera el gesto de restablecer debe sacar el
+    // objeto del punto elegido. Para moverlo se usa explícitamente “Cambiar ubicación”.
+    if (!(isArMode && isAnchored)) objectGroup.position.set(0, 0, 0);
     if (camera) {
       camera.position.set(0, 0, 3.2);
       camera.lookAt(0, 0, 0);
     }
-    if (groundShadow) {
+    if (groundShadow && !(isArMode && isAnchored)) {
       groundShadow.position.x = 0;
       groundShadow.position.z = 0;
     }
@@ -1127,11 +1138,13 @@
   }
 
   function setupSignLearning() {
-    if (signLearningVideo && activeVideoLsc) {
-      signLearningVideo.src = activeVideoLsc;
+    const curObj = window.CURRENT_OBJETO || {};
+    activeSignLearningVideo = curObj.video_aprender_lsc_url || videoAprenderLscUrl;
+    if (signLearningVideo && activeSignLearningVideo) {
+      signLearningVideo.src = activeSignLearningVideo;
       signLearningVideo.load();
     }
-    if (signLearningEmpty) signLearningEmpty.hidden = Boolean(activeVideoLsc);
+    if (signLearningEmpty) signLearningEmpty.hidden = Boolean(activeSignLearningVideo);
 
     if (btnOpenSignLearning) {
       btnOpenSignLearning.addEventListener('click', openSignLearning);
@@ -1148,7 +1161,7 @@
     if (isArMode) stopArMode();
     lscLearningPanel.hidden = false;
     if (btnOpenSignLearning) btnOpenSignLearning.setAttribute('aria-expanded', 'true');
-    if (signLearningVideo && activeVideoLsc) {
+    if (signLearningVideo && activeSignLearningVideo) {
       signLearningVideo.currentTime = 0;
       signLearningVideo.play().catch(() => {});
     }

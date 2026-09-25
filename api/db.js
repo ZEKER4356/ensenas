@@ -20,6 +20,7 @@ const DEFAULT_SEED_OBJECTS = [
     explicacion_texto: 'Bienvenido a enseñas. Estás observando la tarjeta programable Micro:bit en Realidad Aumentada. Este dispositivo cuenta con una matriz de 25 luces LED, sensores de movimiento, brújula y botones interactivos. Es una herramienta pedagógica diseñada para aprender programación, electrónica y robótica de manera práctica e inclusiva.',
     archivo_audio_url: 'assets/audio/microbit-audio.wav',
     video_lsc_url: 'assets/videos/microbit-lsc.mp4',
+    video_aprender_lsc_url: '',
     video_uso_url: 'assets/videos/microbit-uso.mp4',
     instrucciones_lsc: [
       '1. Configuración manual: Mano dominante en letra M (o palma hacia abajo simulando la forma de una tarjeta rectangular pequeña).',
@@ -41,6 +42,7 @@ const DEFAULT_SEED_OBJECTS = [
     explicacion_texto: 'Bienvenido a enseñas. Este es el telescopio astronómico en Realidad Aumentada. Es un instrumento óptico compuesto por lentes y espejos diseñado para observar cuerpos celestes lejanos como la Luna, planetas y nebulosas. Permite acercar el fascinante estudio de la astronomía al aula de clase.',
     archivo_audio_url: 'assets/audio/telescopio-audio.wav',
     video_lsc_url: 'assets/videos/telescopio-lsc.mp4',
+    video_aprender_lsc_url: '',
     video_uso_url: 'assets/videos/telescopio-uso.mp4',
     instrucciones_lsc: [
       '1. Configuración manual: Ambas manos en forma de cilindro (letra C / puño hueco) alineadas a la altura del ojo dominante.',
@@ -62,6 +64,7 @@ const DEFAULT_SEED_OBJECTS = [
     explicacion_texto: 'Bienvenido a enseñas. Estás viendo el microscopio óptico en Realidad Aumentada. Esta herramienta de laboratorio utiliza lentes de gran aumento para observar muestras y microorganismos invisibles a simple vista, como células y bacterias, facilitando el aprendizaje en ciencias y biología.',
     archivo_audio_url: 'assets/audio/microscopio-audio.wav',
     video_lsc_url: 'assets/videos/microscopio-lsc.mp4',
+    video_aprender_lsc_url: '',
     video_uso_url: 'assets/videos/microscopio-uso.mp4',
     instrucciones_lsc: [
       '1. Configuración manual: Mano no dominante como base plana (platina). Mano dominante forma un ángulo sobre la base representando el tubo ocular.',
@@ -202,8 +205,8 @@ async function saveObjeto(objeto) {
         INSERT INTO objetos (
           id, titulo, categoria_lsc, descripcion, activo,
           modelo_3d_url, icono_preview_url, qr_code_url, explicacion_texto,
-          archivo_audio_url, video_lsc_url, video_uso_url, instrucciones_lsc, orden
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          archivo_audio_url, video_lsc_url, video_aprender_lsc_url, video_uso_url, instrucciones_lsc, orden
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         ON CONFLICT (id) DO UPDATE SET
           titulo = EXCLUDED.titulo,
           categoria_lsc = EXCLUDED.categoria_lsc,
@@ -215,6 +218,7 @@ async function saveObjeto(objeto) {
           explicacion_texto = EXCLUDED.explicacion_texto,
           archivo_audio_url = EXCLUDED.archivo_audio_url,
           video_lsc_url = EXCLUDED.video_lsc_url,
+          video_aprender_lsc_url = EXCLUDED.video_aprender_lsc_url,
           video_uso_url = EXCLUDED.video_uso_url,
           instrucciones_lsc = EXCLUDED.instrucciones_lsc,
           orden = EXCLUDED.orden,
@@ -233,6 +237,7 @@ async function saveObjeto(objeto) {
         objeto.explicacion_texto,
         objeto.archivo_audio_url || '',
         objeto.video_lsc_url || '',
+        objeto.video_aprender_lsc_url || '',
         objeto.video_uso_url || '',
         JSON.stringify(objeto.instrucciones_lsc || []),
         objeto.orden || 0

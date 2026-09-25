@@ -1257,7 +1257,7 @@ input:focus-visible {
 .ar-floating-lsc {
   position: absolute;
   z-index: 25;
-  width: 220px;
+  width: 190px;
   background: rgba(15, 23, 42, 0.9);
   backdrop-filter: blur(14px);
   border: 1.5px solid rgba(124, 58, 237, 0.5);
@@ -1317,7 +1317,8 @@ input:focus-visible {
 .lsc-overlay-body {
   position: relative;
   width: 100%;
-  height: 150px;
+  aspect-ratio: 16 / 9;
+  height: auto;
   background: #020617;
   overflow: hidden;
 }
@@ -1325,7 +1326,7 @@ input:focus-visible {
 .overlay-lsc-video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
@@ -1590,11 +1591,7 @@ input:focus-visible {
   }
 
   .ar-floating-lsc {
-    width: 170px;
-  }
-
-  .lsc-overlay-body {
-    height: 120px;
+    width: 150px;
   }
 
   .ar-floating-lsc.pos-bottom-right {
@@ -2685,7 +2682,7 @@ input:checked + .slider:before {
   .ar-floating-lsc {
     right: 12px;
     bottom: 96px;
-    width: min(220px, calc(100vw - 24px));
+    width: min(180px, calc(100vw - 24px));
   }
   .ar-floating-lsc.pos-bottom-left { left: 12px; right: auto; }
   .ar-floating-lsc.pos-top-left { left: 12px; right: auto; top: 12px; bottom: auto; }
@@ -2816,10 +2813,9 @@ input:checked + .slider:before {
     right: 12px;
     bottom: 86px;
     left: auto;
-    width: min(52vw, 210px);
+    width: min(42vw, 165px);
   }
-  .lsc-overlay-body { height: min(28svh, 185px); }
-  .overlay-lsc-video { object-fit: contain; }
+  .lsc-overlay-body { aspect-ratio: 16 / 9; height: auto; }
 
   .ar-section.ar-immersive {
     min-height: 100svh;
@@ -2838,7 +2834,7 @@ input:checked + .slider:before {
   .ar-section.ar-immersive .ar-canvas-wrapper canvas { background: transparent; }
   .ar-section.ar-immersive #btn-toggle-ar-mode { grid-column: auto; }
   .ar-section.ar-immersive .ar-action-buttons { grid-template-columns: 1fr 1fr; }
-  .ar-section.ar-immersive #btn-reanchor-view { grid-column: 1 / -1; }
+  .ar-section.ar-immersive #btn-reanchor-view { grid-column: auto; }
   .ar-section.ar-immersive .scan-instruction-card { margin-top: 104px; }
 
   .lsc-learning-panel { padding: 0 4px; }

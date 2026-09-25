@@ -51,6 +51,7 @@
   const fieldExplicacionTexto = document.getElementById('field-explicacion-texto');
   const fieldAudioUrl = document.getElementById('field-audio-url');
   const fieldVideoLsc = document.getElementById('field-video-lsc');
+  const fieldVideoAprenderLsc = document.getElementById('field-video-aprender-lsc');
   const fieldInstruccionesLsc = document.getElementById('field-instrucciones-lsc');
 
   // Subidas de archivos
@@ -58,6 +59,7 @@
   const uploadPreview = document.getElementById('file-upload-preview');
   const uploadAudio = document.getElementById('file-upload-audio');
   const uploadVideoLsc = document.getElementById('file-upload-video-lsc');
+  const uploadVideoAprenderLsc = document.getElementById('file-upload-video-aprender-lsc');
   const btnTestTts = document.getElementById('btn-test-tts');
 
   // Modal QR Personalizado
@@ -405,6 +407,7 @@
     fieldExplicacionTexto.value = obj.explicacion_texto || obj.audio_texto || '';
     fieldAudioUrl.value = obj.archivo_audio_url || obj.audio_url || '';
     fieldVideoLsc.value = obj.video_lsc_url || '';
+    fieldVideoAprenderLsc.value = obj.video_aprender_lsc_url || '';
 
     if (Array.isArray(obj.instrucciones_lsc)) {
       fieldInstruccionesLsc.value = obj.instrucciones_lsc.join('\n');
@@ -446,6 +449,7 @@
         explicacion_texto: fieldExplicacionTexto.value.trim(),
         archivo_audio_url: fieldAudioUrl.value.trim(),
         video_lsc_url: fieldVideoLsc.value.trim(),
+        video_aprender_lsc_url: fieldVideoAprenderLsc.value.trim(),
         instrucciones_lsc: fieldInstruccionesLsc.value.split('\n').map(s => s.trim()).filter(Boolean)
       };
 
@@ -516,25 +520,38 @@
   }
 
   async function uploadFileToStorage(file, folder, filename = file.name) {
-    const base64 = await readFileAsBase64(file);
-    const res = await fetch('/api/upload', {
+    const maxDirectUploadBytes = 40 * 1024 * 1024;
+    if (file.size > maxDirectUploadBytes) {
+      throw new Error('El archivo supera el límite de 40 MB para subir desde el panel. Reduce su tamaño e intenta de nuevo.');
+    }
+
+    // La carga directa evita que archivos como WebP lleguen codificados en base64
+    // a Vercel, donde el límite de la función es mucho más pequeño.
+    const slotRes = await fetch('/api/upload', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${getToken()}`
       },
-      body: JSON.stringify({
-        filename,
-        fileData: base64,
-        fileType: file.type || 'application/octet-stream',
-        folder
-      })
+      body: JSON.stringify({ action: 'create-upload-slot', filename, fileType: file.type || 'application/octet-stream', folder })
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.url) {
-      throw new Error(data.error || 'Error en subida');
+    const slot = await slotRes.json().catch(() => ({}));
+    if (!slotRes.ok || !slot.signedUrl || !slot.url) {
+      throw new Error(slot.error || 'No fue posible preparar la subida del archivo.');
     }
-    return data.url;
+
+    const uploadRes = await fetch(slot.signedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+        'x-upsert': 'false'
+      },
+      body: file
+    });
+    if (!uploadRes.ok) {
+      throw new Error('Storage no pudo recibir el archivo. Revisa el bucket y vuelve a intentarlo.');
+    }
+    return slot.url;
   }
 
   function setupModelUpload(inputElement, targetField) {
@@ -594,19 +611,11 @@
     });
   }
 
-  function readFileAsBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
   setupModelUpload(upload3D, fieldModeloUrl);
   setupFileUpload(uploadPreview, fieldPreviewUrl, 'previews');
   setupFileUpload(uploadAudio, fieldAudioUrl, 'audio');
   setupFileUpload(uploadVideoLsc, fieldVideoLsc, 'videos');
+  setupFileUpload(uploadVideoAprenderLsc, fieldVideoAprenderLsc, 'videos');
 
   // Botón de prueba de síntesis de voz (Text-to-Speech)
   if (btnTestTts) {

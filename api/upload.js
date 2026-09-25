@@ -28,14 +28,40 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido. Utiliza POST.' });
   }
 
-  const { filename, fileData, fileType, folder = 'general' } = req.body || {};
+  const { action, filename, fileData, fileType, folder = 'general' } = req.body || {};
 
-  if (!filename || !fileData) {
-    return res.status(400).json({ error: 'Debes enviar filename y fileData (base64).' });
+  if (!filename) {
+    return res.status(400).json({ error: 'Debes enviar el nombre del archivo.' });
   }
 
   if (!ALLOWED_FOLDERS.has(folder)) {
     return res.status(400).json({ error: 'Carpeta de medios no válida.' });
+  }
+
+  // Se entrega una URL firmada solo a un administrador ya autenticado. El
+  // navegador carga el archivo directamente a Storage y no queda limitado por
+  // el tamaño del cuerpo de una función serverless (útil para WebP y videos).
+  if (action === 'create-upload-slot') {
+    const cleanName = filename.toLowerCase().replace(/[^a-z0-9._-]/g, '_');
+    const path = `${folder}/${Date.now()}-${cleanName}`;
+    const sb = getSupabase();
+    if (!sb) {
+      return res.status(503).json({ error: 'Supabase Storage no está configurado; el archivo no fue guardado.' });
+    }
+    try {
+      const { data, error } = await sb.storage.from(BUCKET_NAME).createSignedUploadUrl(path, { upsert: false });
+      if (error || !data?.signedUrl) throw error || new Error('No se pudo crear una URL de subida.');
+      const { data: publicUrlData } = sb.storage.from(BUCKET_NAME).getPublicUrl(path);
+      if (!publicUrlData?.publicUrl) throw new Error('No se pudo obtener la URL pública del archivo.');
+      return res.status(200).json({ success: true, signedUrl: data.signedUrl, url: publicUrlData.publicUrl, path });
+    } catch (err) {
+      console.error('Error preparando subida a Supabase Storage:', err.message);
+      return res.status(502).json({ error: 'No se pudo preparar la subida a Storage.' });
+    }
+  }
+
+  if (!fileData) {
+    return res.status(400).json({ error: 'Debes enviar el archivo a subir.' });
   }
 
   const base64Payload = fileData.replace(/^data:.*?;base64,/, '');

@@ -20,6 +20,7 @@ const ENSENAS_CATALOG = {
     explicacion_texto: 'Bienvenido a enseñas. Estás observando la tarjeta programable Micro:bit en Realidad Aumentada. Este dispositivo cuenta con una matriz de 25 luces LED, sensores de movimiento, brújula y botones interactivos. Es una herramienta pedagógica diseñada para aprender programación, electrónica y robótica de manera práctica e inclusiva.',
     video_uso_url: 'assets/videos/microbit-uso.mp4',
     video_lsc_url: 'assets/videos/microbit-lsc.mp4',
+    video_aprender_lsc_url: '',
     instrucciones_lsc: [
       '1. Configuración manual: Mano dominante en letra M (o palma hacia abajo simulando la forma de una tarjeta rectangular pequeña).',
       '2. Movimiento: Desplazar suavemente de izquierda a derecha delineando el contorno del circuito.',
@@ -42,6 +43,7 @@ const ENSENAS_CATALOG = {
     explicacion_texto: 'Bienvenido a enseñas. Este es el telescopio astronómico en Realidad Aumentada. Es un instrumento óptico compuesto por lentes y espejos diseñado para observar cuerpos celestes lejanos como la Luna, planetas y nebulosas. Permite acercar el fascinante estudio de la astronomía al aula de clase.',
     video_uso_url: 'assets/videos/telescopio-uso.mp4',
     video_lsc_url: 'assets/videos/telescopio-lsc.mp4',
+    video_aprender_lsc_url: '',
     instrucciones_lsc: [
       '1. Configuración manual: Ambas manos en forma de cilindro (letra C / puño hueco) alineadas a la altura del ojo dominante.',
       '2. Movimiento: Extender levemente la mano delantera simulando el tubo óptico y ajustar el foco con los dedos índice y pulgar.',
@@ -64,6 +66,7 @@ const ENSENAS_CATALOG = {
     explicacion_texto: 'Bienvenido a enseñas. Estás viendo el microscopio óptico en Realidad Aumentada. Esta herramienta de laboratorio utiliza lentes de gran aumento para observar muestras y microorganismos invisibles a simple vista, como células y bacterias, facilitando el aprendizaje en ciencias y biología.',
     video_uso_url: 'assets/videos/microscopio-uso.mp4',
     video_lsc_url: 'assets/videos/microscopio-lsc.mp4',
+    video_aprender_lsc_url: '',
     instrucciones_lsc: [
       '1. Configuración manual: Mano no dominante como base plana (platina). Mano dominante forma un ángulo sobre la base representando el tubo ocular.',
       '2. Movimiento: Con los dedos índice y pulgar de la mano derecha, realizar giros leves simulando el tornillo micrométrico de enfoque.',
@@ -88,6 +91,7 @@ function normalizeObjectData(item) {
     explicacion_texto: item.explicacion_texto || item.audio_texto || '',
     audio_url: item.archivo_audio_url || item.audio_url || '',
     archivo_audio_url: item.archivo_audio_url || item.audio_url || '',
+    video_aprender_lsc_url: item.video_aprender_lsc_url || '',
     qr_code_url: item.qr_code_url || `/objeto.html?id=${encodeURIComponent(item.id)}`,
     activo: item.activo !== false
   };

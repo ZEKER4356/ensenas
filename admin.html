@@ -280,7 +280,7 @@
               <div class="input-upload-group">
                 <input type="text" id="field-preview-url" class="form-input" placeholder="URL de imagen...">
                 <label class="btn-file-upload">
-                  <input type="file" id="file-upload-preview" accept="image/*" class="sr-only">
+                  <input type="file" id="file-upload-preview" accept="image/png,image/jpeg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif" class="sr-only">
                   <span>Subir Imagen</span>
                 </label>
               </div>
@@ -332,7 +332,7 @@
           </legend>
 
           <div class="form-group">
-            <label for="field-video-lsc" class="form-label">Video de la Seña en LSC (.mp4 / .webm) (Para Overlay RA)</label>
+            <label for="field-video-lsc" class="form-label">Video del Intérprete LSC (.mp4 / .webm) (Ventana accesible)</label>
             <div class="input-upload-group">
               <input type="text" id="field-video-lsc" class="form-input" placeholder="assets/videos/objeto-lsc.mp4 o URL Cloud">
               <label class="btn-file-upload">
@@ -340,7 +340,19 @@
                 <span>Subir Video</span>
               </label>
             </div>
-            <small class="field-hint">Este video se mostrará como ventana superpuesta sincronizada con el modelo 3D y el audio.</small>
+            <small class="field-hint">Este video se muestra automáticamente como intérprete accesible sobre la experiencia. No se usa para el botón “Aprender seña”.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="field-video-aprender-lsc" class="form-label">Video para Aprender la Seña del Objeto (.mp4 / .webm)</label>
+            <div class="input-upload-group">
+              <input type="text" id="field-video-aprender-lsc" class="form-input" placeholder="Video que enseña cómo realizar la seña del objeto">
+              <label class="btn-file-upload">
+                <input type="file" id="file-upload-video-aprender-lsc" accept="video/mp4,video/webm,video/*" class="sr-only">
+                <span>Subir Video</span>
+              </label>
+            </div>
+            <small class="field-hint">Este es un video independiente: se reproduce solamente al pulsar “Aprender seña”. Si se deja vacío, se explicarán los pasos pero no se reutilizará el video del intérprete.</small>
           </div>
 
           <div class="form-group">

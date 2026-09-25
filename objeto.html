@@ -71,6 +71,7 @@
           audioTexto: objeto.explicacion_texto || objeto.audio_texto,
           videoUsoUrl: objeto.video_uso_url,
           videoLscUrl: objeto.video_lsc_url,
+          videoAprenderLscUrl: objeto.video_aprender_lsc_url,
           isArDirect: params.get('ar') === 'true' || params.get('ar') === '1' || params.get('direct') === '1'
         };
         window.CURRENT_OBJETO = objeto;
@@ -91,6 +92,7 @@
                 audioTexto: resolved.explicacion_texto || resolved.audio_texto || '',
                 videoUsoUrl: resolved.video_uso_url || '',
                 videoLscUrl: resolved.video_lsc_url || '',
+                videoAprenderLscUrl: resolved.video_aprender_lsc_url || '',
                 isArDirect: params.get('ar') === 'true' || params.get('ar') === '1' || params.get('direct') === '1'
               };
             }
@@ -497,6 +499,7 @@
         audioTexto: obj.explicacion_texto || obj.audio_texto || '',
         videoUsoUrl: obj.video_uso_url || '',
         videoLscUrl: obj.video_lsc_url || '',
+        videoAprenderLscUrl: obj.video_aprender_lsc_url || '',
         isArDirect: params.get('ar') === 'true' || params.get('ar') === '1' || params.get('direct') === '1'
       };
 

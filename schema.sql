@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS objetos (
     
     -- Traducción en Lengua de Señas Colombiana (LSC)
     video_lsc_url TEXT,                         -- URL video MP4/WebM del intérprete para overlay en RA
+    video_aprender_lsc_url TEXT,                -- URL independiente del video que enseña a realizar la seña
     video_uso_url TEXT,                         -- URL video opcional de uso pedagógico
     instrucciones_lsc JSONB DEFAULT '[]'::jsonb,-- Lista de pasos explicativos para realizar la seña
     
@@ -50,6 +51,9 @@ CREATE TABLE IF NOT EXISTS objetos (
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migración segura para instalaciones que ya tenían la tabla creada.
+ALTER TABLE objetos ADD COLUMN IF NOT EXISTS video_aprender_lsc_url TEXT;
 
 -- Índices de optimización
 CREATE INDEX IF NOT EXISTS idx_objetos_activo ON objetos(activo);
@@ -96,7 +100,7 @@ CREATE POLICY "Gestión completa de objetos para administradores"
 INSERT INTO objetos (
     id, titulo, categoria_lsc, descripcion, activo, 
     modelo_3d_url, icono_preview_url, explicacion_texto, 
-    archivo_audio_url, video_lsc_url, video_uso_url, instrucciones_lsc, orden
+    archivo_audio_url, video_lsc_url, video_aprender_lsc_url, video_uso_url, instrucciones_lsc, orden
 ) VALUES 
 (
     'microbit',
@@ -109,6 +113,7 @@ INSERT INTO objetos (
     'Bienvenido a enseñas. Estás observando la tarjeta programable Micro:bit en Realidad Aumentada. Este dispositivo cuenta con una matriz de 25 luces LED, sensores de movimiento, brújula y botones interactivos. Es una herramienta pedagógica diseñada para aprender programación, electrónica y robótica de manera práctica e inclusiva.',
     'assets/audio/microbit-audio.wav',
     'assets/videos/microbit-lsc.mp4',
+    '',
     'assets/videos/microbit-uso.mp4',
     '["1. Configuración manual: Mano dominante en letra M (o palma hacia abajo simulando la forma de una tarjeta rectangular pequeña).", "2. Movimiento: Desplazar suavemente de izquierda a derecha delineando el contorno del circuito.", "3. Orientación y gesto: Acompañar con gesto facial de precisión y señalar la matriz de luces o pines de conexión con el dedo índice."]'::jsonb,
     1
@@ -124,6 +129,7 @@ INSERT INTO objetos (
     'Bienvenido a enseñas. Este es el telescopio astronómico en Realidad Aumentada. Es un instrumento óptico compuesto por lentes y espejos diseñado para observar cuerpos celestes lejanos como la Luna, planetas y nebulosas. Permite acercar el fascinante estudio de la astronomía al aula de clase.',
     'assets/audio/telescopio-audio.wav',
     'assets/videos/telescopio-lsc.mp4',
+    '',
     'assets/videos/telescopio-uso.mp4',
     '["1. Configuración manual: Ambas manos en forma de cilindro (letra C / puño hueco) alineadas a la altura del ojo dominante.", "2. Movimiento: Extender levemente la mano delantera simulando el tubo óptico y ajustar el foco con los dedos índice y pulgar.", "3. Orientación y gesto: Inclinar la cabeza hacia arriba manteniendo la mirada en el visor con expresión de observación atenta."]'::jsonb,
     2
@@ -139,6 +145,7 @@ INSERT INTO objetos (
     'Bienvenido a enseñas. Estás viendo el microscopio óptico en Realidad Aumentada. Esta herramienta de laboratorio utiliza lentes de gran aumento para observar muestras y microorganismos invisibles a simple vista, como células y bacterias, facilitando el aprendizaje en ciencias y biología.',
     'assets/audio/microscopio-audio.wav',
     'assets/videos/microscopio-lsc.mp4',
+    '',
     'assets/videos/microscopio-uso.mp4',
     '["1. Configuración manual: Mano no dominante como base plana (platina). Mano dominante forma un ángulo sobre la base representando el tubo ocular.", "2. Movimiento: Con los dedos índice y pulgar de la mano derecha, realizar giros leves simulando el tornillo micrométrico de enfoque.", "3. Orientación y gesto: Acercar el rostro en ademán de mirar a través del ocular con un ojo cerrado o enfocado."]'::jsonb,
     3
