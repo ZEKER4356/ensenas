@@ -479,6 +479,7 @@
     isScanningSurface = true;
     isAnchored = false;
     hasSurfaceHit = false;
+    sceneContainer.classList.add('is-scanning');
 
     // Desactivar aparición del objeto flotante
     if (objectGroup) objectGroup.visible = false;
@@ -507,6 +508,7 @@
 
     isScanningSurface = false;
     isAnchored = true;
+    sceneContainer.classList.remove('is-scanning');
 
     // Ocultar retícula y banner de escaneo
     if (reticleGroup) reticleGroup.visible = false;
@@ -840,6 +842,7 @@
 
     sceneContainer.classList.remove('ar-mode-active');
     sceneContainer.classList.remove('ar-immersive');
+    sceneContainer.classList.remove('is-scanning');
     document.body.classList.remove('ar-active-body');
 
     // Restaurar objeto para vista normal 3D
@@ -872,7 +875,7 @@
       if (!isArMode) {
         startArMode();
       } else {
-        stopArMode();
+        returnToObjectPage();
       }
     });
   }
@@ -908,43 +911,22 @@
 
   if (btnCloseArMode) {
     btnCloseArMode.addEventListener('click', () => {
-      if (isFullscreen) toggleImmersiveFullscreen();
-      stopArMode();
-      sceneContainer.scrollIntoView({ behavior: 'smooth' });
+      returnToObjectPage();
     });
+  }
+
+  // Se vuelve a cargar la ficha en lugar de conservar la escena de cámara.
+  // Así la vista 3D normal nunca hereda la escala o el anclaje de RA.
+  function returnToObjectPage() {
+    window.location.href = `objeto.html?id=${encodeURIComponent(objectId)}`;
   }
 
   /* ========================================================================
      6. Flujo de Acceso Directo por Escaneo de Código QR
      ======================================================================== */
   function setupArDirectFlow() {
-    const params = new URLSearchParams(window.location.search);
-    const isDirectAr = params.get('ar') === 'true' || params.get('ar') === '1' || params.get('direct') === '1';
-
-    if (isDirectAr) {
-      sceneContainer.classList.add('ar-immersive');
-      sceneContainer.classList.add('ar-direct-open');
-
-      if (directStartPrompt) {
-        directStartPrompt.classList.add('is-visible');
-      }
-
-      if (btnDirectStart) {
-        btnDirectStart.addEventListener('click', async () => {
-          if (directStartPrompt) directStartPrompt.classList.remove('is-visible');
-          await startArMode();
-        }, { once: true });
-      }
-
-      if (navigator.permissions && navigator.permissions.query) {
-        navigator.permissions.query({ name: 'camera' }).then((res) => {
-          if (res.state === 'granted') {
-            if (directStartPrompt) directStartPrompt.classList.remove('is-visible');
-            startArMode();
-          }
-        }).catch(() => {});
-      }
-    }
+    // El QR abre directamente la ficha del objeto. La persona decide cuándo
+    // activar la cámara con el botón "Ver en mi entorno (RA)", sin pop-up.
   }
 
   /* ========================================================================
@@ -1159,7 +1141,6 @@
     // La práctica de señas requiere una vista cómoda y sin cámara de fondo.
     // Si se solicita desde RA, se sale primero de la sesión y se abre el panel.
     if (isArMode) stopArMode();
-    lscLearningPanel.hidden = false;
     if (btnOpenSignLearning) btnOpenSignLearning.setAttribute('aria-expanded', 'true');
     if (signLearningVideo && activeSignLearningVideo) {
       signLearningVideo.currentTime = 0;
@@ -1171,11 +1152,10 @@
   function closeSignLearning() {
     if (!lscLearningPanel) return;
     if (signLearningVideo) signLearningVideo.pause();
-    lscLearningPanel.hidden = true;
     if (btnOpenSignLearning) {
-      btnOpenSignLearning.setAttribute('aria-expanded', 'false');
-      btnOpenSignLearning.focus();
+      btnOpenSignLearning.setAttribute('aria-expanded', 'true');
     }
+    sceneContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function setInterpreterVisibility(shouldShow) {

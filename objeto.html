@@ -141,24 +141,6 @@
     <!-- SECCIÓN 1: Visor de Realidad Aumentada Directo (SLAM Passthrough / Three.js) -->
     <section id="ar-scene-container" class="ar-section" aria-label="Visor de Realidad Aumentada" aria-describedby="ar-instructions">
       
-      <!-- Prompt de Inicio Inmediato para Escaneo de QR en Móviles (CA1) -->
-      <div id="ar-direct-start-prompt" class="ar-direct-start-prompt">
-        <div class="direct-start-card">
-          <div class="direct-start-badge">
-            <img src="ensenas%20logo.png" alt="enseñas" class="direct-badge-logo" style="height: 36px; width: auto;">
-            <span>Escaneo QR Detectado</span>
-          </div>
-          <h2 class="direct-start-title" id="direct-object-title">Cargando objeto...</h2>
-          <p class="direct-start-desc">
-            Apunta la cámara de tu celular a una mesa o al piso. Cuando aparezca la retícula, tócala para ubicar el modelo en tu entorno real.
-          </p>
-          <button type="button" id="btn-direct-start" class="btn btn-primary btn-lg direct-start-button" aria-label="Iniciar experiencia completa en Realidad Aumentada">
-            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            <span>Iniciar experiencia de RA</span>
-          </button>
-        </div>
-      </div>
-
       <!-- Barra Superior de Control del Visor RA -->
       <div class="ar-header-bar">
         <div class="ar-status-indicator">
@@ -170,7 +152,7 @@
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <span class="btn-text">Ver en mi entorno (RA)</span>
           </button>
-          <button type="button" id="btn-open-sign-learning" class="btn-ar-action" aria-expanded="false" aria-controls="lsc-steps-panel" aria-label="Abrir la práctica para aprender la seña del objeto">
+          <button type="button" id="btn-open-sign-learning" class="btn-ar-action" aria-expanded="true" aria-controls="lsc-steps-panel" aria-label="Ir a la práctica para aprender la seña del objeto">
             <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
             <span class="btn-text">Aprender seña</span>
           </button>
@@ -302,7 +284,7 @@
         </div>
         <div class="hint-item">
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          <span><strong>Mover en mesa:</strong> Arrastra con 2 dedos</span>
+          <span><strong>Ubicación:</strong> usa “Cambiar ubicación”</span>
         </div>
       </div>
     </section>
@@ -426,7 +408,7 @@
     </section>
 
     <!-- Los pasos siguen disponibles como metadatos del objeto; no se muestra un reproductor duplicado. -->
-    <aside id="lsc-steps-panel" class="lsc-learning-panel" aria-labelledby="lsc-steps-heading" hidden>
+    <aside id="lsc-steps-panel" class="lsc-learning-panel" aria-labelledby="lsc-steps-heading">
       <div class="panel-card">
         <div class="panel-header">
           <div class="panel-badge">
@@ -455,8 +437,8 @@
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             <span><strong>Consejo pedagógico:</strong> La precisión en la configuración de la mano y la orientación de la palma son fundamentales en la Lengua de Señas Colombiana.</span>
           </div>
-          <button type="button" id="btn-close-lsc-mode" class="btn btn-outline btn-sm" aria-label="Cerrar práctica de seña">
-            Cerrar práctica
+          <button type="button" id="btn-close-lsc-mode" class="btn btn-outline btn-sm" aria-label="Volver al visualizador 3D">
+            Volver al visor
           </button>
         </div>
       </div>
