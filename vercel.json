@@ -16,8 +16,16 @@
       "destination": "/objeto.html?id=:id&ar=true"
     },
     {
+      "source": "/ra-8th",
+      "destination": "/objeto.html?id=microbit&ar=true&engine=8th"
+    },
+    {
+      "source": "/ra-8th.html",
+      "destination": "/objeto.html?id=microbit&ar=true&engine=8th"
+    },
+    {
       "source": "/ra-8th/:id",
-      "destination": "/ra-8th.html?id=:id"
+      "destination": "/objeto.html?id=:id&ar=true&engine=8th"
     }
   ],
   "headers": [

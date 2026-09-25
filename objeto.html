@@ -52,6 +52,19 @@
 
   <!-- Datos JavaScript -->
   <script src="assets/js/data.js"></script>
+  <!-- El motor 8th Wall se carga únicamente en la ruta piloto. La ficha normal
+       conserva el visor actual y no descarga código adicional. -->
+  <script>
+    (function () {
+      if (new URLSearchParams(window.location.search).get('engine') !== '8th') return;
+      const engine = document.createElement('script');
+      engine.src = 'https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js';
+      engine.async = true;
+      engine.crossOrigin = 'anonymous';
+      engine.dataset.preloadChunks = 'slam';
+      document.head.appendChild(engine);
+    })();
+  </script>
 </head>
 <body class="experience-page">
 
@@ -289,6 +302,10 @@
         </div>
 
       </div>
+
+      <small id="engine-license-notice" class="engine-license-notice" hidden>
+        Experiencia RA con 8th Wall XR Engine.
+      </small>
 
       <!-- Ayudas visuales y táctiles para interacción -->
       <div id="ar-instructions" class="ar-gesture-hints" aria-live="polite">
@@ -574,7 +591,8 @@
   <script>
     (window.ENSENAS_OBJECT_READY || Promise.resolve()).finally(() => {
       const script = document.createElement('script');
-      script.src = 'assets/js/ar-viewer.js';
+      const use8thWall = new URLSearchParams(window.location.search).get('engine') === '8th';
+      script.src = use8thWall ? 'assets/js/8thwall-ar-viewer.js' : 'assets/js/ar-viewer.js';
       document.body.appendChild(script);
     });
   </script>

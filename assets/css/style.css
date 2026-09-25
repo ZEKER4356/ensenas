@@ -2841,6 +2841,32 @@ input:checked + .slider:before {
   .lsc-learning-video-wrap { margin: 16px 0; }
 }
 
+/* Piloto 8th Wall: el lienzo queda dentro del visor existente. Así la barra,
+   el intérprete, el audio y los controles siempre se ven encima de la cámara. */
+.ar-section.ar-8th-pilot .ar-canvas-wrapper #ar-8th-canvas {
+  position: absolute !important;
+  inset: 0;
+  z-index: 1 !important;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent;
+  touch-action: none;
+}
+
+.ar-section.ar-8th-pilot .ar-camera-feed { display: none !important; }
+.ar-section.ar-8th-pilot .ar-loading-overlay { z-index: 42; }
+
+.engine-license-notice {
+  position: absolute;
+  right: 10px;
+  bottom: 6px;
+  z-index: 46;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.62rem;
+  pointer-events: none;
+}
+
 /* ===========================================================================
    Administración mobile-first: cada fila se vuelve una tarjeta legible.
    ========================================================================== */
