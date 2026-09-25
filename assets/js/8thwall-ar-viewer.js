@@ -128,8 +128,10 @@
       }
     }
 
-    if (audio && (audioUrl || audioText)) {
-      if (audioUrl) audio.src = audioUrl;
+    const configuredAudioUrl = getAudioUrl();
+    const configuredAudioText = getAudioText();
+    if (audio && (configuredAudioUrl || configuredAudioText)) {
+      if (configuredAudioUrl) audio.src = configuredAudioUrl;
       if (floatingAudio) floatingAudio.classList.remove('is-hidden');
       audio.addEventListener('timeupdate', updateAudioProgress);
       audio.addEventListener('loadedmetadata', updateAudioProgress);
@@ -159,18 +161,26 @@
     updateStatus('Cargando cámara y detector de superficie…');
     try {
       await waitForEngine();
+      await waitForExtras();
       if (!window.XR8 || !window.XR8.XrController || !window.XR8.Threejs) throw new Error('El navegador no pudo preparar el motor de RA.');
       canvas = document.createElement('canvas');
       canvas.id = 'ar-8th-canvas';
       canvas.setAttribute('aria-label', 'Vista de cámara de realidad aumentada');
       canvasHost.prepend(canvas);
+      fitCanvasToViewport();
       window.XR8.XrController.configure({ disableWorldTracking: false, enableLighting: true, scale: 'absolute' });
-      window.XR8.addCameraPipelineModules([
+      const modules = [
         window.XR8.GlTextureRenderer.pipelineModule(),
         window.XR8.Threejs.pipelineModule(),
         window.XR8.XrController.pipelineModule(),
         makeEnsenasPipelineModule()
-      ]);
+      ];
+      // Módulo oficial: ajusta la resolución real del lienzo a la cámara y evita
+      // que una imagen 300×150 se estire a toda la pantalla del teléfono.
+      if (window.XRExtras && window.XRExtras.FullWindowCanvas) {
+        modules.splice(3, 0, window.XRExtras.FullWindowCanvas.pipelineModule());
+      }
+      window.XR8.addCameraPipelineModules(modules);
       // Se marca antes de run(): onStart puede ejecutarse inmediatamente.
       engineStarted = true;
       window.XR8.run({ canvas });
@@ -187,9 +197,38 @@
   function waitForEngine() {
     if (window.XR8) return Promise.resolve();
     return new Promise((resolve, reject) => {
-      const timeout = window.setTimeout(() => reject(new Error('8th Wall tardó demasiado en cargar.')), 20000);
-      window.addEventListener('xrloaded', () => { window.clearTimeout(timeout); resolve(); }, { once: true });
+      const startedAt = Date.now();
+      const check = () => {
+        if (window.XR8) return resolve();
+        if (Date.now() - startedAt > 20000) return reject(new Error('8th Wall tardó demasiado en cargar.'));
+        window.setTimeout(check, 80);
+      };
+      check();
     });
+  }
+
+  // XRExtras es una mejora de tamaño, no una condición para abrir la cámara.
+  // Si su CDN no responde, seguimos con el lienzo dimensionado manualmente.
+  function waitForExtras() {
+    if (window.XRExtras) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const startedAt = Date.now();
+      const check = () => {
+        if (window.XRExtras || Date.now() - startedAt > 3500) return resolve(Boolean(window.XRExtras));
+        window.setTimeout(check, 80);
+      };
+      check();
+    });
+  }
+
+  function fitCanvasToViewport() {
+    if (!canvas) return;
+    const rect = canvasHost.getBoundingClientRect();
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.round(rect.width * pixelRatio));
+    canvas.height = Math.max(1, Math.round(rect.height * pixelRatio));
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
   }
 
   function makeEnsenasPipelineModule() {
@@ -407,24 +446,44 @@
   }
 
   function toggleAudio() {
-    if (audioUrl && audio) {
+    const configuredAudioUrl = getAudioUrl();
+    const configuredAudioText = getAudioText();
+    if (configuredAudioUrl && audio) {
+      if (audio.src !== configuredAudioUrl) audio.src = configuredAudioUrl;
       (audio.paused ? audio.play() : audio.pause()).catch(() => updateStatus('Toca nuevamente para permitir el audio.'));
       return;
     }
-    if (!audioText || !('speechSynthesis' in window)) return;
+    if (!configuredAudioText || !('speechSynthesis' in window)) return;
     if (speech) { speechSynthesis.cancel(); speech = null; return; }
-    speech = new SpeechSynthesisUtterance(audioText);
+    speech = new SpeechSynthesisUtterance(configuredAudioText);
     speech.lang = 'es-CO';
-    speech.onend = () => { speech = null; updateAudioButtons(); };
+    speech.onstart = () => {
+      if (audioTime) audioTime.textContent = 'Lectura por voz';
+      setAudioVisualState(true);
+    };
+    speech.onend = () => { speech = null; setAudioVisualState(false); };
     speechSynthesis.speak(speech);
   }
 
   function updateAudioButtons() {
+    setAudioVisualState(Boolean(audio && !audio.paused));
+  }
+
+  function setAudioVisualState(playing) {
     const playIcon = audioPlay && audioPlay.querySelector('.icon-play');
     const pauseIcon = audioPlay && audioPlay.querySelector('.icon-pause');
-    const playing = audio && !audio.paused;
     if (playIcon) playIcon.classList.toggle('is-hidden', playing);
     if (pauseIcon) pauseIcon.classList.toggle('is-hidden', !playing);
+  }
+
+  function getAudioUrl() {
+    const current = window.CURRENT_OBJETO || {};
+    return current.archivo_audio_url || current.audio_url || audioUrl;
+  }
+
+  function getAudioText() {
+    const current = window.CURRENT_OBJETO || {};
+    return current.explicacion_texto || current.audio_texto || audioText || current.descripcion || '';
   }
 
   function updateAudioProgress() {

@@ -2856,6 +2856,8 @@ input:checked + .slider:before {
 
 .ar-section.ar-8th-pilot .ar-camera-feed { display: none !important; }
 .ar-section.ar-8th-pilot .ar-loading-overlay { z-index: 42; }
+.ar-section.ar-8th-pilot .ar-floating-audio,
+.ar-section.ar-8th-pilot .ar-floating-lsc { z-index: 46; }
 
 .engine-license-notice {
   position: absolute;
