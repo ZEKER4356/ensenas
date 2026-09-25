@@ -14,6 +14,10 @@
     {
       "source": "/ra/:id",
       "destination": "/objeto.html?id=:id&ar=true"
+    },
+    {
+      "source": "/ra-8th/:id",
+      "destination": "/ra-8th.html?id=:id"
     }
   ],
   "headers": [

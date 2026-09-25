@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Piloto RA 8th Wall | enseñas</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="ensenas%20logo.png">
+  <link rel="stylesheet" href="assets/css/8thwall-pilot.css">
+
+  <!-- Three.js conserva el formato .glb/.gltf que ya usa el catálogo. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="assets/js/data.js"></script>
+
+  <!-- Motor oficial 8th Wall: el chunk SLAM habilita el escaneo del entorno. -->
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" async crossorigin="anonymous" data-preload-chunks="slam"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/landing-page@1/dist/landing-page.js" crossorigin="anonymous"></script>
+</head>
+<body class="pilot-body">
+  <main class="pilot-app" aria-label="Piloto de realidad aumentada con 8th Wall">
+    <canvas id="camerafeed" aria-label="Vista de cámara para realidad aumentada"></canvas>
+
+    <header class="pilot-topbar">
+      <a class="pilot-brand" href="index.html" aria-label="Volver al catálogo">
+        <img src="ensenas%20imagotipo.png" alt="enseñas">
+      </a>
+      <span class="pilot-badge">PRUEBA 8TH WALL</span>
+      <a id="pilot-standard-link" class="pilot-link" href="objeto.html">Visor actual</a>
+    </header>
+
+    <section class="pilot-status-card" aria-live="polite">
+      <span class="pilot-dot" aria-hidden="true"></span>
+      <div>
+        <strong id="pilot-object-name">Cargando objeto…</strong>
+        <p id="pilot-status">Preparando prueba aislada de RA.</p>
+      </div>
+    </section>
+
+    <section id="pilot-start-card" class="pilot-start-card">
+      <p class="pilot-eyebrow">PILOTO AISLADO</p>
+      <h1>Escanea una mesa o el suelo</h1>
+      <p>Esta prueba usa el mismo modelo almacenado en la plataforma, pero con el motor 8th Wall. No modifica el visor oficial.</p>
+      <button id="btn-pilot-start" type="button" class="pilot-primary" disabled>Preparando motor…</button>
+      <p class="pilot-small">Permite el acceso a la cámara cuando el teléfono lo solicite.</p>
+    </section>
+
+    <section id="pilot-controls" class="pilot-controls" hidden aria-label="Controles de la prueba">
+      <button id="btn-pilot-reanchor" type="button" class="pilot-control" hidden>Cambiar ubicación</button>
+      <button id="btn-pilot-learn" type="button" class="pilot-control">Aprender seña</button>
+      <button id="btn-pilot-lsc" type="button" class="pilot-control" disabled>Intérprete LSC</button>
+      <a id="btn-pilot-exit" class="pilot-control pilot-exit" href="objeto.html">Salir de prueba</a>
+    </section>
+
+    <p id="pilot-hint" class="pilot-hint" hidden>Apunta al suelo y toca la pantalla para ubicar el objeto.</p>
+
+    <section id="pilot-lsc" class="pilot-lsc" hidden aria-label="Intérprete en Lengua de Señas Colombiana">
+      <div class="pilot-lsc-title">Intérprete LSC</div>
+      <video id="pilot-lsc-video" playsinline muted loop preload="metadata"></video>
+    </section>
+
+    <section id="pilot-learning" class="pilot-learning" hidden aria-label="Aprender seña">
+      <button id="btn-close-pilot-learning" type="button" class="pilot-close" aria-label="Cerrar aprendizaje">×</button>
+      <h2>Aprender seña</h2>
+      <video id="pilot-learning-video" playsinline controls preload="metadata" hidden></video>
+      <p id="pilot-learning-empty">Este objeto aún no tiene video para aprender la seña.</p>
+      <ol id="pilot-learning-steps"></ol>
+    </section>
+
+    <section id="pilot-audio" class="pilot-audio" hidden aria-label="Audio explicativo">
+      <button id="btn-pilot-audio" type="button" aria-label="Reproducir audio explicativo">▶</button>
+      <span>Audio explicativo</span>
+      <audio id="pilot-audio-element" preload="metadata"></audio>
+    </section>
+
+    <footer class="pilot-legal">
+      Esta prueba utiliza XR Engine de Niantic Spatial, Inc. Copyright © 2026. <a href="https://github.com/8thwall/engine/blob/main/LICENSE" target="_blank" rel="noreferrer">Licencia del motor</a>
+    </footer>
+  </main>
+  <script src="assets/js/8thwall-pilot.js"></script>
+</body>
+</html>
