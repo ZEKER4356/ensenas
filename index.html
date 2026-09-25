@@ -83,32 +83,8 @@
 
   </main>
 
-  <!-- Pie de Página Institucional y Accesibilidad -->
-  <footer class="site-footer" role="contentinfo">
-    <div class="footer-container">
-      <div class="footer-col brand-col">
-        <a href="index.html" class="footer-brand" aria-label="Inicio enseñas">
-          en<strong class="highlight-inline">señas</strong>
-        </a>
-        <p class="footer-text">
-          Plataforma educativa para la integración de la Realidad Aumentada y la Lengua de Señas Colombiana (LSC). Diseñada para aulas inclusivas y accesibilidad universal.
-        </p>
-      </div>
-
-      <div class="footer-col accessibility-col">
-        <h3 class="footer-subheading">Estándares y Accesibilidad</h3>
-        <ul class="accessibility-checklist">
-          <li>HTML5 Semántico y accesibilidad auditada bajo WCAG 2.1 AA</li>
-          <li>Visualizador WebXR y Three.js con soporte inmersivo</li>
-          <li>Overlay de video con intérprete en Lengua de Señas Colombiana (LSC)</li>
-          <li>Audio explicativo nativo y síntesis de voz (Text-to-Speech)</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="footer-bottom">
-      <p>&copy; 2026 enseñas - Plataforma Educativa RA + LSC. Todos los derechos reservados.</p>
-    </div>
+  <footer class="site-footer institutional-footer" role="contentinfo">
+    <p>&copy; 2026 Todos los derechos reservados | Programa de Licenciatura en Tecnología, Universidad del Magdalena.</p>
   </footer>
 
   <!-- Cargar Capa de Datos y Renderizador del Catálogo -->
@@ -214,18 +190,18 @@
               <!-- Acciones de Navegación Accesibles -->
               <div class="object-card-actions">
                 <a 
-                  href="objeto.html?id=${encodeURIComponent(item.id)}&ar=true" 
-                  class="btn btn-primary" 
-                  aria-label="Abrir cámara y ver ${itemTitle} en Realidad Aumentada">
+                  href="objeto.html?id=${encodeURIComponent(item.id)}"
+                  class="btn btn-primary"
+                  aria-label="Acceder al contenido educativo de ${itemTitle}">
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  <span>Abrir en Realidad Aumentada</span>
+                  <span>Acceder al contenido</span>
                 </a>
-                <a 
+                <!-- <a
                   href="objeto.html?id=${encodeURIComponent(item.id)}" 
                   class="btn btn-secondary btn-sm" 
                   aria-label="Ver ficha educativa, explicaciones y pasos de la seña en LSC de ${itemTitle}">
                   <span>Ficha Educativa y Seña LSC</span>
-                </a>
+                </a> -->
               </div>
             </article>
           `;

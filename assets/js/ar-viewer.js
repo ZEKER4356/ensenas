@@ -588,9 +588,9 @@
         const deltaX = e.clientX - previousPointerPos.x;
         const deltaY = e.clientY - previousPointerPos.y;
         objectGroup.rotation.y += deltaX * 0.01;
-        objectGroup.rotation.x += deltaY * 0.01;
+        if (!(isArMode && isAnchored)) objectGroup.rotation.x += deltaY * 0.01;
         previousPointerPos = { x: e.clientX, y: e.clientY };
-      } else if (isDraggingTwoFingers && objectGroup && objectGroup.visible) {
+      } else if (isDraggingTwoFingers && objectGroup && objectGroup.visible && !(isArMode && isAnchored)) {
         const deltaX = e.clientX - touchStartPosTwo.x;
         const deltaY = e.clientY - touchStartPosTwo.y;
         objectGroup.position.x += deltaX * 0.003;
@@ -610,6 +610,7 @@
     el.addEventListener('wheel', (e) => {
       e.preventDefault();
       if (!objectGroup || !objectGroup.visible) return;
+      if (isArMode && isAnchored) return;
       const zoomFactor = e.deltaY > 0 ? 0.92 : 1.08;
       const newScale = objectGroup.scale.x * zoomFactor;
       if (newScale >= 0.25 && newScale <= 3.8) {
@@ -652,9 +653,9 @@
         const deltaY = e.touches[0].clientY - previousPointerPos.y;
 
         objectGroup.rotation.y += deltaX * 0.012;
-        objectGroup.rotation.x += deltaY * 0.012;
+        if (!(isArMode && isAnchored)) objectGroup.rotation.x += deltaY * 0.012;
         previousPointerPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      } else if (e.touches.length === 2 && objectGroup && objectGroup.visible) {
+      } else if (e.touches.length === 2 && objectGroup && objectGroup.visible && !(isArMode && isAnchored)) {
         const currentDist = getTouchDist(e.touches[0], e.touches[1]);
         if (initialTouchDist && currentDist > 0) {
           const scaleMultiplier = currentDist / initialTouchDist;
@@ -1142,6 +1143,9 @@
 
   function openSignLearning() {
     if (!lscLearningPanel) return;
+    // La práctica de señas requiere una vista cómoda y sin cámara de fondo.
+    // Si se solicita desde RA, se sale primero de la sesión y se abre el panel.
+    if (isArMode) stopArMode();
     lscLearningPanel.hidden = false;
     if (btnOpenSignLearning) btnOpenSignLearning.setAttribute('aria-expanded', 'true');
     if (signLearningVideo && activeVideoLsc) {

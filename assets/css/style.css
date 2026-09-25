@@ -2364,6 +2364,19 @@ input:checked + .slider:before {
   color: #64748B;
 }
 
+/* Pie institucional único: sin información técnica ni de implementación. */
+.institutional-footer {
+  padding: 22px 20px;
+  text-align: center;
+}
+
+.institutional-footer p,
+.admin-footer p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
 /* ==========================================================================
    Nuevas Tarjetas de Previsualización del Catálogo Público (Sin QR)
    ========================================================================== */
@@ -2524,6 +2537,10 @@ input:checked + .slider:before {
 
 .preview-card .object-card-actions .btn {
   width: 100%;
+}
+
+.preview-card .object-card-actions .btn svg {
+  display: none;
 }
 
 /* ==========================================================================
@@ -2819,7 +2836,6 @@ input:checked + .slider:before {
   .ar-section.ar-immersive .ar-canvas-wrapper { height: 100%; min-height: 0; }
   .ar-section.ar-immersive .ar-canvas-wrapper,
   .ar-section.ar-immersive .ar-canvas-wrapper canvas { background: transparent; }
-  .ar-section.ar-immersive #btn-open-sign-learning { display: none; }
   .ar-section.ar-immersive #btn-toggle-ar-mode { grid-column: auto; }
   .ar-section.ar-immersive .ar-action-buttons { grid-template-columns: 1fr 1fr; }
   .ar-section.ar-immersive #btn-reanchor-view { grid-column: 1 / -1; }
@@ -2827,4 +2843,69 @@ input:checked + .slider:before {
 
   .lsc-learning-panel { padding: 0 4px; }
   .lsc-learning-video-wrap { margin: 16px 0; }
+}
+
+/* ===========================================================================
+   Administración mobile-first: cada fila se vuelve una tarjeta legible.
+   ========================================================================== */
+@media (max-width: 700px) {
+  .admin-dashboard-container { padding: 18px 12px 32px; }
+  .dashboard-header-section { align-items: stretch; gap: 16px; }
+  .dashboard-title { font-size: 1.45rem; }
+  .dashboard-subtitle { line-height: 1.5; }
+  .dashboard-actions { width: 100%; }
+  .dashboard-actions .btn { width: 100%; min-height: 52px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stat-card { padding: 13px; gap: 10px; }
+  .stat-icon { width: 38px; height: 38px; flex: 0 0 38px; }
+  .stat-value { font-size: 1.35rem; }
+  .stat-label { font-size: 0.72rem; line-height: 1.25; }
+
+  .table-section { overflow: visible; }
+  .table-toolbar { padding: 14px 12px; flex-direction: column; align-items: stretch; }
+  .search-box { max-width: none; min-width: 0; box-sizing: border-box; }
+  .filter-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .filter-actions .btn { min-width: 0; min-height: 46px; padding: 8px; font-size: 0.76rem; }
+  .table-responsive { overflow: visible; }
+  .admin-table, .admin-table tbody, .admin-table tr, .admin-table td { display: block; width: 100%; }
+  .admin-table thead { display: none; }
+  .admin-table tbody { padding: 8px; box-sizing: border-box; }
+  .admin-table tbody tr {
+    margin: 0 0 10px;
+    padding: 14px;
+    border: 1px solid #334155;
+    border-radius: var(--radius-md);
+    background: #162033;
+  }
+  .admin-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  }
+  .admin-table td:first-child { padding-top: 0; }
+  .admin-table td:last-child { border-bottom: 0; padding-bottom: 0; }
+  .admin-table td:not(:first-child):not(.text-right) {
+    display: grid;
+    grid-template-columns: 104px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+  }
+  .admin-table td:not(:first-child):not(.text-right)::before {
+    content: attr(data-label);
+    color: #94A3B8;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .table-object-cell { gap: 10px; }
+  .table-thumb-box { width: 40px; height: 40px; flex: 0 0 40px; }
+  .action-buttons-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .action-buttons-group .btn { width: 100%; min-height: 44px; justify-content: center; }
+  .action-buttons-group .btn-danger { grid-column: 1 / -1; }
+  .table-empty { text-align: center; }
+
+  .modal-content { width: calc(100% - 16px); max-height: calc(100svh - 16px); }
+  .modal-header, .modal-body, .modal-footer { padding-left: 16px; padding-right: 16px; }
+  .modal-footer { flex-direction: column-reverse; }
+  .modal-footer .btn { width: 100%; min-height: 48px; }
 }

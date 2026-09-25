@@ -226,7 +226,7 @@
 
       html += `
         <tr data-id="${item.id}">
-          <td>
+          <td data-label="Objeto">
             <div class="table-object-cell">
               <div class="table-thumb-box">
                 <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
@@ -237,24 +237,24 @@
               </div>
             </div>
           </td>
-          <td>
+          <td data-label="Categoría LSC">
             <span class="badge-category">${escapeHtml(item.categoria_lsc || 'Ciencia y Tecnología')}</span>
           </td>
-          <td>
+          <td data-label="Medios">
             <div class="media-badges-list">
               <span class="badge-media ${has3D ? 'is-active' : ''}" title="${has3D ? 'Modelo 3D disponible' : 'Sin modelo 3D'}">3D</span>
               <span class="badge-media ${hasAudio ? 'is-active' : ''}" title="${hasAudio ? 'Audio grabado (.mp3)' : 'Lectura por voz sintética TTS'}">${hasAudio ? 'MP3' : 'TTS'}</span>
               <span class="badge-media ${hasLsc ? 'is-active' : ''}" title="${hasLsc ? 'Video LSC disponible' : 'Sin video LSC'}">LSC</span>
             </div>
           </td>
-          <td>
+          <td data-label="Estado">
             <label class="switch-toggle" aria-label="Alternar estado activo del objeto">
               <input type="checkbox" class="toggle-status-checkbox" data-id="${item.id}" ${isActive ? 'checked' : ''}>
               <span class="slider round"></span>
               <span class="switch-label">${isActive ? 'Activo' : 'Inactivo'}</span>
             </label>
           </td>
-          <td class="text-right">
+          <td class="text-right" data-label="Acciones">
             <div class="action-buttons-group">
               <a href="objeto.html?id=${encodeURIComponent(item.id)}&ar=true" target="_blank" class="btn btn-primary btn-xs" title="Probar en Realidad Aumentada">
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
