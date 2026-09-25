@@ -57,11 +57,6 @@
   <script>
     (function () {
       if (new URLSearchParams(window.location.search).get('engine') !== '8th') return;
-      const extras = document.createElement('script');
-      extras.src = 'https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js';
-      extras.async = true;
-      extras.crossOrigin = 'anonymous';
-      document.head.appendChild(extras);
       const engine = document.createElement('script');
       engine.src = 'https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js';
       engine.async = true;

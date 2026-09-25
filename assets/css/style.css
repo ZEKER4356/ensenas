@@ -2859,6 +2859,85 @@ input:checked + .slider:before {
 .ar-section.ar-8th-pilot .ar-floating-audio,
 .ar-section.ar-8th-pilot .ar-floating-lsc { z-index: 46; }
 
+/* En la cámara la interfaz debe orientar, no competir con la experiencia. */
+.ar-section.ar-8th-pilot .ar-header-bar {
+  padding: 7px 10px;
+  gap: 6px;
+}
+
+.ar-section.ar-8th-pilot .ar-status-indicator {
+  font-size: 0.76rem;
+  line-height: 1.25;
+}
+
+.ar-section.ar-8th-pilot .ar-action-buttons { gap: 6px; }
+.ar-section.ar-8th-pilot .btn-ar-action {
+  min-height: 44px;
+  padding: 7px 8px;
+  font-size: 0.79rem;
+}
+
+/* Mientras se encuentra una mesa/suelo sólo se conserva la salida: reduce
+   distracciones y evita que la tarjeta de escaneo choque con los botones. */
+.ar-section.ar-8th-pilot.is-scanning .ar-action-buttons { grid-template-columns: 1fr !important; }
+.ar-section.ar-8th-pilot.is-scanning #btn-open-sign-learning,
+.ar-section.ar-8th-pilot.is-scanning #btn-toggle-lsc-overlay { display: none; }
+
+.ar-section.ar-8th-pilot .ar-surface-scan-overlay {
+  justify-content: flex-start;
+  padding: 112px 12px 0;
+  background: transparent;
+}
+
+.ar-section.ar-8th-pilot .scan-instruction-card {
+  width: min(100%, 310px);
+  padding: 9px 12px;
+  border-radius: 12px;
+  animation: none;
+}
+
+.ar-section.ar-8th-pilot .scan-step-pill {
+  margin-bottom: 3px;
+  padding: 3px 8px;
+  font-size: 0.63rem;
+}
+
+.ar-section.ar-8th-pilot .scan-title { font-size: 0.95rem; margin-bottom: 2px; }
+.ar-section.ar-8th-pilot .scan-desc { font-size: 0.75rem; line-height: 1.3; }
+.ar-section.ar-8th-pilot .scan-motion-indicator { display: none; }
+
+.ar-section.ar-8th-pilot .scan-action-container {
+  position: absolute;
+  bottom: calc(68px + env(safe-area-inset-bottom));
+  width: min(250px, calc(100% - 24px));
+  margin: 0;
+}
+
+.ar-section.ar-8th-pilot .btn-anchor-action {
+  min-height: 44px;
+  padding: 9px 14px;
+  font-size: 0.84rem;
+  gap: 7px;
+  box-shadow: 0 5px 14px rgba(16, 185, 129, 0.35);
+}
+
+.ar-section.ar-8th-pilot .ar-floating-audio {
+  left: 8px;
+  right: 8px;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  max-width: none;
+  min-height: 48px;
+  padding: 5px 8px 5px 5px;
+  gap: 7px;
+}
+
+.ar-section.ar-8th-pilot .btn-audio-circle {
+  width: 38px;
+  height: 38px;
+}
+
+.ar-section.ar-8th-pilot .ar-audio-info { min-width: 0; flex: 1; }
+
 .engine-license-notice {
   position: absolute;
   right: 10px;

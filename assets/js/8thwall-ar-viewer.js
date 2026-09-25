@@ -152,6 +152,7 @@
     if (audioPlay) audioPlay.addEventListener('click', toggleAudio);
     if (audioMute) audioMute.addEventListener('click', () => { if (audio) audio.muted = !audio.muted; });
     if (audioReplay) audioReplay.addEventListener('click', () => { if (audio) { audio.currentTime = 0; audio.play().catch(() => {}); } });
+    window.addEventListener('resize', fitCanvasToViewport);
     window.addEventListener('pagehide', stopEngine, { once: true });
   }
 
@@ -161,7 +162,6 @@
     updateStatus('Cargando cámara y detector de superficie…');
     try {
       await waitForEngine();
-      await waitForExtras();
       if (!window.XR8 || !window.XR8.XrController || !window.XR8.Threejs) throw new Error('El navegador no pudo preparar el motor de RA.');
       canvas = document.createElement('canvas');
       canvas.id = 'ar-8th-canvas';
@@ -175,11 +175,6 @@
         window.XR8.XrController.pipelineModule(),
         makeEnsenasPipelineModule()
       ];
-      // Módulo oficial: ajusta la resolución real del lienzo a la cámara y evita
-      // que una imagen 300×150 se estire a toda la pantalla del teléfono.
-      if (window.XRExtras && window.XRExtras.FullWindowCanvas) {
-        modules.splice(3, 0, window.XRExtras.FullWindowCanvas.pipelineModule());
-      }
       window.XR8.addCameraPipelineModules(modules);
       // Se marca antes de run(): onStart puede ejecutarse inmediatamente.
       engineStarted = true;
@@ -201,20 +196,6 @@
       const check = () => {
         if (window.XR8) return resolve();
         if (Date.now() - startedAt > 20000) return reject(new Error('8th Wall tardó demasiado en cargar.'));
-        window.setTimeout(check, 80);
-      };
-      check();
-    });
-  }
-
-  // XRExtras es una mejora de tamaño, no una condición para abrir la cámara.
-  // Si su CDN no responde, seguimos con el lienzo dimensionado manualmente.
-  function waitForExtras() {
-    if (window.XRExtras) return Promise.resolve(true);
-    return new Promise((resolve) => {
-      const startedAt = Date.now();
-      const check = () => {
-        if (window.XRExtras || Date.now() - startedAt > 3500) return resolve(Boolean(window.XRExtras));
         window.setTimeout(check, 80);
       };
       check();
@@ -345,6 +326,7 @@
       return;
     }
     scanning = true;
+    sceneContainer.classList.add('is-scanning');
     modelPlaced = false;
     lastHit = null;
     anchorGroup.visible = false;
@@ -363,6 +345,7 @@
     if (!modelReady) return updateStatus('El modelo aún está cargando.');
     if (!applyHit(anchorGroup, hit || lastHit)) return updateStatus('Aún no hay una superficie estable. Muévete lentamente e inténtalo de nuevo.');
     scanning = false;
+    sceneContainer.classList.remove('is-scanning');
     modelPlaced = true;
     anchorGroup.visible = true;
     if (reticle) reticle.visible = false;
