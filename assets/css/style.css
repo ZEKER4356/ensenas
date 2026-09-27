@@ -156,11 +156,17 @@ input:focus-visible {
   max-width: 210px;
   object-fit: contain;
   display: block;
-  transition: transform var(--transition-fast);
+  transition: transform var(--transition-fast), filter var(--transition-fast);
 }
 
 .brand-link:hover .brand-official-logo {
   transform: scale(1.02);
+}
+
+/* El mismo imagotipo oficial se vuelve blanco sin perder su transparencia. */
+html[data-theme="dark"] .brand-official-logo,
+html[data-theme="dark"] .auth-logo {
+  filter: brightness(0) invert(1);
 }
 
 .brand-text-logo {
@@ -2950,6 +2956,48 @@ input:checked + .slider:before {
   .ar-section.ar-mode-active .ar-audio-info { min-width: 0; flex: 1; }
   .ar-section.ar-mode-active .ar-floating-lsc { z-index: 46; }
 }
+
+/* Administración también parte de modo claro. Su diseño original tenía colores
+   fijos oscuros, por eso se declaran aquí las superficies claras equivalentes. */
+html[data-theme="light"] .admin-body { background: #F8FAFC; color: #0F172A; }
+html[data-theme="light"] .admin-header { background: #FFFFFF; border-bottom-color: #E2E8F0; }
+html[data-theme="light"] .admin-user-menu { border-left-color: #E2E8F0; }
+html[data-theme="light"] .admin-user-label,
+html[data-theme="light"] .auth-subtitle,
+html[data-theme="light"] .dashboard-subtitle,
+html[data-theme="light"] .stat-label,
+html[data-theme="light"] .form-label { color: #475569; }
+html[data-theme="light"] .auth-card,
+html[data-theme="light"] .stat-card,
+html[data-theme="light"] .table-section,
+html[data-theme="light"] .modal-content { background: #FFFFFF; border-color: #E2E8F0; box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08); }
+html[data-theme="light"] .auth-title,
+html[data-theme="light"] .dashboard-title,
+html[data-theme="light"] .stat-value,
+html[data-theme="light"] .modal-title,
+html[data-theme="light"] .table-obj-title { color: #0F172A; }
+html[data-theme="light"] .auth-help-box,
+html[data-theme="light"] .search-box,
+html[data-theme="light"] .table-thumb-box,
+html[data-theme="light"] .admin-table th,
+html[data-theme="light"] .modal-footer { background: #F8FAFC; border-color: #E2E8F0; }
+html[data-theme="light"] .search-input,
+html[data-theme="light"] .admin-table td { color: #0F172A; }
+html[data-theme="light"] .admin-table th { color: #475569; }
+html[data-theme="light"] .admin-table td,
+html[data-theme="light"] .table-toolbar,
+html[data-theme="light"] .modal-header,
+html[data-theme="light"] .modal-footer { border-color: #E2E8F0; }
+html[data-theme="light"] .badge-category { background: #F1F5F9; color: #334155; }
+html[data-theme="light"] .badge-media { background: #F1F5F9; color: #64748B; }
+html[data-theme="light"] .form-section { background: #F8FAFC; border-color: #E2E8F0; }
+html[data-theme="light"] .section-legend { color: #334155; }
+html[data-theme="light"] .form-input,
+html[data-theme="light"] .form-select,
+html[data-theme="light"] .form-textarea { background: #FFFFFF; color: #0F172A; border-color: #CBD5E1; }
+html[data-theme="light"] .btn-file-upload,
+html[data-theme="light"] .btn-close-circle { background: #E2E8F0; color: #334155; border-color: #CBD5E1; }
+html[data-theme="light"] .admin-footer { background: #FFFFFF; border-color: #E2E8F0; color: #475569; }
 
 /* ===========================================================================
    Ficha didáctica pública y material QR para el aula

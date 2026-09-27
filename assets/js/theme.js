@@ -2,7 +2,9 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'ensenas-theme';
+  // Nueva versión: una elección oscura de una versión anterior no debe convertir
+  // la primera carga de esta interfaz rediseñada en modo oscuro.
+  const STORAGE_KEY = 'ensenas-theme-v2';
 
   function getSavedTheme() {
     try {
