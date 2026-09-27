@@ -966,31 +966,59 @@
 
     if (btnArAudioReplay) {
       btnArAudioReplay.addEventListener('click', () => {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         audioElement.currentTime = 0;
+        syncLscWithAudio({ restart: true });
         playExplanationAudio();
       });
     }
 
-    audioElement.addEventListener('timeupdate', () => {
-      const current = audioElement.currentTime;
-      const duration = audioElement.duration || 1;
-      if (arAudioProgress) {
-        arAudioProgress.style.width = `${(current / duration) * 100}%`;
-      }
-      if (arAudioTime) {
-        arAudioTime.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
-      }
-
-      // Sincronizar video de overlay LSC
-      if (lscVideo && Math.abs(lscVideo.currentTime - current) > 0.4) {
-        lscVideo.currentTime = current;
-      }
+    // Estos eventos cubren carga, avance, búsqueda, pausa y reinicio de una pista real.
+    // Así la línea de tiempo no depende de la frecuencia variable de `timeupdate` del móvil.
+    ['loadedmetadata', 'durationchange', 'timeupdate', 'seeking', 'seeked'].forEach((eventName) => {
+      audioElement.addEventListener(eventName, () => {
+        updateAudioProgress();
+        syncLscWithAudio();
+      });
     });
-
+    audioElement.addEventListener('play', () => {
+      updateAudioVisualState(true);
+      syncLscWithAudio({ play: true });
+    });
+    audioElement.addEventListener('pause', () => {
+      if (!audioElement.ended) updateAudioVisualState(false);
+      if (lscVideo && !lscVideo.paused) lscVideo.pause();
+    });
     audioElement.addEventListener('ended', () => {
-      pauseExplanationAudio();
-      if (arAudioProgress) arAudioProgress.style.width = '100%';
+      updateAudioProgress(true);
+      updateAudioVisualState(false);
+      if (lscVideo && !lscVideo.paused) lscVideo.pause();
     });
+  }
+
+  function updateAudioProgress(forceComplete) {
+    if (!audioElement) return;
+    const current = Number.isFinite(audioElement.currentTime) ? audioElement.currentTime : 0;
+    const duration = Number.isFinite(audioElement.duration) && audioElement.duration > 0 ? audioElement.duration : 0;
+    const percent = forceComplete ? 100 : duration ? Math.min(100, (current / duration) * 100) : 0;
+    if (arAudioProgress) arAudioProgress.style.width = `${percent}%`;
+    if (arAudioTime) arAudioTime.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+  }
+
+  function syncLscWithAudio(options) {
+    if (!lscVideo || !activeVideoLsc || !audioElement) return;
+    const opts = options || {};
+    const audioTime = Number.isFinite(audioElement.currentTime) ? audioElement.currentTime : 0;
+    const videoDuration = Number.isFinite(lscVideo.duration) ? lscVideo.duration : null;
+    const targetTime = videoDuration ? Math.min(audioTime, Math.max(0, videoDuration - 0.02)) : audioTime;
+
+    // El umbral evita decenas de búsquedas por segundo, pero mantiene la sincronía visible.
+    if (opts.restart || Math.abs(lscVideo.currentTime - targetTime) > 0.12) {
+      try { lscVideo.currentTime = targetTime; } catch (_) { /* el video aún está cargando */ }
+    }
+    if (opts.play && !audioElement.paused && !lscOverlay?.classList.contains('is-hidden')) {
+      lscVideo.play().catch(() => {});
+    }
   }
 
   /**
@@ -1004,11 +1032,15 @@
     const hasAudioFile = targetAudio && targetAudio.trim() !== '';
 
     if (hasAudioFile) {
-      audioElement.src = targetAudio;
-      audioElement.play().then(() => {
-        updateAudioVisualState(true);
-        if (lscVideo && lscVideo.paused) lscVideo.play().catch(() => {});
-      }).catch((e) => {
+      const resolvedUrl = new URL(targetAudio, window.location.href).href;
+      if (audioElement.src !== resolvedUrl) {
+        audioElement.src = targetAudio;
+        audioElement.load();
+      }
+      if (Number.isFinite(audioElement.duration) && audioElement.currentTime >= audioElement.duration - 0.02) {
+        audioElement.currentTime = 0;
+      }
+      audioElement.play().catch((e) => {
         console.warn('Reproducción MP3 falló o bloqueada, utilizando Web Speech API:', e);
         speakExplanationWithTTS(targetText);
       });
@@ -1036,7 +1068,7 @@
     speechSynthUtterance.onstart = () => {
       speechSynthActive = true;
       updateAudioVisualState(true);
-      if (lscVideo && lscVideo.paused) lscVideo.play().catch(() => {});
+      syncLscWithAudio({ restart: true, play: true });
       if (arAudioTime) arAudioTime.textContent = 'Lectura por Voz TTS';
     };
 
@@ -1044,6 +1076,7 @@
       speechSynthActive = false;
       updateAudioVisualState(false);
       if (arAudioProgress) arAudioProgress.style.width = '100%';
+      if (lscVideo && !lscVideo.paused) lscVideo.pause();
     };
 
     speechSynthUtterance.onerror = () => {
@@ -1100,6 +1133,7 @@
       lscVideo.load();
       lscVideo.addEventListener('loadeddata', () => {
         if (lscPlaceholder) lscPlaceholder.classList.add('is-hidden');
+        syncLscWithAudio({ play: !audioElement?.paused });
       }, { once: true });
       lscVideo.addEventListener('error', () => {
         activeVideoLsc = '';
@@ -1168,7 +1202,7 @@
       if (textSpan) textSpan.textContent = shouldShow ? 'Cerrar intérprete' : 'Intérprete LSC';
     }
     if (lscVideo) {
-      if (shouldShow && activeVideoLsc) lscVideo.play().catch(() => {});
+      if (shouldShow && activeVideoLsc) syncLscWithAudio({ play: !audioElement?.paused });
       if (!shouldShow) lscVideo.pause();
     }
   }

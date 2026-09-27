@@ -44,6 +44,7 @@
 
   <!-- Estilos de la Plataforma -->
   <link rel="stylesheet" href="assets/css/style.css">
+  <script src="assets/js/theme.js"></script>
 
   <!-- Three.js / WebXR Engine para visualización 3D y compatibilidad con 8th Wall -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -110,12 +111,15 @@
     <div class="header-container">
       <div class="brand-group">
         <a href="index.html" class="brand-link" aria-label="Ir al inicio de enseñas">
-          <img src="ensenas%20imagotipo.png" alt="Logotipo oficial enseñas" class="brand-official-logo" width="160" height="46">
+          <img src="assets/brand/ensenas-imagotipo-black.svg" data-theme-logo data-logo-light="assets/brand/ensenas-imagotipo-black.svg" data-logo-dark="assets/brand/ensenas-imagotipo-white.svg" alt="Logotipo oficial enseñas" class="brand-official-logo" width="160" height="46">
         </a>
         <span class="brand-badge" aria-hidden="true">RA + LSC</span>
       </div>
 
       <nav aria-label="Navegación de accesibilidad y regreso" class="header-nav">
+        <button type="button" class="btn btn-outline btn-sm theme-toggle" data-theme-toggle aria-pressed="false">
+          <span data-theme-icon aria-hidden="true">◐</span><span data-theme-label>Modo oscuro</span>
+        </button>
         <a href="index.html" class="btn btn-secondary btn-sm" aria-label="Volver al catálogo de objetos">
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           Catálogo
@@ -250,7 +254,7 @@
             </div>
           </div>
           <div class="lsc-overlay-body">
-            <video id="ar-overlay-video-lsc" class="overlay-lsc-video" playsinline muted loop preload="metadata">
+            <video id="ar-overlay-video-lsc" class="overlay-lsc-video" playsinline muted preload="metadata">
               <source src="" type="video/mp4">
             </video>
             <!-- Estado de Muestra / Vacío con silueta y texto demostrativo -->
@@ -286,6 +290,20 @@
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           <span><strong>Ubicación:</strong> usa “Cambiar ubicación”</span>
         </div>
+      </div>
+    </section>
+
+    <section id="ficha-docente" class="teacher-resource-section" aria-labelledby="ficha-docente-title">
+      <div class="teacher-resource-copy">
+        <span class="ficha-kicker">Material para docentes</span>
+        <h2 id="ficha-docente-title" data-ficha-title>Ficha didáctica</h2>
+        <p data-ficha-description>Información y material de apoyo para usar este objeto en el aula.</p>
+        <span class="ficha-category" data-ficha-category></span>
+        <div data-ficha-actions></div>
+      </div>
+      <div class="teacher-resource-qr">
+        <strong>Escanea para abrir esta experiencia</strong>
+        <div data-ficha-qr class="public-ficha-qr" aria-label="Código QR para abrir este objeto"></div>
       </div>
     </section>
 
@@ -549,6 +567,8 @@
         });
         stepsList.innerHTML = html;
       }
+
+      window.dispatchEvent(new CustomEvent('ensenas:object-ready', { detail: obj }));
     });
   </script>
 
@@ -560,6 +580,9 @@
       document.body.appendChild(script);
     });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
+  <script src="assets/js/qr-generator.js"></script>
+  <script src="assets/js/public-resources.js"></script>
 
 </body>
 </html>

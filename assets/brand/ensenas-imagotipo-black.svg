@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" role="img" aria-label="enseñas">
+  <g transform="translate(44 42)" fill="none" stroke="#111827" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 35V15a7 7 0 0 1 7-7h20M92 8h20a7 7 0 0 1 7 7v20M119 83v20a7 7 0 0 1-7 7H92M42 110H22a7 7 0 0 1-7-7V83"/>
+    <path d="M44 85V53a6 6 0 0 1 12 0v25M61 78V42a6 6 0 0 1 12 0v36M78 78V49a6 6 0 0 1 12 0v29M95 74V59a6 6 0 0 1 12 0v22c0 14-11 25-25 25H64c-11 0-20-9-20-21Z"/>
+  </g>
+  <text x="192" y="115" font-family="Montserrat, Inter, sans-serif" font-size="74" font-weight="800" fill="#111827">enseñas</text>
+</svg>

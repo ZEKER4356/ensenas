@@ -15,6 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="assets/css/style.css">
+  <script src="assets/js/theme.js"></script>
 </head>
 <body class="admin-body">
 
@@ -25,12 +26,15 @@
     <div class="header-container">
       <div class="brand-group">
         <a href="index.html" class="brand-link" aria-label="Ir al portal público de enseñas">
-          <img src="ensenas%20imagotipo.png" alt="Logotipo oficial enseñas" class="brand-official-logo" width="170" height="50">
+          <img src="assets/brand/ensenas-imagotipo-black.svg" data-theme-logo data-logo-light="assets/brand/ensenas-imagotipo-black.svg" data-logo-dark="assets/brand/ensenas-imagotipo-white.svg" alt="Logotipo oficial enseñas" class="brand-official-logo" width="170" height="50">
         </a>
         <span class="brand-badge admin-badge">Admin Studio</span>
       </div>
 
       <nav aria-label="Navegación de administración" class="header-nav admin-nav">
+        <button type="button" class="btn btn-outline btn-sm theme-toggle" data-theme-toggle aria-pressed="false">
+          <span data-theme-icon aria-hidden="true">◐</span><span data-theme-label>Modo oscuro</span>
+        </button>
         <a href="index.html" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
           <span>Ver Portal Público</span>

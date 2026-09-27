@@ -22,6 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="assets/css/style.css">
+  <script src="assets/js/theme.js"></script>
 </head>
 <body>
   <!-- Salto accesible directo para lectores de pantalla y teclado -->
@@ -32,12 +33,15 @@
     <div class="header-container">
       <div class="brand-group">
         <a href="index.html" class="brand-link" aria-label="Inicio enseñas - Plataforma de Realidad Aumentada y LSC">
-          <img src="ensenas%20imagotipo.png" alt="Logotipo oficial de la plataforma enseñas" class="brand-official-logo" width="180" height="52">
+          <img src="assets/brand/ensenas-imagotipo-black.svg" data-theme-logo data-logo-light="assets/brand/ensenas-imagotipo-black.svg" data-logo-dark="assets/brand/ensenas-imagotipo-white.svg" alt="Logotipo oficial de la plataforma enseñas" class="brand-official-logo" width="180" height="52">
         </a>
         <span class="brand-badge" aria-hidden="true">RA + LSC</span>
       </div>
 
       <nav aria-label="Navegación principal del sitio" class="header-nav">
+        <button type="button" class="btn btn-outline btn-sm theme-toggle" data-theme-toggle aria-pressed="false">
+          <span data-theme-icon aria-hidden="true">◐</span><span data-theme-label>Modo oscuro</span>
+        </button>
         <a href="#catalogo" class="btn btn-secondary btn-sm" aria-label="Explorar el catálogo de objetos educativos">
           Explorar Catálogo
         </a>
@@ -75,7 +79,7 @@
         </p>
       </div>
 
-      <!-- Cuadrícula Dinámica de Tarjetas (Previsualizaciones Limpias sin Códigos QR) -->
+      <!-- Cuadrícula Dinámica de Tarjetas con acceso a ficha didáctica y QR -->
       <div class="objects-grid" id="objects-grid-container" aria-live="polite">
         <!-- Tarjetas dinámicas inyectadas mediante JavaScript -->
       </div>
@@ -196,22 +200,28 @@
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   <span>Acceder al contenido</span>
                 </a>
-                <!-- <a
-                  href="objeto.html?id=${encodeURIComponent(item.id)}" 
-                  class="btn btn-secondary btn-sm" 
-                  aria-label="Ver ficha educativa, explicaciones y pasos de la seña en LSC de ${itemTitle}">
-                  <span>Ficha Educativa y Seña LSC</span>
-                </a> -->
+                <button type="button" class="btn btn-secondary btn-sm btn-open-card-ficha" data-object-id="${item.id}" aria-label="Ver ficha didáctica y QR de ${itemTitle}">
+                  Ficha y QR para aula
+                </button>
               </div>
             </article>
           `;
         });
 
         container.innerHTML = html;
+        container.querySelectorAll('.btn-open-card-ficha').forEach((button) => {
+          button.addEventListener('click', () => {
+            const object = objects.find((candidate) => candidate.id === button.dataset.objectId);
+            if (object && window.EnsenasPublicResources) window.EnsenasPublicResources.openFicha(object);
+          });
+        });
       }
 
       renderCatalog();
     });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
+  <script src="assets/js/qr-generator.js"></script>
+  <script src="assets/js/public-resources.js"></script>
 </body>
 </html>
