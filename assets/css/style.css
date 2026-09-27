@@ -3003,6 +3003,8 @@ body.modal-open { overflow: hidden; }
 .public-ficha-qr img { display: block; max-width: 100%; height: auto; }
 
 .ficha-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.public-ficha-dialog .ficha-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.public-ficha-dialog .ficha-actions .btn { justify-content: center; }
 
 .public-ficha-modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; }
 .public-ficha-backdrop { position: absolute; inset: 0; background: rgba(2, 6, 23, 0.7); backdrop-filter: blur(4px); }
@@ -3054,6 +3056,7 @@ html[data-theme="dark"] .form-textarea { background: var(--bg-main); color: var(
   .public-ficha-notes { align-items: center; text-align: center; }
   .public-ficha-qr { width: fit-content; margin: 0 auto; }
   .ficha-actions .btn { flex: 1 1 150px; justify-content: center; }
+  .public-ficha-dialog .ficha-actions { grid-template-columns: 1fr; }
 }
 
 /* ===========================================================================

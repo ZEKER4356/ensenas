@@ -77,7 +77,6 @@
           <div class="public-ficha-notes">
             <strong>Incluye</strong>
             <span>Modelo 3D, experiencia RA, audio explicativo y recursos LSC cuando estén disponibles.</span>
-            <a id="public-ficha-link" class="btn btn-outline btn-sm">Abrir ficha completa</a>
           </div>
           <div id="public-ficha-qr" class="public-ficha-qr" aria-label="Código QR para el aula"></div>
         </div>
@@ -108,9 +107,6 @@
     const info = objectInfo(object);
     modal.querySelector('#public-ficha-title').textContent = `Ficha didáctica: ${info.title}`;
     modal.querySelector('#public-ficha-description').textContent = info.description;
-    const link = modal.querySelector('#public-ficha-link');
-    link.href = `objeto.html?id=${encodeURIComponent(info.id)}#ficha-docente`;
-    link.textContent = 'Abrir ficha completa';
     const actionHost = modal.querySelector('#public-ficha-actions');
     actionHost.innerHTML = actionButtons(object, 'modal');
     bindActions(actionHost, object);
