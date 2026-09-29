@@ -58,6 +58,9 @@
   const audioTexto = data.audioTexto || '';
   const videoLscUrl = data.videoLscUrl || '';
   const videoAprenderLscUrl = data.videoAprenderLscUrl || '';
+  // La ruta experimental conserva este visor y sustituye solamente el motor
+  // que abre la cámara. La ficha ordinaria nunca carga ni usa 8th Wall.
+  const use8thWall = window.ENSENAS_USE_8TH_WALL === true;
 
   // Variables Three.js y estado de la experiencia
   let scene, camera, renderer, objectGroup, modelRoot, groundShadow;
@@ -71,6 +74,7 @@
   let xrReferenceSpace = null;
   let xrViewerSpace = null;
   let isWebXrAr = false;
+  let is8thWallAr = false;
   let hasSurfaceHit = false;
   let activeVideoLsc = '';
   let activeSignLearningVideo = '';
@@ -486,14 +490,18 @@
     if (groundShadow) groundShadow.visible = false;
 
     // Activar retícula y panel de escaneo
-    if (reticleGroup) reticleGroup.visible = !isWebXrAr;
+    if (reticleGroup) reticleGroup.visible = !isWebXrAr && !is8thWallAr;
     if (surfaceScanOverlay) surfaceScanOverlay.classList.remove('is-hidden');
     if (btnReanchorView) btnReanchorView.classList.add('is-hidden');
-    setAnchorActionAvailability(!isWebXrAr);
+    setAnchorActionAvailability(false);
     setInterpreterVisibility(false);
 
+    if (is8thWallAr) {
+      window.Ensenas8thWallController?.startScanning();
+    }
+
     if (arStatusText) {
-      arStatusText.textContent = isWebXrAr
+      arStatusText.textContent = (isWebXrAr || is8thWallAr)
         ? 'Busca una mesa o el suelo'
         : 'Vista 3D manual: este navegador no dispone de detección WebXR';
     }
@@ -503,6 +511,10 @@
    * Confirma la posición y ancla el objeto 3D en el plano detectado
    */
   function confirmObjectAnchor() {
+    if (is8thWallAr) {
+      window.Ensenas8thWallController?.placeAtReticle();
+      return;
+    }
     if (!isScanningSurface && isAnchored) return;
     if (isWebXrAr && !hasSurfaceHit) return;
 
@@ -559,7 +571,7 @@
     const textSpan = btnAnchorHere.querySelector('span');
     if (textSpan) {
       textSpan.textContent = canAnchor
-        ? (isWebXrAr ? 'Ubicar objeto aquí' : 'Ubicar objeto manualmente')
+        ? ((isWebXrAr || is8thWallAr) ? 'Ubicar objeto aquí' : 'Ubicar objeto manualmente')
         : 'Busca una superficie...';
     }
   }
@@ -572,6 +584,7 @@
 
     // Toque en pantalla para anclar si estamos en modo escaneo
     el.addEventListener('click', (e) => {
+      if (is8thWallAr) return;
       if (isArMode && isScanningSurface && (!isWebXrAr || hasSurfaceHit)) {
         confirmObjectAnchor();
       }
@@ -627,6 +640,7 @@
     el.addEventListener('touchstart', (e) => {
       const now = Date.now();
       if (e.touches.length === 1) {
+        if (is8thWallAr) return;
         if (isArMode && isScanningSurface && (!isWebXrAr || hasSurfaceHit)) {
           confirmObjectAnchor();
           return;
@@ -727,6 +741,14 @@
      ======================================================================== */
   async function startArMode() {
     try {
+      // En la ruta de prueba se usa detección de superficies de 8th Wall.
+      // Esta comprobación va antes de WebXR para que Android e iOS validen el
+      // mismo flujo, sin alterar el comportamiento publicado de la ficha.
+      if (use8thWall) {
+        await start8thWallArMode();
+        return;
+      }
+
       if (navigator.xr && await navigator.xr.isSessionSupported('immersive-ar')) {
         await startWebXrSession();
         return;
@@ -785,6 +807,84 @@
     }
   }
 
+  async function start8thWallArMode() {
+    const engine = window.Ensenas8thWallController;
+    if (!engine) {
+      alert('La prueba de RA no pudo preparar su motor. Recarga la página e inténtalo de nuevo.');
+      return;
+    }
+
+    isArMode = true;
+    is8thWallAr = true;
+    isWebXrAr = false;
+    sceneContainer.classList.add('ar-mode-active', 'ar-immersive');
+    document.body.classList.add('ar-active-body');
+
+    const grid = scene.getObjectByName('ar-reference-grid');
+    if (grid) grid.visible = false;
+    if (objectGroup) objectGroup.visible = false;
+    if (groundShadow) groundShadow.visible = false;
+    if (reticleGroup) reticleGroup.visible = false;
+    if (btnToggleAr) {
+      const textSpan = btnToggleAr.querySelector('.btn-text');
+      if (textSpan) textSpan.textContent = 'Salir de RA';
+    }
+
+    const started = await engine.start({
+      canvasHost,
+      normalCanvas: renderer?.domElement,
+      modelUrl,
+      callbacks: {
+        onStarted() {
+          // Evita mantener dos bucles WebGL abiertos mientras la cámara está
+          // activa; así el prototipo conserva más memoria para el seguimiento.
+          renderer?.setAnimationLoop(null);
+        },
+        onStopped() {
+          renderer?.setAnimationLoop(renderFrame);
+        },
+        onStatus(message) {
+          if (arStatusText) arStatusText.textContent = message;
+        },
+        onModelReady() {
+          if (arStatusText) arStatusText.textContent = 'Modelo listo. Busca una mesa o el suelo.';
+        },
+        onSurfaceFound() {
+          hasSurfaceHit = true;
+          setAnchorActionAvailability(true);
+          if (arStatusText && isScanningSurface) {
+            arStatusText.textContent = 'Superficie detectada. Toca la retícula o pulsa “Ubicar objeto aquí”.';
+          }
+        },
+        onPlaced() {
+          finish8thWallAnchor();
+        },
+        onError(message) {
+          if (arStatusText) arStatusText.textContent = message;
+        }
+      }
+    });
+
+    if (!started) {
+      stopArMode();
+      return;
+    }
+
+    startSurfaceScanning();
+    onWindowResize();
+  }
+
+  function finish8thWallAnchor() {
+    isScanningSurface = false;
+    isAnchored = true;
+    hasSurfaceHit = true;
+    sceneContainer.classList.remove('is-scanning');
+    if (surfaceScanOverlay) surfaceScanOverlay.classList.add('is-hidden');
+    if (btnReanchorView) btnReanchorView.classList.remove('is-hidden');
+    if (arStatusText) arStatusText.textContent = 'Objeto ubicado. Usa un dedo para rotar y dos para escalar.';
+    showMultimediaControls();
+  }
+
   async function startWebXrSession() {
     xrSession = await navigator.xr.requestSession('immersive-ar', {
       requiredFeatures: ['hit-test'],
@@ -822,6 +922,10 @@
   }
 
   function stopArMode() {
+    if (is8thWallAr) {
+      window.Ensenas8thWallController?.stop();
+      is8thWallAr = false;
+    }
     if (xrSession) {
       const session = xrSession;
       xrSession = null;

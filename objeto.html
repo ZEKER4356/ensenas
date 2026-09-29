@@ -53,6 +53,26 @@
 
   <!-- Datos JavaScript -->
   <script src="assets/js/data.js"></script>
+
+  <!-- El motor de seguimiento de superficies solo se solicita en la ruta de
+       prueba. La ficha ordinaria conserva exactamente el visor publicado. -->
+  <!-- This product includes the XR Engine software developed by Niantic
+       Spatial, Inc. Copyright © 2026 Niantic Spatial, Inc. All rights
+       reserved. License: https://github.com/8thwall/engine/blob/main/LICENSE -->
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      window.ENSENAS_USE_8TH_WALL = params.get('engine') === '8th';
+      if (!window.ENSENAS_USE_8TH_WALL) return;
+
+      const engine = document.createElement('script');
+      engine.src = 'https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js';
+      engine.async = true;
+      engine.crossOrigin = 'anonymous';
+      engine.dataset.preloadChunks = 'slam';
+      document.head.appendChild(engine);
+    })();
+  </script>
 </head>
 <body class="experience-page">
 
@@ -574,9 +594,21 @@
   <!-- Controladores Frontend -->
   <script>
     (window.ENSENAS_OBJECT_READY || Promise.resolve()).finally(() => {
-      const script = document.createElement('script');
-      script.src = 'assets/js/ar-viewer.js';
-      document.body.appendChild(script);
+      const loadViewer = () => {
+        const script = document.createElement('script');
+        script.src = 'assets/js/ar-viewer.js';
+        document.body.appendChild(script);
+      };
+
+      if (window.ENSENAS_USE_8TH_WALL) {
+        const adapter = document.createElement('script');
+        adapter.src = 'assets/js/8thwall-controller.js';
+        adapter.onload = loadViewer;
+        adapter.onerror = loadViewer;
+        document.body.appendChild(adapter);
+      } else {
+        loadViewer();
+      }
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>

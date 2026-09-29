@@ -1055,6 +1055,16 @@ html[data-theme="dark"] .auth-logo {
   height: 100% !important;
 }
 
+/* El lienzo de 8th Wall ocupa la misma caja del visor existente. No añade
+   una página ni una interfaz alternativa: solamente sustituye el render de
+   cámara durante la prueba con ?engine=8th. */
+#ar-8th-canvas {
+  position: absolute !important;
+  inset: 0;
+  z-index: 4 !important;
+  background: transparent;
+}
+
 /* Botón Salir / Ver Ficha */
 .btn-ar-exit {
   background: var(--color-primary) !important;
