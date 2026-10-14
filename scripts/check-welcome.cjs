@@ -26,6 +26,12 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
       assert.equal(await page.locator('.welcome-path').count(), 5);
       const videoBox = await page.locator('.welcome-video-card').boundingBox();
       const textBox = await page.locator('.welcome-copy').boundingBox();
+      assert.equal(videoBox.x, 0, 'Fondo de video de borde a borde');
+      assert.equal(videoBox.y, 0);
+      assert.equal(videoBox.width, width);
+      assert.equal(await page.locator('.welcome-video-card').evaluate(el => getComputedStyle(el).position), 'fixed');
+      assert.equal(await page.locator('.welcome-copy').evaluate(el => getComputedStyle(el).borderTopWidth), '0px', 'Sin caja alrededor del texto');
+      assert.equal(await page.locator('.welcome-eyebrow').count(), 0);
       assert.ok(textBox.x >= videoBox.x && textBox.y >= videoBox.y, 'Texto superpuesto dentro del video');
       assert.ok(textBox.y + textBox.height <= videoBox.y + videoBox.height + 1);
       assert.ok((await page.locator('.welcome-path').first().boundingBox()).y < 850, 'Accesos próximos a la bienvenida');
@@ -40,6 +46,7 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
       await page.locator('#site-reduce-motion').check();
       assert.equal(await page.locator('#welcome-message-animated').textContent(), await page.locator('#welcome-message-full').textContent());
       assert.equal(await page.locator('#welcome-title-animated').textContent(), await page.locator('#welcome-title-full').textContent());
+      assert.equal(await page.locator('.welcome-brand-highlight').textContent(), 'EnSeñas');
       // Cambiar contraste y tamaño se aplica con el panel abierto, sin modal.
       await page.locator('#site-high-contrast').check();
       assert.equal(await page.evaluate(() => document.documentElement.hasAttribute('data-high-contrast')), true);

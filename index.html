@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EnSeñas | Tecnología que nos acerca</title>
+  <title>EnSeñas | Aprende, explora y comparte</title>
   <meta name="description" content="Bienvenido a EnSeñas. Explora recursos educativos en realidad aumentada y comparte conocimiento en Lengua de Señas Colombiana.">
   <link rel="icon" type="image/png" href="ensenas%20logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,6 +20,21 @@
 </head>
 <body class="welcome-page">
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+  <figure class="welcome-video-card">
+    <div class="welcome-video-stage">
+      <video id="welcome-video" playsinline muted loop preload="metadata" hidden aria-label="Bienvenida en Lengua de Señas Colombiana"></video>
+      <div id="welcome-video-guide" class="welcome-video-guide">
+        <span class="welcome-video-label">Lengua de Señas Colombiana</span>
+        <div class="welcome-sign-symbol" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 33V15a4 4 0 0 1 8 0v15M30 27V9a4 4 0 0 1 8 0v21M38 27V15a4 4 0 0 1 8 0v21M46 30v-6a4 4 0 0 1 8 0v18c0 11-8 17-19 17-7 0-11-3-15-7L9 40a4 4 0 0 1 6-5l7 7"/><path d="M7 18V7h11M46 7h11v11M7 48v9h10"/></svg>
+        </div>
+        <h2>Una experiencia<br>que nos incluye.</h2>
+        <p>Espacio para el intérprete LSC.<br>Rostro y manos siempre visibles.</p>
+        <span class="welcome-video-pending">Video en preparación</span>
+      </div>
+    </div>
+    <figcaption id="welcome-video-caption" class="site-sr-only">Guía de grabación: intérprete a la derecha y zona izquierda libre para el texto. Grabar una versión horizontal y otra vertical, con rostro y manos completos. El video se mostrará como fondo de la página.</figcaption>
+  </figure>
   <header class="site-header" role="banner">
     <div class="header-container">
       <div class="brand-group">
@@ -37,23 +52,8 @@
   </header>
   <main id="main-content" class="welcome-main">
     <section class="welcome-hero" aria-labelledby="welcome-title">
-      <figure class="welcome-video-card">
-        <div class="welcome-video-stage">
-          <video id="welcome-video" playsinline muted loop preload="metadata" hidden aria-label="Bienvenida en Lengua de Señas Colombiana"></video>
-          <div id="welcome-video-guide" class="welcome-video-guide">
-            <span class="welcome-video-label">Lengua de Señas Colombiana</span>
-            <div class="welcome-sign-symbol" aria-hidden="true">
-              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 33V15a4 4 0 0 1 8 0v15M30 27V9a4 4 0 0 1 8 0v21M38 27V15a4 4 0 0 1 8 0v21M46 30v-6a4 4 0 0 1 8 0v18c0 11-8 17-19 17-7 0-11-3-15-7L9 40a4 4 0 0 1 6-5l7 7"/><path d="M7 18V7h11M46 7h11v11M7 48v9h10"/></svg>
-            </div>
-            <h2>Una experiencia<br>que nos incluye.</h2>
-            <p>Espacio para el intérprete LSC.<br>Rostro y manos siempre visibles.</p>
-            <span class="welcome-video-pending">Video en preparación</span>
-          </div>
-        </div>
-        <figcaption id="welcome-video-caption" class="site-sr-only">Guía de grabación: intérprete a la derecha, rostro y manos completos, fondo uniforme y buena iluminación. El texto ocupa la zona izquierda.</figcaption>
-      </figure>
+
       <div class="welcome-copy">
-        <span class="welcome-eyebrow"><span aria-hidden="true"></span>Tecnología que nos acerca</span>
         <h1 id="welcome-title"><span id="welcome-title-full" class="welcome-title-reserve">¡Bienvenido a EnSeñas!</span><span id="welcome-title-animated" aria-hidden="true"></span></h1>
         <div class="welcome-message">
           <p id="welcome-message-full">La realidad aumentada y la Lengua de Señas Colombiana se unen para aprender, explorar y compartir. Juntos, hacemos que el conocimiento sea accesible para todos.</p>

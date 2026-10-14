@@ -16,9 +16,18 @@
   const titleFull = document.getElementById('welcome-title-full');
   const titleAnimated = document.getElementById('welcome-title-animated');
   const title = titleFull.textContent.trim();
+  const brandIndex = title.indexOf('EnSeñas');
+  const prefix = document.createTextNode('');
+  const brand = document.createElement('span');
+  brand.className = 'welcome-brand-highlight';
+  const suffix = document.createTextNode('');
+  titleAnimated.replaceChildren(prefix, brand, suffix);
   const description = full.textContent.trim();
   const message = title + ' ' + description;
   const config = window.ENSENAS_WELCOME || {};
+  const mobileLayout = window.matchMedia('(max-width: 700px)');
+  const configuredSource = mobileLayout.matches && config.mobileVideoUrl
+    ? config.mobileVideoUrl : config.videoUrl;
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   let hasVideo = false;
   let paused = false;
@@ -31,7 +40,12 @@
 
   function draw(count) {
     characters = Math.max(0, Math.min(message.length, Math.floor(count)));
-    titleAnimated.textContent = title.slice(0, Math.min(characters, title.length));
+    const visibleTitle = title.slice(0, Math.min(characters, title.length));
+    if (brandIndex >= 0) {
+      prefix.textContent = visibleTitle.slice(0, brandIndex);
+      brand.textContent = visibleTitle.slice(brandIndex, brandIndex + 'EnSeñas'.length);
+      suffix.textContent = visibleTitle.slice(brandIndex + 'EnSeñas'.length);
+    } else prefix.textContent = visibleTitle;
     animated.textContent = description.slice(0, Math.max(0, characters - title.length - 1));
     const typing = characters < message.length && !paused && !reducedMotion();
     titleAnimated.classList.toggle('is-typing', typing && characters <= title.length);
@@ -59,9 +73,9 @@
     if (reducedMotion()) { draw(message.length); return; }
     if (hasVideo || paused || characters >= message.length) return;
     timer = window.setInterval(() => {
-      draw(characters + 2);
+      draw(characters + 1);
       if (characters >= message.length) { stopTimer(); animated.classList.remove('is-typing'); }
-    }, 65);
+    }, 75);
   }
   full.classList.add('welcome-message-reserve');
   full.setAttribute('aria-label', description);
@@ -69,8 +83,8 @@
   // es decorativa y nunca anuncia cada letra.
   full.style.visibility = '';
 
-  if (typeof config.videoUrl === 'string' && config.videoUrl.trim()) {
-    const source = new URL(config.videoUrl, window.location.href);
+  if (typeof configuredSource === 'string' && configuredSource.trim()) {
+    const source = new URL(configuredSource, window.location.href);
     if (['https:', 'http:'].includes(source.protocol)) {
       video.src = source.href;
       video.addEventListener('loadedmetadata', () => {

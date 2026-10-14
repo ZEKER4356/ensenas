@@ -32,10 +32,13 @@ el panel admin conserva inicio/cierre de sesión y el visor conserva controles.
 
 ## 2. Inclusión LSC, bienvenida y accesibilidad completa
 
-Bienvenida sobre video de fondo, texto translúcido y accesos compactos debajo.
+Video de fondo en toda la landing, incluida navegación y tarjetas. Texto y
+título de accesos flotan sobre degradados, sin caja de bienvenida. EnSeñas
+resaltado con color y escritura a un carácter cada 75 ms.
 Título y mensaje se escriben; texto íntegro disponible para ayudas de lectura,
 pausa/repetición y respeto a movimiento reducido. El intérprete mantiene una
-zona despejada; en móvil se reserva el área superior al cargar un video real.
+zona despejada a la derecha. Se admite un video vertical específico para móvil
+en mobileVideoUrl. Comprobar el encuadre cuando lleguen las grabaciones.
 Mientras no haya video, mostrar guía de grabación y animación de texto como
 demostración visual. Video permanente configurable en welcome-config.js;
 sincronía proporcional inicial y marcas temporales ajustables para traducción
