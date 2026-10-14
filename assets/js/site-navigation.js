@@ -7,7 +7,7 @@
   if (!container || !nav) return;
 
   const links = [
-    ['index.html#catalogo', 'Catálogo', 'index'],
+    ['catalogo.html', 'Catálogo', 'catalogo'],
     ['sube-tu-sena.html', 'Sube tu seña', 'sube-tu-sena'],
     ['comunidad.html', 'Comunidad', 'comunidad'],
     ['leaderboard.html', 'Leaderboard', 'leaderboard'],
@@ -16,7 +16,6 @@
   const page = window.location.pathname.split('/').pop().replace(/\.html$/, '') || 'index';
   const themeToggle = nav.querySelector('[data-theme-toggle]');
   const userMenu = nav.querySelector('#admin-user-menu');
-  const isAdmin = document.body.classList.contains('admin-body');
 
   // Conservar los nodos: admin.js y theme.js siguen usando los mismos botones.
   nav.replaceChildren();
@@ -37,11 +36,6 @@
     if (page === key) link.setAttribute('aria-current', 'page');
     list.appendChild(link);
   });
-  const adminLink = document.createElement('a');
-  adminLink.href = 'admin.html';
-  adminLink.textContent = 'Administración';
-  if (isAdmin) adminLink.setAttribute('aria-current', 'page');
-  list.appendChild(adminLink);
   menu.append(summary, list);
   nav.appendChild(menu);
   const desktopLayout = window.matchMedia('(min-width: 1200px)');
@@ -53,8 +47,11 @@
   const accessibilityButton = document.createElement('button');
   accessibilityButton.type = 'button';
   accessibilityButton.className = 'btn btn-outline btn-sm site-accessibility-button';
-  accessibilityButton.textContent = 'Accesibilidad';
-  accessibilityButton.setAttribute('aria-haspopup', 'dialog');
+  accessibilityButton.innerHTML = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="4" r="2"/><path d="m4 8 8 2 8-2M12 10v5m0 0-4 6m4-6 4 6"/></svg><span class="site-control-label">Accesibilidad</span>';
+  accessibilityButton.setAttribute('aria-label', 'Accesibilidad');
+  accessibilityButton.setAttribute('aria-expanded', 'false');
+  accessibilityButton.setAttribute('aria-controls', 'site-accessibility-panel');
+  accessibilityButton.title = 'Accesibilidad';
   nav.appendChild(accessibilityButton);
   if (userMenu) nav.appendChild(userMenu);
 
@@ -82,14 +79,17 @@
     };
   } catch (_) { /* Las preferencias siguen funcionando sin almacenamiento. */ }
 
-  const dialog = document.createElement('dialog');
+  const dialog = document.createElement('aside');
+  dialog.id = 'site-accessibility-panel';
   dialog.className = 'site-accessibility-dialog';
+  dialog.hidden = true;
+  dialog.setAttribute('role', 'region');
   dialog.setAttribute('aria-labelledby', 'site-accessibility-title');
   dialog.innerHTML = `
-    <form method="dialog" class="site-dialog-heading">
+    <div class="site-dialog-heading">
       <h2 id="site-accessibility-title">Accesibilidad</h2>
-      <button class="btn btn-secondary btn-sm" aria-label="Cerrar accesibilidad">Cerrar</button>
-    </form>
+      <button type="button" class="btn btn-secondary btn-sm" aria-label="Cerrar accesibilidad">Cerrar</button>
+    </div>
     <p>Adapta la lectura a tu comodidad. Tus preferencias se conservan al cambiar de página.</p>
     <label class="site-setting">Tamaño del texto
       <select id="site-text-size">
@@ -123,10 +123,20 @@
     preferences = { textSize: '100', contrast: false, motion: false };
     applyPreferences();
   });
+  function setPanelOpen(open, returnFocus = false) {
+    dialog.hidden = !open;
+    accessibilityButton.setAttribute('aria-expanded', String(open));
+    document.documentElement.toggleAttribute('data-accessibility-open', open);
+    if (open) dialog.querySelector('[aria-label="Cerrar accesibilidad"]').focus();
+    if (!open && returnFocus) accessibilityButton.focus();
+  }
   accessibilityButton.addEventListener('click', () => {
     if (!desktopLayout.matches) menu.open = false;
-    if (!dialog.open) dialog.showModal();
+    setPanelOpen(dialog.hidden);
   });
-  dialog.addEventListener('close', () => accessibilityButton.focus());
+  dialog.querySelector('[aria-label="Cerrar accesibilidad"]').addEventListener('click', () => setPanelOpen(false, true));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !dialog.hidden) setPanelOpen(false, true);
+  });
   applyPreferences();
 })();

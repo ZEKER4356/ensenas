@@ -18,9 +18,12 @@ Base: rama `codex/ajustes-innovafest`, creada desde `main`. El experimento de
 ## 1. Estructura y navegación móvil — en desarrollo
 
 Menú global en inicio, objeto, administración, error y nuevas páginas:
-Sube tu seña, Comunidad, Leaderboard y Colaboradores. Mantener el catálogo
-actual en index durante la transición. Estados vacíos reales, sin cifras ni
-aportes ficticios. Controles básicos de accesibilidad compartidos como base.
+Sube tu seña, Comunidad, Leaderboard y Colaboradores. Inicio independiente con
+bienvenida visual y accesos a las cinco secciones; catálogo en catalogo.html.
+Logo enlaza al inicio. Administración fuera del menú público. Estados vacíos
+reales, sin cifras ni aportes ficticios. Accesibilidad en panel no modal, con
+cambios visibles en tiempo real. En móvil, panel inferior que deja parte de la
+página disponible; en computador, barra lateral.
 
 Aceptar cuando: todos los enlaces funcionan; menú y diálogos accesibles por
 teclado; sin desbordamiento horizontal a 320/360/390/430 px; modo claro/oscuro;
@@ -30,6 +33,10 @@ el panel admin conserva inicio/cierre de sesión y el visor conserva controles.
 
 Bienvenida dividida, apilada en móvil; texto íntegro disponible aunque haya
 efecto de escritura; pausa/repetición y respeto a movimiento reducido.
+Mientras no haya video, mostrar guía de grabación y animación de texto como
+demostración visual. Video permanente configurable en welcome-config.js;
+sincronía proporcional inicial y marcas temporales ajustables para traducción
+exacta cuando llegue la grabación.
 Asignar videos a menús, títulos, descripciones y presentaciones del equipo.
 Usar un controlador compartido que pause el video anterior y permita reiniciar.
 No descargar todos los videos al abrir el catálogo. No recortar manos ni rostro.

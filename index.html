@@ -3,226 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>enseñas | Plataforma Educativa Inclusiva (RA + LSC)</title>
-  <meta name="description" content="Plataforma educativa inclusiva con modelos 3D interactivos en Realidad Aumentada, explicaciones en audio y traducción oficial en Lengua de Señas Colombiana (LSC).">
-
-  <!-- Favicon e Identidad Visual Oficial -->
+  <title>EnSeñas | Tecnología que nos acerca</title>
+  <meta name="description" content="Bienvenido a EnSeñas. Explora recursos educativos en realidad aumentada y comparte conocimiento en Lengua de Señas Colombiana.">
   <link rel="icon" type="image/png" href="ensenas%20logo.png">
-
-  <!-- Open Graph / Redes Sociales y Compartir -->
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="enseñas">
-  <meta property="og:title" content="enseñas | Educación Inclusiva con Realidad Aumentada y LSC">
-  <meta property="og:description" content="Explora objetos educativos interactivos en 3D/RA con explicaciones accesibles y señas en Lengua de Señas Colombiana.">
-  <meta property="og:image" content="ensenas%20logo.png">
-
-  <!-- Tipografía Oficial -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="assets/css/style.css">
-  <script src="assets/js/theme.js"></script>
   <link rel="stylesheet" href="assets/css/site-navigation.css">
+  <link rel="stylesheet" href="assets/css/welcome.css">
+  <script src="assets/js/theme.js"></script>
   <script src="assets/js/site-navigation.js" defer></script>
+  <script src="assets/js/welcome-config.js" defer></script>
+  <script src="assets/js/welcome.js" defer></script>
 </head>
-<body>
-  <!-- Salto accesible directo para lectores de pantalla y teclado -->
+<body class="welcome-page">
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
-
-  <!-- Encabezado Principal Semántico -->
   <header class="site-header" role="banner">
     <div class="header-container">
       <div class="brand-group">
-        <a href="index.html" class="brand-link" aria-label="Inicio enseñas - Plataforma de Realidad Aumentada y LSC">
-          <img src="ensenas%20imagotipo.png" data-theme-logo data-logo-light="ensenas%20imagotipo.png" data-logo-dark="ensenas%20imagotipo.png" alt="Logotipo oficial de la plataforma enseñas" class="brand-official-logo" width="180" height="52">
+        <a href="index.html" class="brand-link" aria-label="Inicio de EnSeñas">
+          <img src="ensenas%20imagotipo.png" data-theme-logo data-logo-light="ensenas%20imagotipo.png" data-logo-dark="ensenas%20imagotipo.png" alt="EnSeñas" class="brand-official-logo" width="180" height="52">
         </a>
       </div>
-
-      <nav aria-label="Navegación principal del sitio" class="header-nav">
+      <nav class="header-nav" aria-label="Navegación principal">
         <button type="button" class="btn btn-outline btn-sm theme-toggle" data-theme-toggle aria-pressed="false">
           <span data-theme-icon aria-hidden="true">◐</span><span data-theme-label>Modo oscuro</span>
         </button>
-        <a href="#catalogo" class="btn btn-secondary btn-sm" aria-label="Explorar el catálogo de objetos educativos">
-          Explorar Catálogo
-        </a>
-        <a href="admin.html" class="btn btn-primary btn-sm" aria-label="Acceder al panel de administración de modelos y códigos QR">
-          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Panel Admin</span>
-        </a>
+        <a href="catalogo.html" class="btn btn-secondary btn-sm">Catálogo</a>
       </nav>
     </div>
   </header>
-
-  <!-- Contenedor Principal Semántico -->
-  <main id="main-content" role="main">
-
-    <!-- Sección Hero de Presentación Educativa -->
-    <section class="catalog-hero" aria-labelledby="hero-title">
-      <div class="header-title-inner">
-        <h1 id="hero-title" class="catalog-title">
-          Educación Inclusiva con <span class="highlight-inline">Realidad Aumentada</span> y <span class="highlight-inline">LSC</span>
-        </h1>
-        <p class="catalog-lead">
-          Interactúa con modelos 3D en tu propio entorno mediante Realidad Aumentada en el navegador, escucha y lee explicaciones educativas y descubre señas compartidas por nuestra comunidad en <strong>Lengua de Señas Colombiana (LSC)</strong>.
-        </p>
-      </div>
-    </section>
-
-    <!-- Catálogo Público de Objetos Educativos con Tarjetas de Previsualización -->
-    <section id="catalogo" class="main-layout" aria-labelledby="catalogo-heading">
-      <div class="section-title-wrap">
-        <h2 id="catalogo-heading" class="section-title">
-          Objetos y Partes Educativas
-        </h2>
-        <p class="section-subtitle">
-          Selecciona una tarjeta para interactuar con su modelo 3D en Realidad Aumentada, escuchar su explicación en audio o consultar su ficha educativa completa en LSC.
-        </p>
-      </div>
-
-      <!-- Cuadrícula Dinámica de Tarjetas con acceso a ficha didáctica y QR -->
-      <div class="objects-grid" id="objects-grid-container" aria-live="polite">
-        <!-- Tarjetas dinámicas inyectadas mediante JavaScript -->
-      </div>
-    </section>
-
-  </main>
-
-  <footer class="site-footer institutional-footer" role="contentinfo">
-    <p>&copy; 2026 Todos los derechos reservados | Programa de Licenciatura en Tecnología, Universidad del Magdalena.</p>
-  </footer>
-
-  <!-- Cargar Capa de Datos y Renderizador del Catálogo -->
-  <script src="assets/js/data.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const container = document.getElementById('objects-grid-container');
-      if (!container) return;
-
-      container.innerHTML = `
-        <div style="grid-column: 1/-1; text-align: center; padding: 48px 20px; color: #64748B;">
-          <div class="spinner" style="margin: 0 auto 16px;" aria-hidden="true"></div>
-          <p>Cargando objetos educativos...</p>
-        </div>
-      `;
-
-      let objects = [];
-      try {
-        objects = await fetchAllObjectsAsync();
-      } catch (e) {
-        console.warn('Fallback a catálogo local:', e);
-        objects = getAllObjects();
-      }
-
-      function renderCatalog() {
-        if (!objects || objects.length === 0) {
-          container.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 48px 20px; color: #64748B;">
-              <p>No hay objetos activos disponibles en este momento.</p>
+  <main id="main-content" class="welcome-main">
+    <section class="welcome-hero" aria-labelledby="welcome-title">
+      <figure class="welcome-video-card">
+        <div class="welcome-video-stage">
+          <video id="welcome-video" playsinline muted loop controls preload="metadata" hidden aria-label="Bienvenida en Lengua de Señas Colombiana"></video>
+          <div id="welcome-video-guide" class="welcome-video-guide">
+            <span class="welcome-video-label">Lengua de Señas Colombiana</span>
+            <div class="welcome-sign-symbol" aria-hidden="true">
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 33V15a4 4 0 0 1 8 0v15M30 27V9a4 4 0 0 1 8 0v21M38 27V15a4 4 0 0 1 8 0v21M46 30v-6a4 4 0 0 1 8 0v18c0 11-8 17-19 17-7 0-11-3-15-7L9 40a4 4 0 0 1 6-5l7 7"/><path d="M7 18V7h11M46 7h11v11M7 48v9h10"/></svg>
             </div>
-          `;
-          return;
-        }
-
-        let html = '';
-        objects.forEach(item => {
-          const itemTitle = item.titulo || item.nombre || item.id;
-          const itemCategory = item.categoria_lsc || 'Ciencia y Tecnología';
-          const itemDesc = item.descripcion || 'Objeto interactivo para aprendizaje con Realidad Aumentada y LSC.';
-          
-          // Comprobar si tiene imagen de previa válida
-          const hasImage = item.icono_preview_url && 
-            !item.icono_preview_url.endsWith('.glb') && 
-            !item.icono_preview_url.endsWith('.gltf') && 
-            !item.icono_preview_url.endsWith('.usdz');
-
-          html += `
-            <article class="object-card preview-card" aria-labelledby="obj-title-${item.id}">
-              <!-- Cabecera de Tarjeta: Miniatura / Previsualización Visual del Modelo 3D -->
-              <div class="object-card-media-wrapper">
-                ${hasImage ? `
-                  <img 
-                    src="${item.icono_preview_url}" 
-                    alt="Fotografía o render 3D de ${itemTitle}" 
-                    class="card-preview-thumb" 
-                    loading="lazy">
-                ` : `
-                  <div class="card-preview-hologram" aria-hidden="true">
-                    <div class="hologram-cube">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                        <polyline points="2 17 12 22 22 17"/>
-                        <polyline points="2 12 12 17 22 12"/>
-                      </svg>
-                    </div>
-                    <span class="hologram-label">Modelo 3D Interactivo</span>
-                  </div>
-                `}
-                <span class="preview-badge-category" aria-label="Categoría: ${itemCategory}">
-                  ${itemCategory}
-                </span>
-                <span class="preview-badge-ra" title="Compatible con cámara y Realidad Aumentada">
-                  <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  <span>Cámara RA</span>
-                </span>
-              </div>
-
-              <!-- Contenido Textual Accesible -->
-              <div class="object-card-content">
-                <h3 id="obj-title-${item.id}" class="object-card-title">
-                  ${itemTitle}
-                </h3>
-                <p class="object-card-desc">
-                  ${itemDesc}
-                </p>
-
-                <div class="card-features-pills" aria-label="Características accesibles disponibles">
-                  <span class="pill-feature ${item.archivo_audio_url || item.explicacion_texto ? 'pill-active' : ''}">
-                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                    Audio
-                  </span>
-                  <span class="pill-feature ${item.video_lsc_url ? 'pill-active' : ''}">
-                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
-                    Seña LSC
-                  </span>
-                  <span class="pill-feature pill-active">
-                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
-                    3D 360°
-                  </span>
-                </div>
-              </div>
-
-              <!-- Acciones de Navegación Accesibles -->
-              <div class="object-card-actions">
-                <a 
-                  href="objeto.html?id=${encodeURIComponent(item.id)}"
-                  class="btn btn-primary"
-                  aria-label="Acceder al contenido educativo de ${itemTitle}">
-                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  <span>Acceder al contenido</span>
-                </a>
-                <button type="button" class="btn btn-secondary btn-sm btn-open-card-ficha" data-object-id="${item.id}" aria-label="Ver ficha didáctica y QR de ${itemTitle}">
-                  Ficha y QR para aula
-                </button>
-              </div>
-            </article>
-          `;
-        });
-
-        container.innerHTML = html;
-        container.querySelectorAll('.btn-open-card-ficha').forEach((button) => {
-          button.addEventListener('click', () => {
-            const object = objects.find((candidate) => candidate.id === button.dataset.objectId);
-            if (object && window.EnsenasPublicResources) window.EnsenasPublicResources.openFicha(object);
-          });
-        });
-      }
-
-      renderCatalog();
-    });
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
-  <script src="assets/js/qr-generator.js"></script>
-  <script src="assets/js/public-resources.js"></script>
+            <h2>Una bienvenida<br>en tu lengua</h2>
+            <p>Aquí encontrarás nuestro video de bienvenida en LSC.</p>
+            <span class="welcome-video-pending">Video en preparación</span>
+          </div>
+        </div>
+        <figcaption id="welcome-video-caption">Guía de grabación: plano medio, rostro y manos completos, fondo uniforme y buena iluminación.</figcaption>
+      </figure>
+      <div class="welcome-copy">
+        <span class="welcome-eyebrow"><span aria-hidden="true"></span>Tecnología que nos acerca</span>
+        <h1 id="welcome-title">¡Bienvenido a <span class="highlight-inline">EnSeñas!</span></h1>
+        <div class="welcome-message">
+          <p id="welcome-message-full">Una plataforma educativa inclusiva donde la realidad aumentada y la Lengua de Señas Colombiana se unen. Explora, aprende y comparte tus señas. Juntos, hacemos que el conocimiento sea accesible para todos.</p>
+          <p id="welcome-message-animated" aria-hidden="true"></p>
+        </div>
+        <div class="welcome-playback" aria-label="Controles de la bienvenida">
+          <button type="button" id="welcome-pause" class="welcome-text-button" aria-pressed="false">Pausar texto</button>
+          <button type="button" id="welcome-replay" class="welcome-text-button">Repetir</button>
+        </div>
+        <div class="welcome-principles" aria-label="Nuestra propuesta">
+          <span>Explora en RA</span><span>Aprende en LSC</span><span>Comparte en comunidad</span>
+        </div>
+      </div>
+    </section>
+    <section class="welcome-explore" aria-labelledby="welcome-explore-title">
+      <div class="welcome-explore-heading"><span class="welcome-eyebrow">Elige tu camino</span><h2 id="welcome-explore-title">Explora lo que EnSeñas tiene para ti</h2><p>Una misma comunidad. Muchas formas de aprender y participar.</p></div>
+      <div class="welcome-paths">
+        <a href="catalogo.html" class="welcome-path"><span class="welcome-path-number" aria-hidden="true">01</span><h3>Catálogo</h3><p>Descubre recursos educativos en 3D y realidad aumentada.</p><span class="welcome-path-action">Explorar recursos <span aria-hidden="true">↗</span></span></a>
+        <a href="sube-tu-sena.html" class="welcome-path"><span class="welcome-path-number" aria-hidden="true">02</span><h3>Sube tu seña</h3><p>Comparte una palabra o expresión y ayuda a otros a aprender.</p><span class="welcome-path-action">Quiero participar <span aria-hidden="true">↗</span></span></a>
+        <a href="comunidad.html" class="welcome-path"><span class="welcome-path-number" aria-hidden="true">03</span><h3>Comunidad</h3><p>Conoce las señas y las historias de quienes las comparten.</p><span class="welcome-path-action">Descubrir la comunidad <span aria-hidden="true">↗</span></span></a>
+        <a href="leaderboard.html" class="welcome-path"><span class="welcome-path-number" aria-hidden="true">04</span><h3>Leaderboard</h3><p>Celebra a las personas que hacen crecer nuestro banco de señas.</p><span class="welcome-path-action">Ver contribuciones <span aria-hidden="true">↗</span></span></a>
+        <a href="colaboradores.html" class="welcome-path"><span class="welcome-path-number" aria-hidden="true">05</span><h3>Colaboradores</h3><p>Conoce al equipo que hace posible esta experiencia.</p><span class="welcome-path-action">Conocer al equipo <span aria-hidden="true">↗</span></span></a>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer institutional-footer welcome-footer">
+    <p>&copy; 2026 · EnSeñas · Licenciatura en Tecnología, Universidad del Magdalena.</p>
+    <a href="admin.html">Panel de administración</a>
+  </footer>
 </body>
 </html>

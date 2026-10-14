@@ -24,7 +24,7 @@ const { chromium } = require(require.resolve('playwright', {
         await route.fulfill({ status: 404, body: 'Not found' });
       }
     });
-    const paths = ['index.html', 'sube-tu-sena.html', 'comunidad.html', 'leaderboard.html', 'colaboradores.html', 'admin.html', '404.html'];
+    const paths = ['index.html', 'catalogo.html', 'sube-tu-sena.html', 'comunidad.html', 'leaderboard.html', 'colaboradores.html', 'admin.html', '404.html'];
     for (const width of [320, 360, 390, 430, 768, 1366]) {
       await page.setViewportSize({ width, height: 850 });
       for (const path of paths) {
@@ -34,17 +34,22 @@ const { chromium } = require(require.resolve('playwright', {
         assert.equal(overflow, false, `Desbordamiento en ${path} a ${width}px`);
         const menu = page.locator('.site-menu');
         if (width < 1200) await page.locator('.site-menu-toggle').click();
-        assert.equal(await menu.locator('a').count(), 6);
+        assert.equal(await menu.locator('a').count(), 5);
+        assert.equal(await menu.locator('a[href="admin.html"]').count(), 0);
         assert.equal(await menu.locator('a').first().isVisible(), true);
         if (width < 1200) {
           await page.keyboard.press('Escape');
           assert.equal(await menu.getAttribute('open'), null);
         }
         await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
-        assert.equal(await page.getByRole('dialog').isVisible(), true);
+        const panel = page.getByRole('region', { name: 'Accesibilidad', exact: true });
+        assert.equal(await panel.isVisible(), true);
+        assert.equal(await page.getByRole('dialog').count(), 0);
+        // El panel no vuelve inerte el contenido: permite seguir usando la página.
+        assert.equal(await page.locator('main').first().evaluate(el => el.inert), false);
         await page.locator('#site-text-size').selectOption('150');
         await page.keyboard.press('Escape');
-        assert.equal(await page.getByRole('dialog').isVisible(), false);
+        assert.equal(await panel.isVisible(), false);
         if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) {
           console.log(await page.evaluate(() => [...document.querySelectorAll('body *')].filter(el => el.getBoundingClientRect().right > innerWidth + 1).map(el => ({ tag: el.tagName, class: el.className, right: Math.round(el.getBoundingClientRect().right) })).slice(0, 12)));
         }
@@ -57,7 +62,7 @@ const { chromium } = require(require.resolve('playwright', {
       }
     }
     assert.deepEqual(errors, [], 'Errores JavaScript durante la navegación');
-    console.log('OK: 7 páginas, 6 tamaños, menú, teclado, diálogo y persistencia de texto.');
+    console.log('OK: 8 páginas, 6 tamaños, menú, teclado, panel no modal y persistencia de texto.');
   } finally {
     await browser.close();
   }
