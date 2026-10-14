@@ -33,6 +33,14 @@ html[data-theme=dark] .community-status[data-error=true] { color: #FDA4AF; }
 .community-admin details > summary { cursor: pointer; font-weight: 600; min-height: 44px; padding: 12px 0; }
 .community-admin .community-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
 .community-progress { width: 100%; height: 12px; accent-color: var(--color-primary); }
+.community-google-button { min-height: 48px; width: 100%; justify-content: center; white-space: normal; }
+#community-email-access, #community-file-option { margin: 16px 0; }
+#community-email-access > summary, #community-file-option > summary { min-height: 44px; padding: 10px 0; cursor: pointer; font-size: .85rem; color: var(--text-main); }
+.community-recorder { min-width: 0; padding: 12px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--bg-surface-alt); }
+.community-recorder h3 { font-size: .95rem; margin-bottom: 10px; }
+.community-live { transform: scaleX(-1); max-height: 45dvh; }
+.community-recorder .community-actions .btn { min-height: 44px; flex: 1 1 130px; white-space: normal; }
+#recording-clock { font-variant-numeric: tabular-nums; }
 .community-random-dialog { width: min(480px, calc(100% - 24px)); max-height: calc(100dvh - 24px); margin: auto; padding: 20px; border: 1px solid var(--border-subtle); border-radius: 20px; color: var(--text-main); background: var(--bg-surface); overflow-y: auto; }
 .community-random-dialog::backdrop { background: #111827aa; }
 .community-random-dialog h2 { font-size: 1.2rem; margin: 12px 0; }

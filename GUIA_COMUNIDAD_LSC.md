@@ -6,8 +6,8 @@ Implementado en `codex/ajustes-innovafest`. La landing conserva su diseño. No e
 
 1. Selecciona el proyecto que usa el despliegue **Preview**. Es preferible un proyecto de pruebas separado; si comparte la base de producción, estas tablas son nuevas y no modifican los objetos ni los administradores existentes.
 2. Conserva una copia de seguridad disponible de la base. Abre SQL Editor y ejecuta **todo** `migrations/20261013_comunidad_lsc.sql` en una sola consulta. Debe terminar sin errores. Crea perfiles, aportes, interpretaciones, funciones y el bucket privado `ensenas-comunidad`.
-3. En Authentication habilita el proveedor Email, el registro de usuarios y la confirmación de correo. Los participantes usan **Supabase Auth**, no la tabla `administradores`. Nunca compartas una cuenta Admin para que alguien aporte una seña.
-4. En la configuración de URL de Auth, establece el sitio de prueba y autoriza sus direcciones `/sube-tu-sena` y `/sube-tu-sena.html` como redirecciones. La URL debe coincidir con `PUBLIC_APP_URL`. Usa una URL de rama estable para no cambiarla en cada despliegue.
+3. Los participantes usan **Supabase Auth**, no la tabla `administradores`. Para el lanzamiento se recomienda Google, sin depender de correos de confirmación de EnSeñas. Mantén el registro de usuarios permitido. No desactives Confirm email como atajo ni compartas una cuenta Admin.
+4. En la configuración de URL de Auth, establece el sitio de prueba y autoriza sus direcciones `/sube-tu-sena`, `/sube-tu-sena.html` y `/api/comunidad?action=google-callback` como redirecciones. La URL debe coincidir con `PUBLIC_APP_URL`. Usa una URL de rama estable para no cambiarla en cada despliegue.
 5. Comprueba que la Data API exponga el esquema `public`. Las tablas nuevas tienen RLS y no conceden acceso directo a `anon` ni a `authenticated`. El backend consulta con la clave secreta y comprueba cada permiso.
 
 No hagas público el bucket de Comunidad ni le añadas políticas de lectura o escritura generales. Si ya existen políticas amplias personalizadas sobre Storage, revisa que **no incluyan** `ensenas-comunidad`.
@@ -23,13 +23,27 @@ Mantén las variables actuales del catálogo y Admin. Para Comunidad se utilizan
 | `SUPABASE_ANON_KEY` o `SUPABASE_PUBLISHABLE_KEY` | Clave pública anon/publishable para Supabase Auth; es diferente de la anterior |
 | `JWT_SECRET` | El secreto actual del Admin, sin cambiarlo |
 | `PUBLIC_APP_URL` | Origen HTTPS de la rama de pruebas, sin ruta final |
+| `COMMUNITY_GOOGLE_AUTH_ENABLED` | `true` (predeterminado); `false` desactiva Google en UI y API |
+| `COMMUNITY_EMAIL_SIGNUP_ENABLED` | `false` (predeterminado); solo cambiar a `true` después de configurar SMTP y comprobar su entrega |
 
 Guarda los cambios y haz Redeploy del despliegue de la rama. No se necesita otra clave JWT para participantes. Sus sesiones usan cookies HttpOnly independientes y la identidad se verifica en Supabase Auth. El frontend no recibe claves secretas.
 
+### Activar Google (no exige dominio propio ni Gmail SMTP)
+
+1. Abre Google Cloud con la cuenta responsable de la plataforma y crea/selecciona un proyecto. En Google Auth Platform configura la audiencia **External**, el nombre EnSeñas y los correos de soporte/contacto. No actives servicios de pago para este acceso.
+2. Solicita únicamente `openid`, `userinfo.email` y `userinfo.profile`. No solicites Gmail, Drive ni permisos sensibles. Sin dominio personalizado la pantalla de Google puede mostrar el identificador de Supabase; no prometas una marca verificada instantáneamente.
+3. Crea un cliente OAuth de tipo **Web application**. Origen autorizado: el origen HTTPS de EnSeñas. URI de redirección de Google: copia **exactamente** el callback mostrado en Supabase → Authentication → Sign In / Providers → Google (`https://ID_PROYECTO.supabase.co/auth/v1/callback`). No confundas este callback de Google con el callback de nuestra API.
+4. Pega Client ID y Client Secret exclusivamente en ese proveedor de Supabase y habilítalo. No publiques el secreto en el repositorio, HTML o capturas.
+5. Añade en Supabase → URL Configuration la redirección exacta `https://ORIGEN_ENSEÑAS/api/comunidad?action=google-callback`. El navegador debe iniciar en la misma dirección estable configurada en `PUBLIC_APP_URL`; no uses la URL única del despliegue para esta prueba.
+6. En **Testing**, añade tu cuenta como usuario de prueba. Para admitir al público, revisa **Audience → Publish app / In production**; no dejes una aplicación restringida a usuarios de prueba. Las verificaciones adicionales que Google solicite no se pueden saltar. No compartas las credenciales de tu cuenta personal.
+7. Prueba entrada, cancelación, salida y reentrada desde un móvil. Google crea o accede a la cuenta de Supabase y el alias público elegido se conserva al volver. Google no otorga permisos Admin ni publica automáticamente videos.
+
+La API usa PKCE, un verificador temporal firmado y cookies HttpOnly. El callback intercambia el código en el servidor; no guarda tokens en localStorage ni los expone al JavaScript público. El registro nuevo por correo permanece cerrado sin SMTP; las cuentas confirmadas existentes pueden seguir entrando con contraseña. Para publicar en el dominio de producción, repite los orígenes/redirecciones para ese dominio y actualiza `PUBLIC_APP_URL` de Production antes de la prueba final.
+
 ## 3. Prueba completa antes de publicar
 
-1. Abre **Sube tu seña**, crea una cuenta con un correo real y alias público, confirma el correo e inicia sesión.
-2. Selecciona un video o abre la cámara del teléfono. En equipos sin captura nativa se abrirá el selector de archivos. Deben verse rostro, manos y torso completos. MP4 es la opción preferida; también se admite WebM y MOV si el navegador puede reproducirlos.
+1. Abre **Sube tu seña**, elige un alias público, acepta las condiciones y pulsa **Continuar con Google**. Comprueba que regresas con la sesión abierta. Una cuenta nueva con correo/contraseña solo estará disponible si el equipo activa esa alternativa con SMTP funcional.
+2. Pulsa **Grabar mi seña aquí**, permite la cámara frontal y luego **Comenzar grabación**. Pulsa **Terminar y revisar**: el archivo se prepara en memoria y aparece en la vista previa sin descargar/subir archivos manualmente. Escribe el significado, acepta la autorización y envía a revisión. Siempre puedes seleccionar un video existente; si el navegador no admite grabación, se ofrece la cámara nativa.
 3. El límite es 25 MB y 60 segundos. Tamaño y MIME se comprueban también en Storage/servidor; la duración se comprueba en el navegador y debe revisarla la persona moderadora. No existe transcodificación automática.
 4. Escribe el significado de **cualquier** palabra, saludo o expresión en LSC, y el contexto o variante regional si corresponde. Acepta la autorización y envía.
 5. Verifica que se muestre **pendiente de revisión** en Mis aportes. No debe aparecer todavía en Comunidad ni sumar al leaderboard. El servidor comprueba que el archivo almacenado coincide en tamaño y MIME antes de confirmar.
@@ -69,16 +83,34 @@ En Accesibilidad se puede desactivar la apertura automática; los botones manual
 - Los enlaces firmados duran una hora. Si una publicación se retira, no se generan nuevos enlaces públicos; uno emitido anteriormente puede seguir siendo válido hasta caducar. No es protección anticopia. Actualizar la lista renueva los enlaces caducados.
 - Rechazar o retirar no elimina automáticamente el archivo. Revisa periódicamente Storage y el consumo de tu plan. Para una solicitud de eliminación completa, retira primero la publicación y elimina **ese archivo exacto** desde Storage; no borres registros directamente de `storage.objects` mediante SQL. Conserva o elimina los metadatos según la política de retención que defina el equipo.
 - Los borradores abandonados y videos rechazados requieren limpieza supervisada. Nunca vacíes el bucket completo para hacer esta limpieza.
-- La entrega/confirmación de correos depende de Supabase Auth y de la configuración de envío del proyecto. Revisa sus límites antes del evento. No se ha implementado todavía una pantalla de recuperación de contraseña: mientras tanto el equipo puede gestionar la recuperación desde Supabase Auth.
+- La grabación necesita HTTPS y permiso de cámara; no se pide micrófono. Se intenta MP4 compatible primero y luego WebM según `MediaRecorder.isTypeSupported`. Objetivo: 640×480, 30 fps y 1,5 Mbps (aproximadamente 11 MB por minuto, no garantizado). Se detiene a 60 segundos o al acercarse al límite de tamaño. La vista de cámara está en espejo para encuadrar, pero el video final no se invierte ni recorta las señas. La cámara se libera al terminar/cancelar/salir. No hay conversión universal a MP4 ni transcodificación en el servidor; prueba especialmente reproducción cruzada de WebM entre Android e iPhone antes del evento.
+- No se envían videos automáticamente: la persona siempre revisa y confirma. No cierres la pestaña antes de enviarlos; la grabación vive en memoria hasta que se guarda en Storage. Cerrar sesión elimina la vista previa local.
+- Google evita nuestros correos de confirmación, pero requiere una cuenta Google y no elimina los límites gratuitos de usuarios, almacenamiento o tráfico. Si se activa correo/contraseña, la entrega depende de SMTP y sus límites. La recuperación con contraseña no tiene pantalla propia todavía; Google gestiona la recuperación de sus cuentas y el equipo puede gestionar las cuentas de contraseña desde Supabase Auth.
 
 ## Comprobaciones hechas en desarrollo
+
+### Puerta de salida a producción
+
+No hace falta repetir la migración ni desarrollar otro sistema de correo para Google. Orden de cierre:
+
+1. Activar Google en Preview y verificar entrada/cancelación/salida con una cuenta real.
+2. Desde un móvil, grabar una seña propia y enviarla. Comprobar pendiente → aprobación Admin → Comunidad → leaderboard → aprender desde catálogo. Verificar también con una persona distinta a la administradora.
+3. Comprobar en Android y Safari de iPhone el formato generado y la reproducción cruzada; sin videos reales de bienvenida/interfaz esas áreas conservan su guía/estado vacío, no una interpretación ficticia.
+4. Preparar Google para audiencia pública y las redirecciones del dominio de producción. Establecer `PUBLIC_APP_URL` de Production al dominio público real, sin sobreescribir el valor específico de la rama Preview. Mantener `COMMUNITY_EMAIL_SIGNUP_ENABLED=false` si no hay SMTP.
+5. Promover/integrar únicamente la revisión probada a `main`; verificar página pública, catálogo/QR, Admin, sesión Google, cámara y subida nuevamente en el dominio final. Conservar el despliegue anterior listo para revertir. Una reversión de frontend no revierte los datos añadidos; no borrar las tablas/bucket nuevos.
+
+La configuración de Google y esta prueba real son requisitos externos al código. No declarar listo para público solamente porque el despliegue diga Ready.
 
 `node scripts/check-community-api.cjs`: API aislada con servicios simulados: permisos, identidad, cuotas, comprobación de archivos, idempotencia, revisión, ranking, cookies y errores persistentes.
 
 `node scripts/check-community-ui.cjs`: navegador con API y Storage simulados: hover, teclado, móvil, formularios, vista previa, fallo/reintento de confirmación, moderación, publicación y descubrimiento aleatorio.
 
+`node scripts/check-community-oauth.cjs`: usa la librería oficial de Supabase instalada (o `ENSENAS_AUTH_PACKAGES` para un entorno temporal), con HTTP simulado. Verifica PKCE, callback, cuenta confirmada, alias, cookies, cancelación, manipulación/caducidad y registro por correo cerrado.
+
+`node scripts/check-community-recording.cjs`: cámara simulada mediante canvas con MediaRecorder real en Chrome. Prueba MP4 y alternativa WebM, archivo automático, permisos rechazados, grabar/cancelar/repetir, envío a revisión, liberación de cámara y tamaños móviles. No sustituye la prueba con cámaras Android/iPhone físicas.
+
 `node scripts/check-navigation.cjs` y `node scripts/check-welcome.cjs`: regresión de navegación, accesibilidad, tema y landing.
 
-No se ha ejecutado la migración contra tu Supabase ni se ha verificado una subida real en Vercel desde este entorno. Completa los pasos 1–3 para validar la integración real antes de llevarla a producción.
+El usuario ejecutó la migración y comprobó las tablas/bucket durante la activación guiada. Aún falta comprobar Google y una subida real hasta su aprobación en Vercel; las pruebas con servicios simulados no sustituyen esa validación. No promover la rama a producción hasta completar el recorrido en un dispositivo real.
 
 Referencias de implementación: [Supabase: verificar usuarios](https://supabase.com/docs/reference/javascript/auth-getuser), [subidas firmadas](https://supabase.com/docs/reference/javascript/file-buckets-createsigneduploadurl), [buckets privados](https://supabase.com/docs/guides/storage/buckets/fundamentals) y [relaciones en funciones PostgREST](https://docs.postgrest.org/en/v13/references/api/resource_embedding.html).

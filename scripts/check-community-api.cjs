@@ -64,6 +64,7 @@ require.cache[require.resolve('../api/auth')] = { exports: { verifyToken: token 
 const originalLoad = Module._load;
 Module._load = function (name, ...args) { return name === '@supabase/supabase-js' ? { createClient: () => ({ auth }) } : originalLoad.call(this, name, ...args); };
 process.env.SUPABASE_URL = 'https://example.supabase.co'; process.env.SUPABASE_ANON_KEY = 'test-public-key';
+process.env.COMMUNITY_EMAIL_SIGNUP_ENABLED = 'true';
 const handler = require('../api/comunidad');
 async function call(action, body, identity, origin) {
   const headers = { host: 'example.test' };

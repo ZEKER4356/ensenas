@@ -48,6 +48,7 @@ const ORIGIN = 'http://127.0.0.1:4173';
       if (url.pathname === '/api/objetos') return json([{ id: 'microbit', titulo: 'Micro:bit', descripcion: 'Placa educativa', activo: true }, { id: 'telescopio', titulo: 'Telescopio', descripcion: 'Explora el cielo', activo: true }]);
       if (url.pathname === '/api/auth') return json({ user: { nombre: 'Equipo', rol: 'admin' } });
       if (url.pathname === '/api/comunidad') {
+        if (action === 'config') return json({ success: true, google: true, email_signup: true, app_url: ORIGIN });
         if (action === 'interpretaciones') return json({ success: true, items: sources.filter(row => row.activo) });
         if (action === 'interpretaciones-admin') return json({ success: true, items: sources });
         if (action === 'sesion') return loggedIn ? json({ success: true, user: { id: 'a1', alias: 'Ana' } }) : json({ success: false, error: 'Inicia sesión.' }, 401);

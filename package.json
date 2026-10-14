@@ -8,6 +8,8 @@
     "start": "serve .",
     "test": "node scripts/check-community-api.cjs",
     "test:community-ui": "node scripts/check-community-ui.cjs",
+    "test:oauth": "node scripts/check-community-oauth.cjs",
+    "test:recording": "node scripts/check-community-recording.cjs",
     "test:navigation": "node scripts/check-navigation.cjs",
     "test:welcome": "node scripts/check-welcome.cjs"
   },

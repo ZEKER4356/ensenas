@@ -1,6 +1,7 @@
 /* Comunidad y LSC: cuentas independientes del panel Admin, videos privados. */
 const { getSupabase } = require('./db');
 const { verifyToken, isAdminUser } = require('./auth');
+const crypto = require('node:crypto');
 const MAX_BYTES = 25 * 1024 * 1024;
 const BUCKET = 'ensenas-comunidad';
 const MIMES = ['video/mp4', 'video/webm', 'video/quicktime'];
@@ -29,19 +30,57 @@ function cookies(req) {
   }
   return out;
 }
+function appendCookies(res, values) {
+  const previous = res.getHeader?.('Set-Cookie') || [];
+  res.setHeader('Set-Cookie', [...(Array.isArray(previous) ? previous : [previous]), ...values]);
+}
+function oauthCookie(res, value) {
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  appendCookies(res, [`ensenas_member_oauth=${value || ''}; HttpOnly; SameSite=Lax; Path=/api/comunidad; Max-Age=${value ? 600 : 0}${secure}`]);
+}
+function oauthSecret() {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) fail(503, 'Falta configurar el secreto del servidor para el acceso con Google.');
+  return process.env.JWT_SECRET;
+}
+function packOAuth(value) {
+  const payload = Buffer.from(JSON.stringify(value)).toString('base64url');
+  const signature = crypto.createHmac('sha256', oauthSecret()).update(payload).digest('base64url');
+  return `${payload}.${signature}`;
+}
+function unpackOAuth(value) {
+  const parts = (value || '').split('.');
+  if (parts.length !== 2 || value.length > 2000) fail(401, 'Vuelve a iniciar el acceso con Google desde esta página.');
+  const expected = crypto.createHmac('sha256', oauthSecret()).update(parts[0]).digest('base64url');
+  if (expected.length !== parts[1].length || !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(parts[1]))) fail(401, 'El acceso con Google no es válido.');
+  let state;
+  try { state = JSON.parse(Buffer.from(parts[0], 'base64url').toString()); } catch (_) { fail(401, 'El acceso con Google no es válido.'); }
+  if (!state.exp || state.exp < Date.now() || !/^[a-zA-Z0-9._~-]{43,128}$/.test(state.verifier || '')) fail(401, 'El acceso caducó. Vuelve a pulsar Continuar con Google.');
+  return state;
+}
+function appOrigin() {
+  let url;
+  try { url = new URL(process.env.PUBLIC_APP_URL); } catch (_) { fail(503, 'Falta configurar PUBLIC_APP_URL para el acceso con Google.'); }
+  if (url.username || url.password || (url.protocol !== 'https:' && !(process.env.NODE_ENV !== 'production' && url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)))) fail(503, 'Configura una dirección HTTPS válida para la plataforma.');
+  return url.origin;
+}
+function oauthClient(verifier) {
+  const values = { 'ensenas-community-oauth-code-verifier': JSON.stringify(verifier) };
+  return authClient({ flowType: 'pkce', storageKey: 'ensenas-community-oauth', persistSession: true,
+    storage: { getItem: key => values[key] || null, setItem: (key, value) => { values[key] = value; }, removeItem: key => { delete values[key]; } } });
+}
 function setSession(req, res, session) {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  res.setHeader('Set-Cookie', [
+  appendCookies(res, [
     `ensenas_member_access=${session?.access_token || ''}; HttpOnly; SameSite=Lax; Path=/api/comunidad; Max-Age=${session ? 3600 : 0}${secure}`,
     `ensenas_member_refresh=${session?.refresh_token || ''}; HttpOnly; SameSite=Lax; Path=/api/comunidad; Max-Age=${session ? 604800 : 0}${secure}`
   ]);
 }
-function authClient() {
+function authClient(options = {}) {
   const { createClient } = require('@supabase/supabase-js');
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) fail(503, 'Falta configurar Supabase Auth para la comunidad.');
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, ...options } });
 }
 async function member(sb, req, res) {
   const jar = cookies(req);
@@ -82,6 +121,7 @@ async function present(sb, rows, privateView = false) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Referrer-Policy', 'no-referrer');
   try {
     if (!['GET', 'POST'].includes(req.method)) { res.setHeader('Allow', 'GET, POST'); fail(405, 'Método no permitido.'); }
     if (req.method === 'POST' && req.headers.origin) {
@@ -92,7 +132,30 @@ module.exports = async function handler(req, res) {
     if (!sb) fail(503, 'Comunidad todavía no está configurada en Supabase.');
     const body = req.body || {};
     const action = req.method === 'GET' ? req.query?.action : body.action;
+    if (req.method === 'GET' && action === 'google-callback') {
+      // PKCE liga el código al navegador que inició el acceso. No hay tokens en JS/URL de la página.
+      oauthCookie(res, null);
+      let destination = '/sube-tu-sena?acceso=google-error';
+      try {
+        const origin = appOrigin();
+        const state = unpackOAuth(cookies(req).ensenas_member_oauth);
+        if (new URL(origin).host !== req.headers.host || state.origin !== origin || req.query.error || typeof req.query.code !== 'string' || req.query.code.length > 2048) fail(401, 'Acceso no válido.');
+        const result = await oauthClient(state.verifier).auth.exchangeCodeForSession(req.query.code);
+        if (result.error || !result.data?.session) fail(401, 'No se pudo completar el acceso con Google.');
+        const verified = await sb.auth.getUser(result.data.session.access_token);
+        const user = verified.data?.user;
+        if (verified.error || !user?.email_confirmed_at) fail(401, 'No se pudo verificar la cuenta.');
+        // Nunca usar el nombre/correo de Google como alias público sin elección de la persona.
+        const existing = checked(await sb.from('comunidad_perfiles').select('id').eq('id', user.id).maybeSingle());
+        if (!existing) checked(await sb.from('comunidad_perfiles').upsert({ id: user.id, alias: text(state.alias, 2, 40) }, { onConflict: 'id', ignoreDuplicates: true }));
+        setSession(req, res, result.data.session);
+        destination = '/sube-tu-sena?acceso=google-ok';
+      } catch (_) { /* No devolver códigos/tokens ni errores del proveedor a la página. */ }
+      res.setHeader('Location', destination);
+      return res.status(303).end();
+    }
     if (req.method === 'GET') {
+      if (action === 'config') return res.json({ success: true, google: process.env.COMMUNITY_GOOGLE_AUTH_ENABLED !== 'false', email_signup: process.env.COMMUNITY_EMAIL_SIGNUP_ENABLED === 'true', app_url: process.env.PUBLIC_APP_URL ? appOrigin() : null });
       if (action === 'interpretaciones') {
         const data = checked(await sb.from('lsc_interfaz').select('clave,etiqueta,video_url').eq('activo', true).limit(500));
         return res.json({ success: true, items: data });
@@ -125,7 +188,22 @@ module.exports = async function handler(req, res) {
       const rows = checked(result);
       return res.json({ success: true, items: await present(sb, rows, action !== 'senas'), more: (page + 1) * 24 < result.count });
     }
+    if (action === 'google') {
+      if (process.env.COMMUNITY_GOOGLE_AUTH_ENABLED === 'false') fail(503, 'El acceso con Google todavía no está habilitado.');
+      if (body.consent !== true) fail(400, 'Acepta las condiciones de participación antes de continuar.');
+      const alias = text(body.alias, 2, 40), origin = appOrigin();
+      if (new URL(origin).host !== req.headers.host) fail(400, 'Abre la dirección principal de esta rama para entrar con Google.');
+      const values = {};
+      const storage = { getItem: key => values[key] || null, setItem: (key, value) => { values[key] = value; }, removeItem: key => { delete values[key]; } };
+      const client = authClient({ flowType: 'pkce', storageKey: 'ensenas-community-oauth', persistSession: true, storage });
+      const result = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${origin}/api/comunidad?action=google-callback`, skipBrowserRedirect: true, queryParams: { prompt: 'select_account' } } });
+      const verifier = values['ensenas-community-oauth-code-verifier'];
+      if (result.error || !result.data?.url || !verifier) fail(503, 'No se pudo iniciar Google. Revisa su configuración en Supabase.');
+      oauthCookie(res, packOAuth({ verifier: JSON.parse(verifier), alias, origin, exp: Date.now() + 600000 }));
+      return res.json({ success: true, url: result.data.url });
+    }
     if (action === 'registro' || action === 'login') {
+      if (action === 'registro' && process.env.COMMUNITY_EMAIL_SIGNUP_ENABLED !== 'true') fail(503, 'Usa Continuar con Google. El registro por correo estará disponible cuando se configure su envío.');
       const email = text(body.email, 5, 254).toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, 'Escribe un correo válido.');
       const password = typeof body.password === 'string' ? body.password : '';

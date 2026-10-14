@@ -57,7 +57,15 @@
     mount.innerHTML = `
       <div class="community-box" id="member-auth" data-lsc-key="community.cuenta"><h2>Tu espacio en la comunidad</h2>
         <p>La cuenta es solo para tus aportes; no permite administrar la plataforma. Tu correo no se publica.</p>
-        <div class="community-actions"><button type="button" class="btn btn-secondary btn-sm" data-auth-mode="login" aria-pressed="true">Iniciar sesión</button><button type="button" class="btn btn-outline btn-sm" data-auth-mode="registro" aria-pressed="false">Crear cuenta</button></div>
+        <form id="community-google-form" class="community-form">
+          <label>Tu alias en la comunidad<input name="alias" required minlength="2" maxlength="40" autocomplete="nickname" placeholder="El nombre que quieres mostrar"></label>
+          <label class="community-consent"><input name="consent" type="checkbox" required>Tengo 18 años o participo con mi representante autorizado. Acepto aportar contenido educativo respetuoso.</label>
+          <button type="submit" class="btn btn-secondary community-google-button" data-lsc-key="community.google">Continuar con Google</button>
+          <p class="community-note">Sirve para crear tu cuenta o volver a entrar. Si ya participaste, conservamos tu alias. No necesitas otra contraseña ni un correo de confirmación de EnSeñas. Tus videos siempre pasan por revisión.</p>
+        </form>
+        <p id="google-canonical" class="community-status" hidden></p>
+        <details id="community-email-access"><summary>Ya tengo una cuenta con correo y contraseña</summary>
+        <div class="community-actions"><button type="button" class="btn btn-secondary btn-sm" data-auth-mode="login" aria-pressed="true">Iniciar sesión</button><button type="button" class="btn btn-outline btn-sm" data-auth-mode="registro" aria-pressed="false" hidden>Crear cuenta</button></div>
         <form id="community-auth-form" class="community-form">
           <label id="alias-label" hidden>Alias público<input name="alias" minlength="2" maxlength="40" autocomplete="nickname"></label>
           <label>Correo<input name="email" type="email" required maxlength="254" autocomplete="email"></label>
@@ -65,6 +73,7 @@
           <label id="account-consent-label" class="community-consent" hidden><input name="consent" type="checkbox">Tengo 18 años o participo con mi representante autorizado. Acepto usar esta cuenta para aportar contenido educativo respetuoso.</label>
           <button type="submit" class="btn btn-primary" data-lsc-key="community.login">Entrar</button>
         </form>
+        </details>
         <p class="community-status" id="auth-status" role="status"></p>
       </div>
       <div id="member-workspace" hidden>
@@ -76,8 +85,16 @@
             <form id="community-upload-form" class="community-form">
               <label>¿Qué significa?<input name="significado" required minlength="2" maxlength="100" placeholder="Por ejemplo: Buenos días"></label>
               <label>Contexto o variante regional (opcional)<textarea name="descripcion" maxlength="500" rows="3"></textarea></label>
-              <label>Selecciona un video<input id="community-file" type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" required></label>
-              <button type="button" id="community-record" class="btn btn-secondary btn-sm">Grabar con la cámara del teléfono</button>
+              <button type="button" id="community-record" class="btn btn-secondary btn-sm" data-lsc-key="community.grabar">Grabar mi seña aquí</button>
+              <section id="community-recorder" class="community-recorder" aria-labelledby="recorder-heading" hidden>
+                <h3 id="recorder-heading">Encuadra rostro, manos y torso</h3>
+                <video id="community-live" class="community-video community-live" autoplay muted playsinline aria-label="Cámara frontal, vista previa en espejo"></video>
+                <p id="recording-clock" class="community-note" role="timer" aria-label="Tiempo de grabación">00:00 / 01:00</p>
+                <div class="community-actions"><button type="button" id="record-start" class="btn btn-primary btn-sm" disabled>Comenzar grabación</button><button type="button" id="record-stop" class="btn btn-primary btn-sm" hidden>Terminar y revisar</button><button type="button" id="record-cancel" class="btn btn-outline btn-sm">Cancelar cámara</button></div>
+                <p id="record-status" class="community-status" role="status"></p>
+              </section>
+              <details id="community-file-option"><summary>O seleccionar un video que ya tengas</summary><label>Selecciona un video<input id="community-file" type="file" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"></label></details>
+              <button type="button" id="community-native-camera" class="btn btn-outline btn-sm" hidden>Usar la cámara del teléfono</button>
               <input type="file" id="community-camera" accept="video/*" capture="user" hidden>
               <div id="community-mobile-preview" hidden></div>
               <p class="community-note">Hasta 25 MB y 60 segundos. MP4 es la opción más compatible. Encuadra rostro, manos y torso, con buena luz y sin recortar los movimientos.</p>
@@ -92,6 +109,7 @@
         <section class="community-box"><div class="community-actions"><h2>Mis aportes</h2><button type="button" id="refresh-mine" class="btn btn-outline btn-sm">Actualizar</button></div><p class="community-status" id="mine-status" role="status"></p><div id="my-signs" class="community-grid"></div><button type="button" id="more-mine" class="btn btn-secondary btn-sm" hidden>Ver más aportes</button></section>
       </div>`;
     let mode = 'login', file = null, objectURL = null, validated = false, reservedId = null, busy = false, myPage = 0;
+    let cameraStream = null, recorder = null, recordTimer = null, openingCamera = false, cameraRequest = 0, discardRecording = false, recordedSeconds = null;
     const form = $('#community-auth-form'), authStatus = $('#auth-status'), uploadForm = $('#community-upload-form');
     const preview = $('#community-preview'), uploadStatus = $('#upload-status'), send = $('#community-send');
     const compact = matchMedia('(max-width: 700px)');
@@ -103,6 +121,30 @@
     }
     compact.addEventListener('change', placePreview); placePreview();
     const authButtons = [...document.querySelectorAll('[data-auth-mode]')];
+    const googleForm = $('#community-google-form');
+    let authConfiguration;
+    async function configureAuth() {
+      try {
+        const config = await api('config'); authConfiguration = config;
+        googleForm.hidden = !config.google;
+        authButtons.find(button => button.dataset.authMode === 'registro').hidden = !config.email_signup;
+        if (config.email_signup) $('#community-email-access').open = true;
+        if (config.app_url && config.app_url !== location.origin) {
+          const notice = $('#google-canonical'); notice.hidden = false; googleForm.hidden = true;
+          notice.append(el('span', 'Para entrar con Google usa la dirección principal: '));
+          const link = el('a', 'Abrir Sube tu seña', 'btn btn-secondary btn-sm'); link.href = `${config.app_url}/sube-tu-sena`; notice.append(link);
+        }
+      } catch (error) { status(authStatus, error.message, true); }
+    }
+    googleForm.addEventListener('submit', async event => {
+      event.preventDefault(); const button = googleForm.querySelector('[type=submit]'); button.disabled = true;
+      status(authStatus, 'Abriendo Google para entrar de forma segura…');
+      try {
+        if (!authConfiguration?.google) throw new Error('Espera a que se cargue la configuración de acceso e inténtalo de nuevo.');
+        const data = await api('google', { alias: googleForm.elements.alias.value, consent: googleForm.elements.consent.checked });
+        location.assign(data.url);
+      } catch (error) { status(authStatus, error.message, true); button.disabled = false; }
+    });
     authButtons.forEach(button => button.addEventListener('click', () => {
       mode = button.dataset.authMode;
       authButtons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
@@ -149,38 +191,40 @@
       finally { button.disabled = false; authButtons.forEach(item => item.disabled = false); }
     });
     $('#member-logout').addEventListener('click', async event => {
-      if (busy) { status(uploadStatus, 'Espera a que termine el envío antes de cerrar sesión.', true); return; }
+      if (busy || recorder?.state === 'recording') { status(uploadStatus, 'Termina la grabación o el envío antes de cerrar sesión.', true); return; }
       event.currentTarget.disabled = true;
-      try { await api('logout', {}); $('#my-signs').replaceChildren(); $('#member-workspace').hidden = true; $('#member-auth').hidden = false; uploadForm.reset(); clearPreview(); form.elements.password.value = ''; status(authStatus, 'Sesión cerrada.'); }
+      try { await api('logout', {}); closeCamera(); $('#my-signs').replaceChildren(); $('#member-workspace').hidden = true; $('#member-auth').hidden = false; uploadForm.reset(); clearPreview(); form.elements.password.value = ''; status(authStatus, 'Sesión cerrada.'); }
       catch (error) { status(uploadStatus, error.message, true); }
       finally { $('#member-logout').disabled = false; }
     });
     function clearPreview() {
-      validated = false; reservedId = null; file = null; send.disabled = true;
+      validated = false; reservedId = null; file = null; recordedSeconds = null; send.disabled = true;
       preview.pause(); preview.removeAttribute('src'); preview.load(); preview.hidden = true;
       if (objectURL) URL.revokeObjectURL(objectURL); objectURL = null;
       $('#preview-help').hidden = false;
     }
-    function selectFile(selected) {
+    function selectFile(selected, duration = null) {
       clearPreview(); status(uploadStatus, '');
       if (!selected) return;
       const extension = selected.name.split('.').pop().toLowerCase();
       const mime = selected.type || ({ mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime' }[extension]);
       if (!['video/mp4', 'video/webm', 'video/quicktime'].includes(mime) || selected.size > 25 * 1024 * 1024 || selected.size === 0) { status(uploadStatus, 'Elige un video MP4, WebM o MOV de hasta 25 MB.', true); return; }
       file = { value: selected.type === mime ? selected : new File([selected], selected.name, { type: mime }), mime }; objectURL = URL.createObjectURL(file.value);
+      recordedSeconds = duration;
       preview.src = objectURL; preview.hidden = false; $('#preview-help').hidden = true;
       status(uploadStatus, 'Comprobando el video…');
     }
     function validatePreview() {
       if (!file) return;
-      if (!Number.isFinite(preview.duration)) return;
-      validated = Number.isFinite(preview.duration) && preview.duration > 0 && preview.duration <= 60 && preview.videoWidth > 0;
+      const duration = recordedSeconds === null ? preview.duration : recordedSeconds;
+      if (!Number.isFinite(duration)) return;
+      validated = duration > 0 && duration <= 60 && preview.videoWidth > 0;
       send.disabled = !validated;
       if (preview.currentTime > 60) preview.currentTime = 0;
       status(uploadStatus, validated ? 'Video listo. Reprodúcelo y revisa las manos antes de enviarlo.' : 'El video debe durar entre 1 y 60 segundos. Exporta una versión MP4 si no se puede leer.', !validated);
     }
     preview.addEventListener('loadedmetadata', () => {
-      if (!Number.isFinite(preview.duration)) {
+      if (recordedSeconds === null && !Number.isFinite(preview.duration)) {
         // Algunas grabaciones WebM no escriben duración hasta leer su último bloque.
         preview.currentTime = 1e7;
         return;
@@ -189,12 +233,86 @@
     });
     preview.addEventListener('durationchange', validatePreview);
     preview.addEventListener('error', () => { if (file) { validated = false; send.disabled = true; status(uploadStatus, 'Este navegador no puede leer el video. Prueba con un MP4 compatible.', true); } });
-    $('#community-file').addEventListener('change', event => selectFile(event.target.files[0]));
-    $('#community-record').addEventListener('click', () => $('#community-camera').click());
+    const live = $('#community-live'), recordPanel = $('#community-recorder'), recordStatus = $('#record-status');
+    const recordButton = $('#community-record'), startRecording = $('#record-start'), stopRecording = $('#record-stop');
+    function closeCamera() {
+      cameraRequest++; openingCamera = false;
+      if (recordTimer) clearInterval(recordTimer); recordTimer = null;
+      if (recorder) { discardRecording = true; if (recorder.state !== 'inactive') recorder.stop(); }
+      cameraStream?.getTracks().forEach(track => track.stop()); cameraStream = null;
+      live.srcObject = null; recordPanel.hidden = true;
+      recordButton.disabled = false; startRecording.disabled = true; startRecording.hidden = false; stopRecording.hidden = true; stopRecording.disabled = false;
+    }
+    function cameraFallback(message) {
+      status(uploadStatus, message, true); $('#community-file-option').open = true;
+      $('#community-native-camera').hidden = false;
+    }
+    recordButton.addEventListener('click', async () => {
+      if (busy || openingCamera || recorder) return;
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+        cameraFallback('Este navegador no admite grabación dentro de la página. Puedes usar la cámara del teléfono o seleccionar un video.'); return;
+      }
+      closeCamera(); const request = ++cameraRequest; openingCamera = true; recordButton.disabled = true;
+      recordPanel.hidden = false; status(recordStatus, 'Permite la cámara para preparar tu grabación. No se usa el micrófono.');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30, max: 30 } } });
+        if (request !== cameraRequest) { stream.getTracks().forEach(track => track.stop()); return; }
+        cameraStream = stream; live.srcObject = stream; await live.play();
+        if (request !== cameraRequest) return;
+        status(uploadStatus, ''); $('#community-file-option').open = false; $('#community-native-camera').hidden = true;
+        startRecording.disabled = false; $('#recording-clock').textContent = '00:00 / 01:00';
+        status(recordStatus, 'Cuando estés listo, pulsa Comenzar. La vista previa es un espejo; el video enviado conserva la orientación real de tu seña.');
+      } catch (error) {
+        if (request !== cameraRequest) return;
+        closeCamera(); cameraFallback(error.name === 'NotAllowedError' ? 'No se permitió la cámara. Puedes habilitarla en el navegador y reintentar, o seleccionar un video.' : 'No pudimos abrir la cámara. Cierra otras aplicaciones que la usen o selecciona un video.');
+      } finally { if (request === cameraRequest) openingCamera = false; }
+    });
+    startRecording.addEventListener('click', () => {
+      if (!cameraStream || recorder?.state === 'recording') return;
+      const mime = ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp8', 'video/webm;codecs=vp9', 'video/webm'].find(type => MediaRecorder.isTypeSupported(type));
+      if (!mime) { closeCamera(); cameraFallback('El navegador no puede preparar un formato de video compatible. Usa la cámara del teléfono o selecciona un MP4.'); return; }
+      try {
+        clearPreview(); discardRecording = false;
+        status(uploadStatus, '');
+        recorder = new MediaRecorder(cameraStream, { mimeType: mime, videoBitsPerSecond: 1500000 });
+        const activeRecorder = recorder;
+        const chunks = []; let bytes = 0; const began = performance.now();
+        let failure = false;
+        recorder.addEventListener('dataavailable', event => { if (event.data.size) { chunks.push(event.data); bytes += event.data.size; if (bytes >= 24 * 1024 * 1024 && recorder.state === 'recording') recorder.stop(); } });
+        recorder.addEventListener('error', () => { failure = true; closeCamera(); cameraFallback('La grabación se interrumpió. Intenta otra vez o selecciona un video.'); });
+        recorder.addEventListener('stop', () => {
+          const discarded = discardRecording || failure;
+          const duration = (performance.now() - began) / 1000;
+          const type = activeRecorder.mimeType.split(';')[0];
+          closeCamera(); recorder = null;
+          if (discarded) return;
+          const blob = new Blob(chunks, { type });
+          if (duration < 1 || !blob.size) { status(uploadStatus, 'Graba al menos un segundo para poder revisar tu seña.', true); return; }
+          selectFile(new File([blob], `mi-sena-${Date.now()}.${type === 'video/mp4' ? 'mp4' : 'webm'}`, { type }), duration);
+          // El archivo queda en memoria; no requiere descarga ni selección manual.
+          preview.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'nearest' });
+        });
+        recorder.start(500); startRecording.hidden = true; stopRecording.hidden = false; send.disabled = true;
+        status(recordStatus, 'Grabando. Pulsa Terminar y revisar cuando acabes; se detiene automáticamente a los 60 segundos.');
+        recordTimer = setInterval(() => {
+          const seconds = Math.min(60, Math.floor((performance.now() - began) / 1000));
+          $('#recording-clock').textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')} / 01:00`;
+          // Un segundo de margen para que el navegador termine el último bloque.
+          if (performance.now() - began >= 59000 && recorder?.state === 'recording') recorder.stop();
+        }, 250);
+      } catch (_) { closeCamera(); cameraFallback('No se pudo iniciar la grabación. Reintenta o usa un video de tu dispositivo.'); }
+    });
+    stopRecording.addEventListener('click', () => { if (recorder?.state === 'recording') { stopRecording.disabled = true; recorder.stop(); } });
+    $('#record-cancel').addEventListener('click', () => { closeCamera(); stopRecording.disabled = false; status(uploadStatus, 'Cámara cerrada. No se envió ningún video.'); });
+    // Liberar cámara al salir o esconder la página, sin enviar grabaciones automáticamente.
+    document.addEventListener('visibilitychange', () => { if (document.hidden && cameraStream) { if (recorder?.state === 'recording') recorder.stop(); else closeCamera(); } });
+    window.addEventListener('pagehide', closeCamera);
+    $('#community-file').addEventListener('change', event => { closeCamera(); selectFile(event.target.files[0]); });
+    $('#community-native-camera').addEventListener('click', () => $('#community-camera').click());
     $('#community-camera').addEventListener('change', event => {
       const selected = event.target.files[0]; if (!selected) return;
       // La grabación nativa entrega el mismo archivo que el selector; no exige otra app.
-      const transfer = new DataTransfer(); transfer.items.add(selected); $('#community-file').files = transfer.files; selectFile(selected);
+      closeCamera(); selectFile(selected);
     });
     function upload(url, selected) {
       return new Promise((resolve, reject) => {
@@ -207,7 +325,8 @@
       });
     }
     uploadForm.addEventListener('submit', async event => {
-      event.preventDefault(); if (!validated || !file || busy) return;
+      event.preventDefault(); if (!validated || !file || busy || recorder?.state === 'recording' || openingCamera) return;
+      closeCamera();
       busy = true; preview.pause();
       const controls = [...uploadForm.querySelectorAll('input,textarea,button')]; controls.forEach(node => node.disabled = true);
       $('#upload-progress').hidden = false; $('#upload-progress').value = 0;
@@ -227,7 +346,7 @@
       } catch (error) { status(uploadStatus, `${error.message}${reservedId ? ' Pulsa de nuevo para confirmar el envío sin volver a subir el video.' : ''}`, true); }
       finally { busy = false; controls.forEach(node => node.disabled = false); send.disabled = !validated; $('#upload-progress').hidden = true; }
     });
-    window.addEventListener('beforeunload', event => { if (busy) { event.preventDefault(); event.returnValue = ''; } });
+    window.addEventListener('beforeunload', event => { if (busy || recorder?.state === 'recording') { event.preventDefault(); event.returnValue = ''; } });
     $('#refresh-mine').addEventListener('click', () => mine());
     $('#more-mine').addEventListener('click', () => mine(true));
     // No guardar tokens de confirmación en historial ni utilizarlos como sesión implícita.
@@ -235,7 +354,12 @@
       const failed = location.hash.includes('error_description='); history.replaceState(null, '', location.pathname + location.search);
       status(authStatus, failed ? 'El enlace de confirmación no es válido o caducó. Revisa tu correo.' : 'Correo confirmado. Inicia sesión para aportar una seña.', failed);
     }
-    session();
+    const access = new URLSearchParams(location.search).get('acceso');
+    if (access) {
+      const url = new URL(location.href); url.searchParams.delete('acceso'); history.replaceState(null, '', url.pathname + url.search);
+      if (access === 'google-error') status(authStatus, 'No se completó el acceso con Google. Si cancelaste, puedes volver a intentarlo; si persiste, avisa al equipo para revisar la configuración.', true);
+    }
+    configureAuth(); session();
   }
 
   function initGallery() {
