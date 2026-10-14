@@ -126,12 +126,14 @@
     authView.classList.remove('is-hidden');
     dashboardView.classList.add('is-hidden');
     adminUserMenu.classList.add('is-hidden');
+    window.dispatchEvent(new CustomEvent('ensenas:admin-session', { detail: { active: false } }));
   }
 
   function showDashboardView(user) {
     authView.classList.add('is-hidden');
     dashboardView.classList.remove('is-hidden');
     adminUserMenu.classList.remove('is-hidden');
+    window.dispatchEvent(new CustomEvent('ensenas:admin-session', { detail: { active: true } }));
     if (user && user.nombre) {
       adminUserName.textContent = user.nombre;
     }

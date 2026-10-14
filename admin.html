@@ -19,6 +19,8 @@
   <link rel="stylesheet" href="assets/css/site-navigation.css">
   <script src="assets/js/site-navigation.js" defer></script>
   <script src="assets/js/accessibility.js" defer></script>
+  <link rel="stylesheet" href="assets/css/community.css">
+  <script src="assets/js/lsc-interface.js" defer></script>
 </head>
 <body class="admin-body">
 
@@ -194,6 +196,11 @@
       </div>
     </section>
 
+    <section id="community-admin" class="community-box community-admin" aria-labelledby="community-admin-title">
+      <h2 id="community-admin-title">Comunidad e interpretación LSC</h2>
+      <p>Revisa los aportes antes de publicarlos y asigna los videos que interpretan la interfaz. Estas señas son independientes de la explicación LSC de los objetos.</p>
+      <div id="community-admin-content"></div>
+    </section>
   </main>
 
   <!-- ========================================================================
@@ -350,8 +357,9 @@
             <small class="field-hint">Este video se muestra automáticamente como intérprete accesible sobre la experiencia. No se usa para el botón “Aprender seña”.</small>
           </div>
 
-          <div class="form-group">
-            <label for="field-video-aprender-lsc" class="form-label">Video para Aprender la Seña del Objeto (.mp4 / .webm)</label>
+          <!-- Metadatos antiguos conservados; aprender señas usa ahora la comunidad. -->
+          <div class="form-group" hidden>
+            <label for="field-video-aprender-lsc" class="form-label">Video antiguo de práctica (conservado)</label>
             <div class="input-upload-group">
               <input type="text" id="field-video-aprender-lsc" class="form-input" placeholder="Video que enseña cómo realizar la seña del objeto">
               <label class="btn-file-upload">
@@ -362,8 +370,8 @@
             <small class="field-hint">Este es un video independiente: se reproduce solamente al pulsar “Aprender seña”. Si se deja vacío, se explicarán los pasos pero no se reutilizará el video del intérprete.</small>
           </div>
 
-          <div class="form-group">
-            <label for="field-instrucciones-lsc" class="form-label">Pasos Pedagógicos para Realizar la Seña</label>
+          <div class="form-group" hidden>
+            <label for="field-instrucciones-lsc" class="form-label">Pasos antiguos de práctica (conservados)</label>
             <textarea 
               id="field-instrucciones-lsc" 
               class="form-textarea" 
@@ -458,6 +466,7 @@
 
   <!-- Script del Panel de Administración -->
   <script src="assets/js/admin.js"></script>
+  <script src="assets/js/community-admin.js"></script>
 
 </body>
 </html>

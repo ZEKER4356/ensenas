@@ -1154,13 +1154,9 @@
   }
 
   function setupSignLearning() {
-    const curObj = window.CURRENT_OBJETO || {};
-    activeSignLearningVideo = curObj.video_aprender_lsc_url || videoAprenderLscUrl;
-    if (signLearningVideo && activeSignLearningVideo) {
-      signLearningVideo.src = activeSignLearningVideo;
-      signLearningVideo.load();
-    }
-    if (signLearningEmpty) signLearningEmpty.hidden = Boolean(activeSignLearningVideo);
+    // Aprender una seña comunitaria no es traducir el objeto ni su explicación.
+    // Los videos anteriores permanecen en la base de datos, pero no se mezclan.
+    window.EnsenasCommunity?.loadObjectSign();
 
     if (btnOpenSignLearning) {
       btnOpenSignLearning.addEventListener('click', openSignLearning);
@@ -1176,10 +1172,7 @@
     // Si se solicita desde RA, se sale primero de la sesión y se abre el panel.
     if (isArMode) stopArMode();
     if (btnOpenSignLearning) btnOpenSignLearning.setAttribute('aria-expanded', 'true');
-    if (signLearningVideo && activeSignLearningVideo) {
-      signLearningVideo.currentTime = 0;
-      signLearningVideo.play().catch(() => {});
-    }
+    window.EnsenasCommunity?.playObjectSign();
     lscLearningPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 

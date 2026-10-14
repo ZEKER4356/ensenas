@@ -6,7 +6,10 @@
   "main": "index.html",
   "scripts": {
     "start": "serve .",
-    "test": "echo \"No tests specified\" && exit 0"
+    "test": "node scripts/check-community-api.cjs",
+    "test:community-ui": "node scripts/check-community-ui.cjs",
+    "test:navigation": "node scripts/check-navigation.cjs",
+    "test:welcome": "node scripts/check-welcome.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

@@ -9,7 +9,7 @@
     ['sube-tu-sena.html', 'Sube tu seña', 'sube-tu-sena'],
     ['comunidad.html', 'Comunidad', 'comunidad'],
     ['leaderboard.html', 'Leaderboard', 'leaderboard'],
-    ['colaboradores.html', 'Colaboradores', 'colaboradores']
+    ['colaboradores.html', 'Equipo de trabajo', 'colaboradores']
   ];
   const page = location.pathname.split('/').pop().replace(/\.html$/, '') || 'index';
   const theme = nav.querySelector('[data-theme-toggle]');
