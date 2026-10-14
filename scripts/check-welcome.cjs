@@ -22,6 +22,22 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
     for (const width of [390, 1366]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('http://127.0.0.1:4173/index.html', { waitUntil: 'networkidle' });
+      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'light', 'Tema claro por defecto');
+      const lightSurface = await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor);
+      const lightText = await page.locator('.welcome-copy h1').evaluate(el => getComputedStyle(el).color);
+      const lightCard = await page.locator('.welcome-path').first().evaluate(el => getComputedStyle(el).backgroundColor);
+      assert.equal(await page.locator('.brand-official-logo').evaluate(el => getComputedStyle(el).filter), 'none', 'Logo normal en modo claro');
+      await page.getByRole('button', { name: 'Activar modo oscuro', exact: true }).click();
+      await page.waitForFunction(() => {
+        const color = getComputedStyle(document.querySelector('.welcome-path')).backgroundColor.match(/[\d.]+/g).slice(0, 3).map(Number);
+        return color.every(channel => channel < 100);
+      });
+      assert.notEqual(await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor), lightSurface);
+      assert.notEqual(await page.locator('.welcome-copy h1').evaluate(el => getComputedStyle(el).color), lightText);
+      assert.notEqual(await page.locator('.welcome-path').first().evaluate(el => getComputedStyle(el).backgroundColor), lightCard);
+      await page.reload({ waitUntil: 'networkidle' });
+      assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'dark', 'Tema oscuro persiste al recargar');
+      await page.getByRole('button', { name: 'Activar modo claro', exact: true }).click();
       assert.equal(await page.locator('#objects-grid-container').count(), 0, 'El inicio no incluye el catálogo');
       assert.equal(await page.locator('.welcome-path').count(), 5);
       const videoBox = await page.locator('.welcome-video-card').boundingBox();
@@ -73,7 +89,10 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
       assert.equal(await page.locator('#site-reading-guide').isVisible(), false);
       await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();
       await page.locator('#welcome-pause').click();
-      await page.screenshot({ path: path.join(shots, 'inicio-' + width + '.png'), fullPage: true });
+      await page.screenshot({ path: path.join(shots, 'inicio-' + width + '.png'), fullPage: true, animations: 'disabled' });
+      await page.getByRole('button', { name: 'Activar modo oscuro', exact: true }).click();
+      await page.screenshot({ path: path.join(shots, 'oscuro-' + width + '.png'), fullPage: true, animations: 'disabled' });
+      await page.getByRole('button', { name: 'Activar modo claro', exact: true }).click();
       await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
       await page.screenshot({ path: path.join(shots, 'panel-' + width + '.png') });
       await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();

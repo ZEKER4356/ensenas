@@ -90,6 +90,7 @@
       video.addEventListener('loadedmetadata', () => {
         hasVideo = true;
         document.querySelector('.welcome-hero').classList.add('has-welcome-video');
+        document.body.classList.add('has-welcome-video');
         stopTimer();
         video.hidden = false;
         guide.hidden = true;
@@ -100,6 +101,7 @@
       video.addEventListener('error', () => {
         hasVideo = false;
         document.querySelector('.welcome-hero').classList.remove('has-welcome-video');
+        document.body.classList.remove('has-welcome-video');
         video.hidden = true;
         guide.hidden = false;
         paused = false;
