@@ -13,7 +13,11 @@
   const replayButton = document.getElementById('welcome-replay');
   if (!full || !animated || !video) return;
 
-  const message = full.textContent.trim();
+  const titleFull = document.getElementById('welcome-title-full');
+  const titleAnimated = document.getElementById('welcome-title-animated');
+  const title = titleFull.textContent.trim();
+  const description = full.textContent.trim();
+  const message = title + ' ' + description;
   const config = window.ENSENAS_WELCOME || {};
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   let hasVideo = false;
@@ -27,8 +31,11 @@
 
   function draw(count) {
     characters = Math.max(0, Math.min(message.length, Math.floor(count)));
-    animated.textContent = message.slice(0, characters);
-    animated.classList.toggle('is-typing', characters < message.length && !paused && !reducedMotion());
+    titleAnimated.textContent = title.slice(0, Math.min(characters, title.length));
+    animated.textContent = description.slice(0, Math.max(0, characters - title.length - 1));
+    const typing = characters < message.length && !paused && !reducedMotion();
+    titleAnimated.classList.toggle('is-typing', typing && characters <= title.length);
+    animated.classList.toggle('is-typing', typing && characters > title.length);
   }
   function updateButton() {
     pauseButton.textContent = paused ? 'Continuar bienvenida' : (hasVideo ? 'Pausar bienvenida' : 'Pausar texto');
@@ -57,7 +64,7 @@
     }, 65);
   }
   full.classList.add('welcome-message-reserve');
-  full.setAttribute('aria-label', message);
+  full.setAttribute('aria-label', description);
   // Mantener el mensaje íntegro para lectores de pantalla; la copia animada
   // es decorativa y nunca anuncia cada letra.
   full.style.visibility = '';
@@ -68,6 +75,7 @@
       video.src = source.href;
       video.addEventListener('loadedmetadata', () => {
         hasVideo = true;
+        document.querySelector('.welcome-hero').classList.add('has-welcome-video');
         stopTimer();
         video.hidden = false;
         guide.hidden = true;
@@ -77,6 +85,7 @@
       }, { once: true });
       video.addEventListener('error', () => {
         hasVideo = false;
+        document.querySelector('.welcome-hero').classList.remove('has-welcome-video');
         video.hidden = true;
         guide.hidden = false;
         paused = false;

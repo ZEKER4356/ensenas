@@ -36,6 +36,7 @@ const { chromium } = require(require.resolve('playwright', {
         if (width < 1200) await page.locator('.site-menu-toggle').click();
         assert.equal(await menu.locator('a').count(), 5);
         assert.equal(await menu.locator('a[href="admin.html"]').count(), 0);
+        assert.equal(await page.locator('.site-tools a[href="admin.html"]').isVisible(), true);
         assert.equal(await menu.locator('a').first().isVisible(), true);
         if (width < 1200) {
           await page.keyboard.press('Escape');
@@ -57,7 +58,7 @@ const { chromium } = require(require.resolve('playwright', {
         await page.reload({ waitUntil: 'networkidle' });
         assert.equal(await page.evaluate(() => document.documentElement.style.fontSize), '150%');
         await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
-        await page.getByRole('button', { name: 'Restablecer preferencias' }).click();
+        await page.getByRole('button', { name: /Restablecer configuración/ }).click();
         await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();
       }
     }

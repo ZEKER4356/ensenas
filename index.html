@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="assets/css/welcome.css">
   <script src="assets/js/theme.js"></script>
   <script src="assets/js/site-navigation.js" defer></script>
+  <script src="assets/js/accessibility.js" defer></script>
   <script src="assets/js/welcome-config.js" defer></script>
   <script src="assets/js/welcome.js" defer></script>
 </head>
@@ -38,37 +39,34 @@
     <section class="welcome-hero" aria-labelledby="welcome-title">
       <figure class="welcome-video-card">
         <div class="welcome-video-stage">
-          <video id="welcome-video" playsinline muted loop controls preload="metadata" hidden aria-label="Bienvenida en Lengua de Señas Colombiana"></video>
+          <video id="welcome-video" playsinline muted loop preload="metadata" hidden aria-label="Bienvenida en Lengua de Señas Colombiana"></video>
           <div id="welcome-video-guide" class="welcome-video-guide">
             <span class="welcome-video-label">Lengua de Señas Colombiana</span>
             <div class="welcome-sign-symbol" aria-hidden="true">
               <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 33V15a4 4 0 0 1 8 0v15M30 27V9a4 4 0 0 1 8 0v21M38 27V15a4 4 0 0 1 8 0v21M46 30v-6a4 4 0 0 1 8 0v18c0 11-8 17-19 17-7 0-11-3-15-7L9 40a4 4 0 0 1 6-5l7 7"/><path d="M7 18V7h11M46 7h11v11M7 48v9h10"/></svg>
             </div>
-            <h2>Una bienvenida<br>en tu lengua</h2>
-            <p>Aquí encontrarás nuestro video de bienvenida en LSC.</p>
+            <h2>Una experiencia<br>que nos incluye.</h2>
+            <p>Espacio para el intérprete LSC.<br>Rostro y manos siempre visibles.</p>
             <span class="welcome-video-pending">Video en preparación</span>
           </div>
         </div>
-        <figcaption id="welcome-video-caption">Guía de grabación: plano medio, rostro y manos completos, fondo uniforme y buena iluminación.</figcaption>
+        <figcaption id="welcome-video-caption" class="site-sr-only">Guía de grabación: intérprete a la derecha, rostro y manos completos, fondo uniforme y buena iluminación. El texto ocupa la zona izquierda.</figcaption>
       </figure>
       <div class="welcome-copy">
         <span class="welcome-eyebrow"><span aria-hidden="true"></span>Tecnología que nos acerca</span>
-        <h1 id="welcome-title">¡Bienvenido a <span class="highlight-inline">EnSeñas!</span></h1>
+        <h1 id="welcome-title"><span id="welcome-title-full" class="welcome-title-reserve">¡Bienvenido a EnSeñas!</span><span id="welcome-title-animated" aria-hidden="true"></span></h1>
         <div class="welcome-message">
-          <p id="welcome-message-full">Una plataforma educativa inclusiva donde la realidad aumentada y la Lengua de Señas Colombiana se unen. Explora, aprende y comparte tus señas. Juntos, hacemos que el conocimiento sea accesible para todos.</p>
+          <p id="welcome-message-full">La realidad aumentada y la Lengua de Señas Colombiana se unen para aprender, explorar y compartir. Juntos, hacemos que el conocimiento sea accesible para todos.</p>
           <p id="welcome-message-animated" aria-hidden="true"></p>
         </div>
         <div class="welcome-playback" aria-label="Controles de la bienvenida">
           <button type="button" id="welcome-pause" class="welcome-text-button" aria-pressed="false">Pausar texto</button>
           <button type="button" id="welcome-replay" class="welcome-text-button">Repetir</button>
         </div>
-        <div class="welcome-principles" aria-label="Nuestra propuesta">
-          <span>Explora en RA</span><span>Aprende en LSC</span><span>Comparte en comunidad</span>
-        </div>
       </div>
     </section>
     <section class="welcome-explore" aria-labelledby="welcome-explore-title">
-      <div class="welcome-explore-heading"><span class="welcome-eyebrow">Elige tu camino</span><h2 id="welcome-explore-title">Explora lo que EnSeñas tiene para ti</h2><p>Una misma comunidad. Muchas formas de aprender y participar.</p></div>
+      <div class="welcome-explore-heading"><h2 id="welcome-explore-title">Explora lo que EnSeñas tiene para ti</h2><p>Aprende. Participa. Conecta.</p></div>
       <div class="welcome-paths">
         <a href="catalogo.html" class="welcome-path"><span class="welcome-path-number" aria-hidden="true">01</span><h3>Catálogo</h3><p>Descubre recursos educativos en 3D y realidad aumentada.</p><span class="welcome-path-action">Explorar recursos <span aria-hidden="true">↗</span></span></a>
         <a href="sube-tu-sena.html" class="welcome-path"><span class="welcome-path-number" aria-hidden="true">02</span><h3>Sube tu seña</h3><p>Comparte una palabra o expresión y ayuda a otros a aprender.</p><span class="welcome-path-action">Quiero participar <span aria-hidden="true">↗</span></span></a>
@@ -80,7 +78,6 @@
   </main>
   <footer class="site-footer institutional-footer welcome-footer">
     <p>&copy; 2026 · EnSeñas · Licenciatura en Tecnología, Universidad del Magdalena.</p>
-    <a href="admin.html">Panel de administración</a>
   </footer>
 </body>
 </html>

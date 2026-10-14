@@ -20,7 +20,8 @@ Base: rama `codex/ajustes-innovafest`, creada desde `main`. El experimento de
 Menú global en inicio, objeto, administración, error y nuevas páginas:
 Sube tu seña, Comunidad, Leaderboard y Colaboradores. Inicio independiente con
 bienvenida visual y accesos a las cinco secciones; catálogo en catalogo.html.
-Logo enlaza al inicio. Administración fuera del menú público. Estados vacíos
+Logo enlaza al inicio. Administración como botón independiente a la derecha;
+navegación centrada. Estados vacíos
 reales, sin cifras ni aportes ficticios. Accesibilidad en panel no modal, con
 cambios visibles en tiempo real. En móvil, panel inferior que deja parte de la
 página disponible; en computador, barra lateral.
@@ -31,8 +32,10 @@ el panel admin conserva inicio/cierre de sesión y el visor conserva controles.
 
 ## 2. Inclusión LSC, bienvenida y accesibilidad completa
 
-Bienvenida dividida, apilada en móvil; texto íntegro disponible aunque haya
-efecto de escritura; pausa/repetición y respeto a movimiento reducido.
+Bienvenida sobre video de fondo, texto translúcido y accesos compactos debajo.
+Título y mensaje se escriben; texto íntegro disponible para ayudas de lectura,
+pausa/repetición y respeto a movimiento reducido. El intérprete mantiene una
+zona despejada; en móvil se reserva el área superior al cargar un video real.
 Mientras no haya video, mostrar guía de grabación y animación de texto como
 demostración visual. Video permanente configurable en welcome-config.js;
 sincronía proporcional inicial y marcas temporales ajustables para traducción
