@@ -14,13 +14,15 @@ const ORIGIN = 'http://127.0.0.1:4173';
     const bytes = await page.evaluate(async () => {
       const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 120; document.body.append(canvas);
       const context = canvas.getContext('2d'); context.fillStyle = '#7c3aed'; context.fillRect(0, 0, 160, 120);
+      await new Promise(requestAnimationFrame);
       const stream = canvas.captureStream(10), recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8' });
       return await new Promise(resolve => {
         const chunks = []; recorder.ondataavailable = event => chunks.push(event.data);
         recorder.onstop = async () => { stream.getTracks().forEach(track => track.stop()); resolve([...new Uint8Array(await new Blob(chunks).arrayBuffer())]); };
         let tick = 0;
         recorder.start(100);
-        const interval = setInterval(() => { context.fillStyle = tick++ % 2 ? '#2563eb' : '#7c3aed'; context.fillRect(0, 0, 160, 120); }, 100);
+        stream.getVideoTracks()[0].requestFrame?.();
+        const interval = setInterval(() => { context.fillStyle = tick++ % 2 ? '#2563eb' : '#7c3aed'; context.fillRect(0, 0, 160, 120); stream.getVideoTracks()[0].requestFrame?.(); }, 100);
         setTimeout(() => { clearInterval(interval); recorder.stop(); }, 1500);
       });
     });
@@ -201,6 +203,23 @@ const ORIGIN = 'http://127.0.0.1:4173';
     touch.on('pageerror', error => errors.push(error.message));
     await touch.route('https://**/*', externalRoute); await touch.route(`${ORIGIN}/**`, appRoute);
     await touch.goto(`${ORIGIN}/index.html`, { waitUntil: 'networkidle' });
+    assert.equal(await touch.locator('.lsc-inline-media video').count(), 5);
+    for (const key of ['nav.catalogo', 'nav.comunidad', 'nav.leaderboard', 'nav.equipo']) {
+      const card = touch.locator(`.welcome-path[data-lsc-key="${key}"]`);
+      await card.locator('video').evaluate(el => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+      try { await touch.waitForFunction(key => {
+        const selected = document.querySelector(`.welcome-path[data-lsc-key="${key}"] video`);
+        return selected && !selected.paused && selected.readyState >= 2;
+      }, key, { timeout: 10000 }); } catch (error) {
+        console.log({ key, errors, clips: await touch.locator('.lsc-inline-media video').evaluateAll(videos => videos.map(video => ({ key: video.closest('[data-lsc-key]').dataset.lscKey, src: video.src, paused: video.paused, ready: video.readyState, error: video.error?.message, rect: video.getBoundingClientRect().toJSON(), note: video.nextElementSibling.textContent }))), hidden: await touch.evaluate(() => document.hidden) }); throw error;
+      }
+      assert.equal(await touch.locator('.lsc-inline-media video').evaluateAll(videos => videos.filter(video => !video.paused).length), 1, 'Solo la traducción visible se reproduce');
+      const box = await card.boundingBox(); assert.ok(box.width > 340, 'Tarjeta móvil de ancho completo');
+      assert.equal(await touch.locator('#lsc-interface-player').isVisible(), false, 'Sin panel flotante ni acceso obligatorio por Accesibilidad');
+    }
+    if (process.env.ENSENAS_SCREENSHOTS_DIR) await touch.screenshot({ path: path.join(process.env.ENSENAS_SCREENSHOTS_DIR, 'lsc-inline-mobile.png') });
+    await touch.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+    await touch.waitForFunction(() => [...document.querySelectorAll('.lsc-inline-media video')].every(video => video.paused));
     for (const size of [{ width: 320, height: 844 }, { width: 430, height: 844 }, { width: 844, height: 390 }]) {
       await touch.setViewportSize(size);
       assert.equal(await touch.locator('.site-navigation').isVisible(), false);

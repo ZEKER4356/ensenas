@@ -46,8 +46,8 @@
   }
   // Evita que varios aportes o interpretaciones de interfaz reproduzcan a la vez.
   document.addEventListener('play', event => {
-    if (!event.target.matches('.community-video, .lsc-help-panel video')) return;
-    document.querySelectorAll('.community-video, .lsc-help-panel video').forEach(video => { if (video !== event.target) video.pause(); });
+    if (!event.target.matches('.community-video, .lsc-help-panel video, .lsc-inline-media video')) return;
+    document.querySelectorAll('.community-video, .lsc-help-panel video, .lsc-inline-media video').forEach(video => { if (video !== event.target) video.pause(); });
   }, true);
 
   const mount = $('.community-empty');

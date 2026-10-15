@@ -79,8 +79,7 @@
   let isScanningSurface = false;
   let isAnchored = false;
   let scanningTime = 0;
-  let speechSynthActive = false;
-  let speechSynthUtterance = null;
+  let explanationPlayer;
 
   // Variables de gestos táctiles (Pinch, Drag & Rotate)
   let isPointerDown = false;
@@ -463,7 +462,7 @@
     if (btnReanchorView) {
       btnReanchorView.addEventListener('click', startSurfaceScanning);
     }
-    // El intérprete es una ayuda independiente: solo se abre a petición de la persona.
+    // La persona puede ocultar el intérprete y pausar la explicación cuando quiera.
     if (btnToggleLscOverlay) {
       btnToggleLscOverlay.addEventListener('click', () => {
         if (!lscOverlay || !activeVideoLsc) return;
@@ -476,6 +475,7 @@
    * Inicia el estado de escaneo de superficie (oculta el objeto 3D flotante)
    */
   function startSurfaceScanning() {
+    pauseExplanationAudio();
     isScanningSurface = true;
     isAnchored = false;
     hasSurfaceHit = false;
@@ -551,6 +551,8 @@
     }
 
     showMultimediaControls();
+    // Colocar es el gesto que inicia la explicación, también en WebXR.
+    playExplanationAudio({ restart: true });
   }
 
   function setAnchorActionAvailability(canAnchor) {
@@ -936,10 +938,24 @@
      ======================================================================== */
   function setupAudioController() {
     if (!audioElement) return;
+    explanationPlayer = window.EnsenasExplanation.create({
+      audio: audioElement, video: lscVideo,
+      hasInterpreter: () => !!activeVideoLsc,
+      narration: () => {
+        const item = window.CURRENT_OBJETO || {};
+        return { url: item.archivo_audio_url || item.audio_url || audioUrl, text: item.explicacion_texto || item.audio_texto || audioTexto };
+      },
+      onState: updateAudioVisualState,
+      onProgress: (current, duration, complete) => {
+        if (arAudioProgress) arAudioProgress.style.width = `${complete ? 100 : duration ? Math.min(100, current / duration * 100) : 0}%`;
+        if (arAudioTime) arAudioTime.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
+      },
+      onError: message => { if (arAudioTime) arAudioTime.textContent = message; }
+    });
 
     if (btnArAudioPlay) {
       btnArAudioPlay.addEventListener('click', () => {
-        if (!audioElement.paused || speechSynthActive) {
+        if (explanationPlayer.playing) {
           pauseExplanationAudio();
         } else {
           playExplanationAudio();
@@ -949,153 +965,31 @@
 
     if (btnArAudioMute) {
       btnArAudioMute.addEventListener('click', () => {
-        audioElement.muted = !audioElement.muted;
-        const isMuted = audioElement.muted;
+        const isMuted = explanationPlayer.mute();
         btnArAudioMute.classList.toggle('is-muted', isMuted);
         btnArAudioMute.setAttribute('aria-label', isMuted ? 'Activar sonido de audio' : 'Silenciar audio');
 
-        if ('speechSynthesis' in window && speechSynthActive) {
-          if (isMuted) {
-            window.speechSynthesis.pause();
-          } else {
-            window.speechSynthesis.resume();
-          }
-        }
       });
     }
 
     if (btnArAudioReplay) {
       btnArAudioReplay.addEventListener('click', () => {
-        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-        audioElement.currentTime = 0;
-        syncLscWithAudio({ restart: true });
-        playExplanationAudio();
+        playExplanationAudio({ restart: true });
       });
     }
 
-    // Estos eventos cubren carga, avance, búsqueda, pausa y reinicio de una pista real.
-    // Así la línea de tiempo no depende de la frecuencia variable de `timeupdate` del móvil.
-    ['loadedmetadata', 'durationchange', 'timeupdate', 'seeking', 'seeked'].forEach((eventName) => {
-      audioElement.addEventListener(eventName, () => {
-        updateAudioProgress();
-        syncLscWithAudio();
-      });
-    });
-    audioElement.addEventListener('play', () => {
-      updateAudioVisualState(true);
-      syncLscWithAudio({ play: true });
-    });
-    audioElement.addEventListener('pause', () => {
-      if (!audioElement.ended) updateAudioVisualState(false);
-      if (lscVideo && !lscVideo.paused) lscVideo.pause();
-    });
-    audioElement.addEventListener('ended', () => {
-      updateAudioProgress(true);
-      updateAudioVisualState(false);
-      if (lscVideo && !lscVideo.paused) lscVideo.pause();
-    });
-  }
-
-  function updateAudioProgress(forceComplete) {
-    if (!audioElement) return;
-    const current = Number.isFinite(audioElement.currentTime) ? audioElement.currentTime : 0;
-    const duration = Number.isFinite(audioElement.duration) && audioElement.duration > 0 ? audioElement.duration : 0;
-    const percent = forceComplete ? 100 : duration ? Math.min(100, (current / duration) * 100) : 0;
-    if (arAudioProgress) arAudioProgress.style.width = `${percent}%`;
-    if (arAudioTime) arAudioTime.textContent = `${formatTime(current)} / ${formatTime(duration)}`;
-  }
-
-  function syncLscWithAudio(options) {
-    if (!lscVideo || !activeVideoLsc || !audioElement) return;
-    const opts = options || {};
-    const audioTime = Number.isFinite(audioElement.currentTime) ? audioElement.currentTime : 0;
-    const videoDuration = Number.isFinite(lscVideo.duration) ? lscVideo.duration : null;
-    const targetTime = videoDuration ? Math.min(audioTime, Math.max(0, videoDuration - 0.02)) : audioTime;
-
-    // El umbral evita decenas de búsquedas por segundo, pero mantiene la sincronía visible.
-    if (opts.restart || Math.abs(lscVideo.currentTime - targetTime) > 0.12) {
-      try { lscVideo.currentTime = targetTime; } catch (_) { /* el video aún está cargando */ }
-    }
-    if (opts.play && !audioElement.paused && !lscOverlay?.classList.contains('is-hidden')) {
-      lscVideo.play().catch(() => {});
-    }
   }
 
   /**
    * Lógica condicional de reproducción de explicación
    */
-  function playExplanationAudio() {
-    const curObj = window.CURRENT_OBJETO || {};
-    const targetAudio = curObj.archivo_audio_url || curObj.audio_url || audioUrl;
-    const targetText = curObj.explicacion_texto || curObj.audio_texto || audioTexto;
-
-    const hasAudioFile = targetAudio && targetAudio.trim() !== '';
-
-    if (hasAudioFile) {
-      const resolvedUrl = new URL(targetAudio, window.location.href).href;
-      if (audioElement.src !== resolvedUrl) {
-        audioElement.src = targetAudio;
-        audioElement.load();
-      }
-      if (Number.isFinite(audioElement.duration) && audioElement.currentTime >= audioElement.duration - 0.02) {
-        audioElement.currentTime = 0;
-      }
-      audioElement.play().catch((e) => {
-        console.warn('Reproducción MP3 falló o bloqueada, utilizando Web Speech API:', e);
-        speakExplanationWithTTS(targetText);
-      });
-    } else if (targetText) {
-      speakExplanationWithTTS(targetText);
-    }
-  }
-
-  /**
-   * Lectura por voz sintética con Web Speech API
-   */
-  function speakExplanationWithTTS(text) {
-    if (!('speechSynthesis' in window) || !text) return;
-
-    window.speechSynthesis.cancel();
-    speechSynthUtterance = new SpeechSynthesisUtterance(text);
-    speechSynthUtterance.lang = 'es-CO';
-    speechSynthUtterance.rate = 0.95;
-
-    // Buscar voz en español óptima
-    const voices = window.speechSynthesis.getVoices();
-    const esVoice = voices.find(v => v.lang.startsWith('es-CO') || v.lang.startsWith('es-419') || v.lang.startsWith('es'));
-    if (esVoice) speechSynthUtterance.voice = esVoice;
-
-    speechSynthUtterance.onstart = () => {
-      speechSynthActive = true;
-      updateAudioVisualState(true);
-      syncLscWithAudio({ restart: true, play: true });
-      if (arAudioTime) arAudioTime.textContent = 'Lectura por Voz TTS';
-    };
-
-    speechSynthUtterance.onend = () => {
-      speechSynthActive = false;
-      updateAudioVisualState(false);
-      if (arAudioProgress) arAudioProgress.style.width = '100%';
-      if (lscVideo && !lscVideo.paused) lscVideo.pause();
-    };
-
-    speechSynthUtterance.onerror = () => {
-      speechSynthActive = false;
-      updateAudioVisualState(false);
-    };
-
-    window.speechSynthesis.speak(speechSynthUtterance);
+  function playExplanationAudio(options) {
+    if (activeVideoLsc) setInterpreterVisibility(true);
+    explanationPlayer?.play(options);
   }
 
   function pauseExplanationAudio() {
-    if (audioElement) audioElement.pause();
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.pause();
-      window.speechSynthesis.cancel();
-    }
-    speechSynthActive = false;
-    updateAudioVisualState(false);
-    if (lscVideo && !lscVideo.paused) lscVideo.pause();
+    explanationPlayer?.pause();
   }
 
   function updateAudioVisualState(isPlaying) {
@@ -1133,12 +1027,13 @@
       lscVideo.load();
       lscVideo.addEventListener('loadeddata', () => {
         if (lscPlaceholder) lscPlaceholder.classList.add('is-hidden');
-        syncLscWithAudio({ play: !audioElement?.paused });
+        explanationPlayer?.progress();
       }, { once: true });
       lscVideo.addEventListener('error', () => {
         activeVideoLsc = '';
         if (lscPlaceholder) lscPlaceholder.classList.remove('is-hidden');
-        setInterpreterVisibility(false);
+        lscOverlay.classList.add('is-hidden');
+        layoutInterpreter();
         updateLscAvailability();
       }, { once: true });
     }
@@ -1195,17 +1090,30 @@
       if (textSpan) textSpan.textContent = shouldShow ? 'Cerrar intérprete' : 'Intérprete LSC';
     }
     if (lscVideo) {
-      if (shouldShow && activeVideoLsc) syncLscWithAudio({ play: !audioElement?.paused });
-      if (!shouldShow) lscVideo.pause();
+      if (!shouldShow) pauseExplanationAudio();
     }
+    layoutInterpreter();
+  }
+
+  function layoutInterpreter() {
+    const dock = document.getElementById('ar-lsc-dock');
+    if (!dock || !lscOverlay) return;
+    const docked = matchMedia('(max-width: 700px)').matches && !isArMode && !isFullscreen;
+    const parent = docked ? dock : canvasHost;
+    if (lscOverlay.parentElement !== parent) {
+      const resume = explanationPlayer?.playing;
+      parent.append(lscOverlay);
+      if (resume) explanationPlayer.play();
+    }
+    dock.hidden = !docked || lscOverlay.classList.contains('is-hidden');
   }
 
   function showMultimediaControls() {
-    // Solo se muestra audio cuando el objeto tiene una explicación configurada.
+    // Un solo control para la explicación, incluso si únicamente hay video LSC.
     const curObj = window.CURRENT_OBJETO || {};
     const targetAudio = curObj.archivo_audio_url || curObj.audio_url || audioUrl;
     const targetText = curObj.explicacion_texto || curObj.audio_texto || audioTexto;
-    if (floatingAudio) floatingAudio.classList.toggle('is-hidden', !(targetAudio || targetText));
+    if (floatingAudio) floatingAudio.classList.toggle('is-hidden', !(targetAudio || targetText || activeVideoLsc));
     // LSC se habilita por defecto cuando hay un video real. Quien no lo necesite
     // puede cerrarlo con el mismo botón, pero nunca se muestra un recuadro vacío.
     if (activeVideoLsc) setInterpreterVisibility(true);
@@ -1215,6 +1123,7 @@
      9. Bucle de Renderizado y Animaciones de Escaneo
      ======================================================================== */
   function onWindowResize() {
+    layoutInterpreter();
     if (!canvasHost || !camera || !renderer) return;
 
     let width = canvasHost.clientWidth;

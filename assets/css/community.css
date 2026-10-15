@@ -61,6 +61,14 @@ html[data-theme=dark] .community-status[data-error=true] { color: #FDA4AF; }
 .lsc-help-trigger:hover { background: var(--bg-surface-alt); }
 .a11y-body .community-actions .lsc-help-trigger { flex: 1 1 120px; overflow-wrap: anywhere; }
 .lsc-help-trigger:focus-visible, .community-box :focus-visible { outline: 3px solid var(--border-focus, #7c3aed); outline-offset: 3px; }
+.lsc-inline-media { display: none; }
+@media (max-width: 700px), (hover: none) {
+  .welcome-page .welcome-paths { grid-template-columns: minmax(0, 1fr); }
+  .welcome-path .lsc-inline-media { display: block; position: relative; margin-top: 14px; border-radius: 12px; overflow: hidden; background: #111827; aspect-ratio: 1; }
+  .lsc-inline-media video { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+  .lsc-inline-status { position: absolute; inset: 0; display: grid; place-content: center; padding: 20px; text-align: center; color: #fff; background: #111827; font-size: .8rem; line-height: 1.5; }
+  .welcome-path.is-lsc-active .lsc-inline-media { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+}
 @media (max-width: 700px) {
   .community-split { grid-template-columns: minmax(0, 1fr); }
   .community-ranking li { gap: 8px; padding: 12px; grid-template-columns: 28px minmax(0, 1fr) auto; }

@@ -11,6 +11,8 @@
     "test:oauth": "node scripts/check-community-oauth.cjs",
     "test:recording": "node scripts/check-community-recording.cjs",
     "test:lsc-theme": "node scripts/check-lsc-practice-theme.cjs",
+    "test:explanation": "node scripts/check-explanation-player.cjs",
+    "test:viewer-media": "node scripts/check-viewer-media.cjs",
     "test:navigation": "node scripts/check-navigation.cjs",
     "test:welcome": "node scripts/check-welcome.cjs"
   },

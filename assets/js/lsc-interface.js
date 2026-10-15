@@ -20,6 +20,49 @@
   const coarse = matchMedia('(hover: none)');
   const compact = matchMedia('(max-width: 700px)');
   const reduced = () => document.documentElement.hasAttribute('data-reduce-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mobile = matchMedia('(max-width: 700px), (hover: none)');
+  const inlineClips = new Map();
+  let inlineActive = null, inlineTimer;
+  function stopInline() {
+    for (const clip of inlineClips.values()) { clip.video.pause(); clip.element.classList.remove('is-lsc-active'); }
+    inlineActive = null;
+  }
+  function chooseInline() {
+    clearTimeout(inlineTimer);
+    if (!mobile.matches || !autoEnabled || reduced() || document.hidden || !panel.hidden || document.documentElement.hasAttribute('data-accessibility-open')) { stopInline(); return; }
+    const visible = [...inlineClips.values()].filter(clip => clip.ratio >= .5);
+    for (const clip of visible) {
+      const rect = clip.video.getBoundingClientRect();
+      clip.center = rect.top + rect.height / 2;
+      clip.score = clip.ratio * .6 + .4 * Math.max(0, 1 - Math.abs(clip.center - innerHeight / 2) / (innerHeight / 2));
+    }
+    visible.sort((a, b) => b.score - a.score);
+    let next = visible[0];
+    if (inlineActive && inlineActive.ratio >= .5 && next && next.score - inlineActive.score < .05) next = inlineActive;
+    if (!next) { stopInline(); return; }
+    if (next === inlineActive) return;
+    stopInline(); inlineActive = next;
+    if (!next.video.getAttribute('src')) next.video.src = sources.get(next.element.dataset.lscKey).video_url;
+    next.element.classList.add('is-lsc-active'); next.note.hidden = true;
+    next.video.play().catch(() => {
+      if (inlineActive !== next) return;
+      next.note.textContent = 'El navegador no pudo iniciar esta interpretación automáticamente.'; next.note.hidden = false;
+    });
+  }
+  const inlineObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      const clip = inlineClips.get(entry.target.parentElement.parentElement);
+      if (clip) { clip.ratio = entry.intersectionRatio; clip.center = entry.boundingClientRect.top + entry.boundingClientRect.height / 2; }
+    }
+    if (inlineActive && inlineActive.ratio < .15) stopInline();
+    clearTimeout(inlineTimer); inlineTimer = setTimeout(chooseInline, 180);
+  }, { threshold: Array.from({ length: 11 }, (_, index) => index / 10) }) : null;
+  mobile.addEventListener('change', () => { close(); chooseInline(); });
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', () => { if (reduced()) close(); chooseInline(); });
+  window.addEventListener('scroll', () => {
+    if (!mobile.matches || !inlineClips.size) return;
+    clearTimeout(inlineTimer); inlineTimer = setTimeout(chooseInline, 180);
+  }, { passive: true });
   let autoEnabled = true;
   try { autoEnabled = localStorage.getItem('ensenas-lsc-auto') !== 'false'; } catch (_) { /* Valor accesible predeterminado. */ }
   const a11yBody = document.querySelector('.a11y-body');
@@ -27,9 +70,10 @@
     const setting = document.createElement('label'); setting.className = 'a11y-switch';
     setting.innerHTML = '<span class="a11y-switch-icon" aria-hidden="true">LSC</span><span>Interpretación LSC al explorar</span><input type="checkbox"><span class="a11y-switch-track" aria-hidden="true"></span>';
     const input = setting.querySelector('input'); input.checked = autoEnabled;
-    input.addEventListener('change', () => { autoEnabled = input.checked; try { localStorage.setItem('ensenas-lsc-auto', String(autoEnabled)); } catch (_) {} if (!autoEnabled) close(); });
+    input.addEventListener('change', () => { autoEnabled = input.checked; try { localStorage.setItem('ensenas-lsc-auto', String(autoEnabled)); } catch (_) {} if (!autoEnabled) close(); chooseInline(); });
     document.querySelector('#site-reset-preferences')?.addEventListener('click', () => {
       autoEnabled = true; input.checked = true; try { localStorage.removeItem('ensenas-lsc-auto'); } catch (_) {}
+      chooseInline();
     });
     a11yBody.prepend(setting);
   }
@@ -78,6 +122,7 @@
     const item = sources.get(key);
     if (!item || document.documentElement.hasAttribute('data-accessibility-open') || ((!autoEnabled || reduced()) && !explicit) || (suppressed === key && !explicit)) return;
     clearTimeout(leaveTimer);
+    stopInline();
     if (trigger) trigger.setAttribute('aria-expanded', 'false');
     anchor = target || button;
     trigger = button || target;
@@ -108,13 +153,14 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pause();
     else if (!panel.hidden) video.play().catch(() => { /* Reintento explícito desde Accesibilidad. */ });
+    chooseInline();
   });
   window.addEventListener('resize', schedulePlace, { passive: true });
   window.addEventListener('scroll', schedulePlace, { passive: true, capture: true });
   if ('ResizeObserver' in window) new ResizeObserver(schedulePlace).observe(panel);
   document.addEventListener('ensenas:navigation-open', () => close());
-  document.addEventListener('ensenas:accessibility-toggle', event => { if (event.detail.open) close(); });
-  document.addEventListener('ensenas:accessibility-change', event => { if (event.detail.motion) close(); });
+  document.addEventListener('ensenas:accessibility-toggle', event => { if (event.detail.open) close(); chooseInline(); });
+  document.addEventListener('ensenas:accessibility-change', event => { if (event.detail.motion) close(); chooseInline(); });
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.preventDefault(); close(true); } });
   function targetFor(node) {
     if (!(node instanceof Element)) return null;
@@ -185,6 +231,15 @@
       // El acceso táctil/manual permanece reunido dentro de Accesibilidad.
       if (!element.matches('a, button, input, select, textarea, [tabindex]')) element.tabIndex = 0;
       element.setAttribute('aria-controls', panel.id);
+      if (element.matches('.welcome-path') && inlineObserver && !inlineClips.has(element)) {
+        const slot = document.createElement('span'); slot.className = 'lsc-inline-media';
+        const clipVideo = document.createElement('video'); clipVideo.muted = true; clipVideo.loop = true; clipVideo.playsInline = true; clipVideo.preload = 'none';
+        clipVideo.setAttribute('aria-label', `Interpretación LSC: ${sources.get(key).etiqueta}`);
+        const note = document.createElement('span'); note.className = 'lsc-inline-status'; note.textContent = 'Interpretación LSC · se activa al verla';
+        slot.append(clipVideo, note); element.append(slot);
+        inlineClips.set(element, { element, video: clipVideo, note, ratio: 0, center: 0 });
+        inlineObserver.observe(clipVideo);
+      }
     }
   }
   fetch('/api/comunidad?action=interpretaciones').then(async response => {
