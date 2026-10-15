@@ -63,7 +63,7 @@ function wav(seconds) {
     for (const width of [320, 360, 390, 430, 768, 1366]) {
       await page.setViewportSize({ width, height: 844 });
       const box = await page.locator('#ar-floating-lsc').boundingBox();
-      assert.ok(box.width >= 165 && box.width <= 266, 'Tamaño intermedio, no pantalla completa');
+      assert.ok(box.width >= 149 && box.width <= (width <= 700 ? 201 : 231), 'Intérprete compacto para dejar libre la interacción');
       assert.equal(await page.locator('#ar-floating-lsc').evaluate(el => el.parentElement.id), 'ar-canvas-host');
       const host = await page.locator('#ar-canvas-host').boundingBox();
       assert.ok(box.x >= host.x && box.y >= host.y && box.x + box.width <= host.x + host.width + 1 && box.y + box.height <= host.y + host.height + 1, `Intérprete dentro del visualizador a ${width}px: ${JSON.stringify({ box, host })}`);
