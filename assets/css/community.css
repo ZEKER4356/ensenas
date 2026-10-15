@@ -64,7 +64,7 @@ html[data-theme=dark] .community-status[data-error=true] { color: #FDA4AF; }
 .lsc-inline-media { display: none; }
 @media (max-width: 700px), (hover: none) {
   .welcome-page .welcome-paths { grid-template-columns: minmax(0, 1fr); }
-  .welcome-path:has(.lsc-inline-media) { display: grid; grid-template-columns: minmax(0, 1fr) clamp(104px, 34vw, 160px); grid-template-rows: auto 1fr auto; gap: 6px 14px; align-items: start; }
+  .welcome-path:has(.lsc-inline-media) { display: grid; grid-template-columns: minmax(0, 1fr) clamp(118px, 38vw, 180px); grid-template-rows: auto 1fr auto; gap: 8px 12px; align-items: start; }
   .welcome-path:has(.lsc-inline-media) .welcome-path-number { display: none; }
   .welcome-path:has(.lsc-inline-media) :is(h3, p, .welcome-path-action) { grid-column: 1; margin: 0; padding-right: 0; overflow-wrap: anywhere; }
   .welcome-path .lsc-inline-media { display: block; position: relative; grid-column: 2; grid-row: 1 / 4; align-self: center; width: 100%; margin: 0; border-radius: 12px; overflow: hidden; background: #111827; aspect-ratio: 1; }

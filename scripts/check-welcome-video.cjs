@@ -47,23 +47,38 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
           assert.ok(copy.y + copy.height <= media.y + media.height + 1, 'Texto integrado sobre la extensión inferior del escenario');
           const frame = await page.locator('#welcome-video').boundingBox();
           assert.ok(Math.abs(frame.width - frame.height) < 1 && frame.y < copy.y, 'Video cuadrado, primero y sin recorte');
+          const backdrop = await page.locator('#welcome-video-backdrop').boundingBox();
+          assert.ok(backdrop.y < copy.y && backdrop.y + backdrop.height >= copy.y + copy.height, 'Fotogramas del video detrás de todo el texto, no caja blanca independiente');
+          assert.equal(await page.locator('.welcome-copy').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+          assert.equal(await page.locator('.welcome-copy').evaluate(el => getComputedStyle(el).gridArea), await page.locator('.welcome-video-card').evaluate(el => getComputedStyle(el).gridArea), 'Video y copia comparten una celda: capas superpuestas, no dos filas');
         } else assert.ok(media.x >= copy.x + copy.width, 'PC conserva dos columnas');
         const typingDuration = Number(await page.locator('.welcome-hero').getAttribute('data-text-duration-ms'));
         assert.ok(width <= 700 ? typingDuration >= 12500 && typingDuration <= 13000 : typingDuration >= 8000 && typingDuration <= 8500, 'Móvil más lento sin alterar el ritmo de PC');
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
         if (width <= 700) {
           const preview = await page.locator('.lsc-inline-media').first().boundingBox();
-          assert.ok(preview.width <= 161 && preview.width < media.width / 2, 'Tarjetas subordinadas al video principal');
+          assert.ok(preview.width <= 181 && preview.width < media.width / 2, 'Tarjetas mayores pero subordinadas al video principal');
+          assert.ok((await page.locator('.welcome-path').first().boundingBox()).height >= 190, 'Tarjetas móviles más altas');
+          assert.ok(await page.locator('.welcome-path p').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 13), 'Texto base de las tarjetas más legible');
         }
       }
     }
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('#welcome-video-backdrop').evaluate(canvas => {
+      const context = canvas.getContext('2d'), draw = context.drawImage;
+      window.testBackdropPaints = 0;
+      context.drawImage = function (...args) { window.testBackdropPaints++; return draw.apply(this, args); };
+    });
     await page.locator('#welcome-pause').click();
     assert.equal(await page.locator('#welcome-video').evaluate(v => v.paused), true);
     const time = await page.locator('#welcome-video').evaluate(v => v.currentTime); await page.waitForTimeout(200);
     assert.ok(Math.abs(await page.locator('#welcome-video').evaluate(v => v.currentTime) - time) < .03);
+    const pausedPaints = await page.evaluate(() => window.testBackdropPaints);
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(() => window.testBackdropPaints), pausedPaints, 'La pausa detiene también el fondo del video');
     await page.locator('#welcome-pause').click();
     await page.waitForFunction(() => !document.querySelector('#welcome-video').paused);
+    await page.waitForFunction(count => window.testBackdropPaints > count, pausedPaints);
     // Al salir de vista no descarga/reproduce continuamente la bienvenida.
     await page.evaluate(() => {
       const spacer = document.createElement('div'); spacer.id = 'test-scroll-space'; spacer.style.height = '100vh'; document.body.append(spacer);

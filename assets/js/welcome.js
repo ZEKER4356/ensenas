@@ -28,6 +28,35 @@
   let holding = false, holdRemaining = delay, holdTimer = null, holdStarted = null;
   video.muted = true; video.loop = false;
 
+  // Fondo decorativo a baja resolución y hasta 6 fps: reutiliza el video
+  // principal, sin otra descarga ni otra pista que pueda quedar reproduciéndose.
+  const backdrop = document.getElementById('welcome-video-backdrop');
+  const backdropContext = backdrop?.getContext('2d');
+  let backdropFrame = null, backdropTick = -Infinity;
+  function paintBackdrop() {
+    if (!backdropContext || !mobileLayout.matches || video.readyState < 2) return;
+    backdropContext.drawImage(video, 0, 0, backdrop.width, backdrop.height);
+  }
+  function stopBackdrop() {
+    if (backdropFrame !== null) cancelAnimationFrame(backdropFrame);
+    backdropFrame = null;
+  }
+  function animateBackdrop(now) {
+    backdropFrame = null;
+    if (!mobileLayout.matches || video.paused || document.hidden) return;
+    if (now - backdropTick >= 160) { paintBackdrop(); backdropTick = now; }
+    backdropFrame = requestAnimationFrame(animateBackdrop);
+  }
+  function startBackdrop() {
+    stopBackdrop(); paintBackdrop();
+    if (mobileLayout.matches && !video.paused && !document.hidden) backdropFrame = requestAnimationFrame(animateBackdrop);
+  }
+  video.addEventListener('playing', startBackdrop);
+  for (const event of ['pause', 'ended']) video.addEventListener(event, () => { stopBackdrop(); paintBackdrop(); });
+  for (const event of ['waiting', 'emptied']) video.addEventListener(event, stopBackdrop);
+  for (const event of ['loadeddata', 'seeked']) video.addEventListener(event, paintBackdrop);
+  mobileLayout.addEventListener('change', startBackdrop);
+
   function updateTextDuration() {
     const mobile = mobileLayout.matches;
     const estimate = Number.isFinite(video.duration) && video.duration > 0
