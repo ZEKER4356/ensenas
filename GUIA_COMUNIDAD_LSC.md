@@ -85,6 +85,12 @@ Respeta movimiento reducido, pausa al salir de vista o abrir Accesibilidad y con
 
 `node scripts/check-welcome-video.cjs` comprueba el MP4 real, seis anchos, temas, pausa/reinicio/bucle y preferencias. Usa la copia optimizada local (no se añade al repositorio); puede indicarse otra ruta mediante `ENSENAS_WELCOME_FIXTURE`. La disponibilidad de la URL pública se comprueba aparte.
 
+### Vista previa al compartir el enlace principal
+
+`index.html` incluye Open Graph en el HTML inicial (no depende de JavaScript), con URL pública absoluta y la imagen `assets/images/ensenas-compartir-v1.jpg`: logo oficial sobre blanco, JPEG 1200×1200. `scripts/build-social-image.cjs` la deriva de los logos existentes sin modificarlos; `scripts/check-social-preview.cjs` valida etiquetas, dimensiones, formato y tamaño. Estos scripts usan `sharp` del entorno de herramientas indicado por `ENSENAS_RUNTIME_PACKAGES`, no agregan dependencias a producción. La tarjeta final y su caché dependen de WhatsApp; probar pegando la URL pública en un mensaje nuevo, sin necesidad de enviarlo. Si se reemplaza la imagen, actualizar su nombre/versionado y las etiquetas.
+
+`node scripts/check-production.cjs` revisa por GET/HEAD la landing, imagen social, páginas, catálogo/medios, videos de navegación, configuración pública de Google y privacidad de las rutas. No inicia sesión ni crea aportes. No sustituye la prueba humana de Google ni de cámara/WebXR en un teléfono físico.
+
 ### Explicación de los objetos y RA
 
 El intérprete de los objetos conserva su velocidad original y controla el final de la explicación. Audio/TTS y LSC arrancan juntos desde Reproducir; si la narración acaba antes, la seña sigue hasta terminar. Si la narración es más larga, se detiene al finalizar el intérprete. No se estiran los medios para igualar duraciones: el equipo debe comprobar que ambos contenidos correspondan. Pausa y reanudación controlan ambas pistas; reiniciar vuelve al comienzo. Sin LSC válida se mantiene la explicación de audio/TTS.

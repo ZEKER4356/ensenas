@@ -15,7 +15,8 @@
     "test:viewer-media": "node scripts/check-viewer-media.cjs",
     "test:navigation": "node scripts/check-navigation.cjs",
     "test:welcome": "node scripts/check-welcome.cjs",
-    "test:welcome-video": "node scripts/check-welcome-video.cjs"
+    "test:welcome-video": "node scripts/check-welcome-video.cjs",
+    "test:social": "node scripts/check-social-preview.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
