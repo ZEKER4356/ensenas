@@ -1033,7 +1033,6 @@
         activeVideoLsc = '';
         if (lscPlaceholder) lscPlaceholder.classList.remove('is-hidden');
         lscOverlay.classList.add('is-hidden');
-        layoutInterpreter();
         updateLscAvailability();
       }, { once: true });
     }
@@ -1092,20 +1091,6 @@
     if (lscVideo) {
       if (!shouldShow) pauseExplanationAudio();
     }
-    layoutInterpreter();
-  }
-
-  function layoutInterpreter() {
-    const dock = document.getElementById('ar-lsc-dock');
-    if (!dock || !lscOverlay) return;
-    const docked = matchMedia('(max-width: 700px)').matches && !isArMode && !isFullscreen;
-    const parent = docked ? dock : canvasHost;
-    if (lscOverlay.parentElement !== parent) {
-      const resume = explanationPlayer?.playing;
-      parent.append(lscOverlay);
-      if (resume) explanationPlayer.play();
-    }
-    dock.hidden = !docked || lscOverlay.classList.contains('is-hidden');
   }
 
   function showMultimediaControls() {
@@ -1123,7 +1108,6 @@
      9. Bucle de Renderizado y Animaciones de Escaneo
      ======================================================================== */
   function onWindowResize() {
-    layoutInterpreter();
     if (!canvasHost || !camera || !renderer) return;
 
     let width = canvasHost.clientWidth;

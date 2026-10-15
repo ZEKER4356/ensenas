@@ -60,11 +60,17 @@ function wav(seconds) {
       assert.equal(await page.locator('#ar-overlay-video-lsc').evaluate(video => video.paused), true, 'Sin autoplay de audio al abrir la ficha');
     }
     await load();
-    for (const width of [320, 390, 430]) {
+    for (const width of [320, 360, 390, 430, 768, 1366]) {
       await page.setViewportSize({ width, height: 844 });
       const box = await page.locator('#ar-floating-lsc').boundingBox();
-      assert.ok(box.width >= width - 55, 'Intérprete móvil a todo el ancho bajo el modelo');
-      assert.equal(await page.locator('#ar-floating-lsc').evaluate(el => el.parentElement.id), 'ar-lsc-dock');
+      assert.ok(box.width >= 165 && box.width <= 266, 'Tamaño intermedio, no pantalla completa');
+      assert.equal(await page.locator('#ar-floating-lsc').evaluate(el => el.parentElement.id), 'ar-canvas-host');
+      const host = await page.locator('#ar-canvas-host').boundingBox();
+      assert.ok(box.x >= host.x && box.y >= host.y && box.x + box.width <= host.x + host.width + 1 && box.y + box.height <= host.y + host.height + 1, `Intérprete dentro del visualizador a ${width}px: ${JSON.stringify({ box, host })}`);
+      if (width <= 700) {
+        const audio = await page.locator('#ar-floating-audio').boundingBox();
+        assert.ok(box.y + box.height + 8 <= audio.y, 'No tapa los controles de reproducción');
+      }
       assert.equal(await page.locator('#ar-overlay-video-lsc').evaluate(el => getComputedStyle(el).objectFit), 'contain');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
     }
