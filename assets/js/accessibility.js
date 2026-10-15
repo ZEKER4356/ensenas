@@ -4,6 +4,7 @@
   const trigger = document.querySelector('[data-accessibility-toggle]');
   if (!trigger) return;
   const storageKey = 'ensenas-accessibility-v1';
+  const compact = matchMedia('(max-width: 700px), (max-height: 500px) and (pointer: coarse)');
   const defaults = {
     textSize: '100', contrast: false, motion: false, saturation: 'normal',
     dyslexia: false, lineHeight: 'normal', letterSpacing: 'normal',
@@ -93,6 +94,7 @@
       } else control.value = value;
     });
     try { localStorage.setItem(storageKey, JSON.stringify(preferences)); } catch (_) { /* opcional */ }
+    document.dispatchEvent(new CustomEvent('ensenas:accessibility-change', { detail: { motion: preferences.motion } }));
   }
   panel.addEventListener('change', event => {
     const control = event.target;
@@ -138,6 +140,7 @@
     panel.hidden = !open;
     trigger.setAttribute('aria-expanded', String(open));
     document.documentElement.toggleAttribute('data-accessibility-open', open);
+    document.dispatchEvent(new CustomEvent('ensenas:accessibility-toggle', { detail: { open } }));
     if (open) {
       panel.querySelector('.a11y-body').scrollTop = 0;
       panel.querySelector('.a11y-close').focus();
@@ -148,6 +151,12 @@
   panel.querySelector('.a11y-close').addEventListener('click', () => setOpen(false, true));
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !panel.hidden) setOpen(false, true);
+    if (event.key === 'Tab' && !panel.hidden && compact.matches) {
+      const controls = [...panel.querySelectorAll('button, input, select, a[href]')].filter(node => !node.disabled && node.getClientRects().length);
+      const first = controls[0], last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }
     if (preferences.guide && event.altKey && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
       event.preventDefault();
       const current = parseInt(guide.style.top, 10) || innerHeight / 2;

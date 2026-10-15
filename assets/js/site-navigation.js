@@ -75,4 +75,7 @@
   });
   list.addEventListener('click', () => { if (!desktop.matches) menu.open = false; });
   accessibility.addEventListener('click', () => { if (!desktop.matches) menu.open = false; });
+  menu.addEventListener('toggle', () => {
+    if (menu.open && !desktop.matches) document.dispatchEvent(new CustomEvent('ensenas:navigation-open'));
+  });
 })();

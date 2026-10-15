@@ -49,26 +49,20 @@ html[data-theme=dark] .community-status[data-error=true] { color: #FDA4AF; }
 .community-admin :is(pre, code) { white-space: pre-wrap; overflow-wrap: anywhere; }
 [hidden] { display: none !important; }
 .lsc-help-panel { position: fixed; z-index: 10005; right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); width: min(240px, calc(100% - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: 16px; box-shadow: 0 10px 35px #0003; background: var(--bg-surface); color: var(--text-main); }
+.lsc-help-panel.is-anchored { right: auto; bottom: auto; overflow: visible; }
+.lsc-help-panel.is-anchored::before { content: ''; position: absolute; z-index: -1; width: 12px; height: 12px; left: var(--lsc-arrow-left, 50%); top: -7px; transform: rotate(45deg); background: var(--bg-surface); border-top: 1px solid var(--border-subtle); border-left: 1px solid var(--border-subtle); }
+.lsc-help-panel.is-above::before { top: auto; bottom: -7px; transform: rotate(225deg); }
 .lsc-help-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; }
 .lsc-help-heading h2 { font-size: .8rem; line-height: 1.4; overflow-wrap: anywhere; }
 .lsc-help-heading button { min-width: 44px; min-height: 44px; border: 0; background: transparent; color: inherit; font-size: 1.25rem; cursor: pointer; }
-.lsc-help-panel video { display: block; width: 100%; aspect-ratio: 4 / 3; max-height: 32dvh; object-fit: contain; background: #111827; }
+.lsc-help-panel video { display: block; width: 100%; aspect-ratio: 1; max-height: 32dvh; object-fit: contain; background: #111827; pointer-events: none; border-radius: 0 0 15px 15px; }
 .lsc-help-panel p { font-size: .75rem; padding: 8px 12px; margin: 0; line-height: 1.5; }
-.lsc-target-group { display: flex; align-items: stretch; min-width: 0; }
-.lsc-target-group > :first-child { min-width: 0; flex: 1; }
-.lsc-target-group.lsc-card-group { position: relative; display: grid; }
-.lsc-card-group > .lsc-help-trigger { position: absolute; right: 8px; top: 8px; }
-.lsc-card-group .welcome-path-number { visibility: hidden; }
-.lsc-card-group .welcome-path { height: 100%; }
 .lsc-help-trigger { flex: 0 0 44px; min-width: 44px; min-height: 44px; align-self: center; padding: 6px; border: 1px solid var(--border-subtle); border-radius: 12px; font: inherit; font-size: .7rem; font-weight: 700; background: var(--bg-surface); color: var(--color-primary); cursor: pointer; }
 .lsc-help-trigger:hover { background: var(--bg-surface-alt); }
-.object-card > .lsc-help-trigger { align-self: flex-end; margin: 0 16px 12px; }
-.site-menu-links .lsc-target-group { flex: 1; }
 .a11y-body .community-actions .lsc-help-trigger { flex: 1 1 120px; overflow-wrap: anywhere; }
 .lsc-help-trigger:focus-visible, .community-box :focus-visible { outline: 3px solid var(--border-focus, #7c3aed); outline-offset: 3px; }
 @media (max-width: 700px) {
   .community-split { grid-template-columns: minmax(0, 1fr); }
   .community-ranking li { gap: 8px; padding: 12px; grid-template-columns: 28px minmax(0, 1fr) auto; }
-  .welcome-paths > .lsc-card-group:last-child { grid-column: 1 / -1; }
   .lsc-help-panel { width: min(210px, calc(100% - 24px)); }
 }

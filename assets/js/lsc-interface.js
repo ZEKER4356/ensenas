@@ -3,20 +3,22 @@
   'use strict';
   const sources = new Map();
   const savedTimes = new Map();
-  const controls = new WeakMap();
-  let active = null, trigger = null, suppressed = null, enterTimer, leaveTimer, restoringFocus = false;
+  let active = null, trigger = null, anchor = null, suppressed = null, enterTimer, leaveTimer, restoringFocus = false, placementFrame;
+  let pointer = { x: 0, y: 0 }, dismissedAt = null;
   const panel = document.createElement('section');
   panel.className = 'lsc-help-panel';
   panel.id = 'lsc-interface-player';
   panel.hidden = true;
   panel.setAttribute('role', 'region');
   panel.setAttribute('aria-label', 'Interpretación LSC del elemento');
-  panel.innerHTML = '<div class="lsc-help-heading"><h2>Interpretación LSC</h2><button type="button" aria-label="Cerrar interpretación LSC">×</button></div><video controls muted playsinline preload="none" aria-label="Interpretación en Lengua de Señas Colombiana"></video><p hidden role="status"></p>';
+  panel.innerHTML = '<div class="lsc-help-heading"><h2>Interpretación LSC</h2><button type="button" aria-label="Cerrar interpretación LSC">×</button></div><video muted loop playsinline preload="none" tabindex="-1" aria-label="Interpretación en Lengua de Señas Colombiana"></video><p hidden role="status"></p>';
   document.body.append(panel);
   const video = panel.querySelector('video');
+  video.muted = true;
   const title = panel.querySelector('h2');
   const message = panel.querySelector('p');
   const coarse = matchMedia('(hover: none)');
+  const compact = matchMedia('(max-width: 700px)');
   const reduced = () => document.documentElement.hasAttribute('data-reduce-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
   let autoEnabled = true;
   try { autoEnabled = localStorage.getItem('ensenas-lsc-auto') !== 'false'; } catch (_) { /* Valor accesible predeterminado. */ }
@@ -35,34 +37,62 @@
     if (active) savedTimes.set(active, video.ended ? 0 : video.currentTime || 0);
     video.pause();
   }
+  function place() {
+    placementFrame = null;
+    if (panel.hidden) return;
+    if (compact.matches || coarse.matches || !anchor?.isConnected || !anchor.getClientRects().length) {
+      panel.classList.remove('is-anchored'); panel.style.removeProperty('left'); panel.style.removeProperty('top');
+      return;
+    }
+    const rect = anchor.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top > innerHeight) { close(); return; }
+    panel.classList.add('is-anchored');
+    const width = panel.offsetWidth, height = panel.offsetHeight, gap = 10, margin = 12;
+    const left = Math.max(margin, Math.min(innerWidth - width - margin, rect.left + (rect.width - width) / 2));
+    let top = rect.bottom + gap;
+    const above = top + height > innerHeight - margin && rect.top - height - gap >= margin;
+    if (above) top = rect.top - height - gap;
+    top = Math.max(margin, Math.min(top, innerHeight - height - margin));
+    panel.style.left = `${Math.round(left)}px`; panel.style.top = `${Math.round(top)}px`;
+    panel.style.setProperty('--lsc-arrow-left', `${Math.max(16, Math.min(width - 24, rect.left + rect.width / 2 - left - 6))}px`);
+    panel.classList.toggle('is-above', above);
+  }
+  function schedulePlace() {
+    if (!panel.hidden && !placementFrame) placementFrame = requestAnimationFrame(place);
+  }
   function close(restore = false) {
     clearTimeout(enterTimer); clearTimeout(leaveTimer);
     pause(); panel.hidden = true;
+    anchor = null;
     if (trigger) trigger.setAttribute('aria-expanded', 'false');
     suppressed = active;
     if (restore && trigger) {
+      dismissedAt = { ...pointer };
       restoringFocus = true;
       if (trigger.getClientRects().length) trigger.focus();
       else document.querySelector('[data-accessibility-toggle]')?.focus();
       restoringFocus = false;
     }
   }
-  function show(key, button, explicit = false) {
+  function show(key, button, explicit = false, target) {
     const item = sources.get(key);
-    if (!item || (!autoEnabled && !explicit) || (suppressed === key && !explicit)) return;
+    if (!item || document.documentElement.hasAttribute('data-accessibility-open') || ((!autoEnabled || reduced()) && !explicit) || (suppressed === key && !explicit)) return;
     clearTimeout(leaveTimer);
     if (trigger) trigger.setAttribute('aria-expanded', 'false');
-    trigger = button || document.querySelector(`[data-lsc-open="${CSS.escape(key)}"]`);
+    anchor = target || button;
+    trigger = button || target;
     if (active !== key) {
       pause(); active = key;
       title.textContent = item.etiqueta;
       message.hidden = true;
       video.src = item.video_url;
-      video.onloadedmetadata = () => { if (savedTimes.has(key)) video.currentTime = Math.min(savedTimes.get(key), video.duration || 0); };
+      video.onloadedmetadata = () => { if (savedTimes.has(key)) video.currentTime = Math.min(savedTimes.get(key), video.duration || 0); schedulePlace(); };
     }
     panel.hidden = false;
     if (trigger) trigger.setAttribute('aria-expanded', 'true');
-    if (explicit || !reduced()) video.play().catch(() => { /* Controles disponibles si el navegador bloquea autoplay. */ });
+    place();
+    if (explicit) panel.querySelector('button').focus({ preventScroll: true });
+    video.play().catch(() => { message.textContent = 'No se pudo iniciar el video. Abre esta interpretación desde Accesibilidad para intentarlo de nuevo.'; message.hidden = false; schedulePlace(); });
   }
   function scheduleClose() {
     clearTimeout(enterTimer);
@@ -73,9 +103,18 @@
   panel.querySelector('button').addEventListener('click', () => close(true));
   panel.addEventListener('pointerenter', () => clearTimeout(leaveTimer));
   panel.addEventListener('pointerleave', () => { if (!coarse.matches) scheduleClose(); });
-  video.addEventListener('error', () => { message.textContent = 'No se pudo reproducir esta interpretación. El contenido escrito sigue disponible.'; message.hidden = false; });
+  video.addEventListener('error', () => { message.textContent = 'No se pudo reproducir esta interpretación. El contenido escrito sigue disponible.'; message.hidden = false; schedulePlace(); });
   video.addEventListener('ended', () => { savedTimes.set(active, 0); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pause();
+    else if (!panel.hidden) video.play().catch(() => { /* Reintento explícito desde Accesibilidad. */ });
+  });
+  window.addEventListener('resize', schedulePlace, { passive: true });
+  window.addEventListener('scroll', schedulePlace, { passive: true, capture: true });
+  if ('ResizeObserver' in window) new ResizeObserver(schedulePlace).observe(panel);
+  document.addEventListener('ensenas:navigation-open', () => close());
+  document.addEventListener('ensenas:accessibility-toggle', event => { if (event.detail.open) close(); });
+  document.addEventListener('ensenas:accessibility-change', event => { if (event.detail.motion) close(); });
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.preventDefault(); close(true); } });
   function targetFor(node) {
     if (!(node instanceof Element)) return null;
@@ -83,12 +122,22 @@
     while (target && !sources.has(target.dataset.lscKey)) target = target.parentElement?.closest('[data-lsc-key]');
     return target;
   }
+  function scheduleOpen(target) {
+    suppressed = null; clearTimeout(leaveTimer); clearTimeout(enterTimer);
+    enterTimer = setTimeout(() => show(target.dataset.lscKey, null, false, target), 300);
+  }
+  document.addEventListener('pointermove', event => {
+    pointer = { x: event.clientX, y: event.clientY };
+    if (!dismissedAt || (dismissedAt.x === pointer.x && dismissedAt.y === pointer.y)) return;
+    dismissedAt = null;
+    const target = targetFor(event.target);
+    if (target && !coarse.matches && event.pointerType !== 'touch') scheduleOpen(target);
+  }, { passive: true });
   document.addEventListener('pointerover', event => {
-    if (coarse.matches || event.pointerType === 'touch') return;
+    if (coarse.matches || event.pointerType === 'touch' || dismissedAt) return;
     const target = targetFor(event.target);
     if (!target || target === targetFor(event.relatedTarget)) return;
-    suppressed = null; clearTimeout(leaveTimer); clearTimeout(enterTimer);
-    enterTimer = setTimeout(() => show(target.dataset.lscKey), 450);
+    scheduleOpen(target);
   });
   document.addEventListener('pointerout', event => {
     const target = targetFor(event.target);
@@ -96,7 +145,7 @@
   });
   document.addEventListener('focusin', event => {
     const target = targetFor(event.target);
-    if (target && !coarse.matches && !restoringFocus) { suppressed = null; clearTimeout(leaveTimer); clearTimeout(enterTimer); enterTimer = setTimeout(() => show(target.dataset.lscKey), 350); }
+    if (target && !coarse.matches && !restoringFocus) { suppressed = null; clearTimeout(leaveTimer); clearTimeout(enterTimer); enterTimer = setTimeout(() => show(target.dataset.lscKey, null, false, target), 300); }
     if (panel.contains(event.target)) clearTimeout(leaveTimer);
   });
   document.addEventListener('focusout', event => {
@@ -130,32 +179,12 @@
         } else if (element.id) element.dataset.lscKey = `element.${element.id}`;
       }
       const key = element.dataset.lscKey;
-      const existing = controls.get(element);
-      if (existing) {
-        if (existing.dataset.lscOpen !== key && trigger === existing && !panel.hidden) close();
-        existing.hidden = !sources.has(key);
-        if (sources.has(key) && existing.dataset.lscOpen !== key) {
-          existing.dataset.lscOpen = key;
-          existing.setAttribute('aria-label', `Ver en LSC: ${sources.get(key).etiqueta}`);
-        }
-        continue;
-      }
       if (!sources.has(key) || element.dataset.lscBound === key) continue;
       element.dataset.lscBound = key;
-      // No añadir botones que aprieten el logo o las herramientas del encabezado.
-      // En móvil, esos destinos también se interpretan desde Accesibilidad.
-      if (element.closest('.brand-group, .site-tools')) continue;
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = 'lsc-help-trigger';
-      button.textContent = 'LSC'; button.dataset.lscOpen = key;
-      button.setAttribute('aria-label', `Ver en LSC: ${sources.get(key).etiqueta}`);
-      button.setAttribute('aria-controls', panel.id); button.setAttribute('aria-expanded', 'false');
-      controls.set(element, button);
-      if (element.matches('a, button')) {
-        const wrapper = document.createElement('div');
-        wrapper.className = `lsc-target-group${element.matches('.welcome-path') ? ' lsc-card-group' : ''}`;
-        element.before(wrapper); wrapper.append(element, button);
-      } else element.append(button);
+      // Interpretar el elemento original sin añadir botones ni alterar su diseño.
+      // El acceso táctil/manual permanece reunido dentro de Accesibilidad.
+      if (!element.matches('a, button, input, select, textarea, [tabindex]')) element.tabIndex = 0;
+      element.setAttribute('aria-controls', panel.id);
     }
   }
   fetch('/api/comunidad?action=interpretaciones').then(async response => {
@@ -166,9 +195,8 @@
     }
     if (a11yBody) {
       const section = document.createElement('div'); section.className = 'community-actions';
-      const heading = document.createElement('p'); heading.className = 'a11y-help'; heading.textContent = 'Navegación en LSC';
+      const heading = document.createElement('p'); heading.className = 'a11y-help'; heading.textContent = 'Interpretaciones LSC disponibles';
       for (const [key, item] of sources) {
-        if (!key.startsWith('nav.')) continue;
         const button = document.createElement('button'); button.type = 'button'; button.className = 'lsc-help-trigger';
         button.dataset.lscOpen = key; button.textContent = item.etiqueta; button.setAttribute('aria-controls', panel.id); button.setAttribute('aria-expanded', 'false');
         section.append(button);

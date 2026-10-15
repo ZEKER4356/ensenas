@@ -75,9 +75,9 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
       await page.locator('#site-text-size').selectOption('150');
       assert.ok((await page.locator('#welcome-message-full').evaluate(el => getComputedStyle(el).fontFamily)).includes('Verdana'));
       assert.equal(await page.locator('#site-reading-guide').isVisible(), true);
+      await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();
       await page.mouse.move(100, 100);
       assert.equal(await page.locator('#site-reading-guide').evaluate(el => el.style.top), '100px');
-      await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'Preferencias combinadas no desbordan la página');
       await page.reload({ waitUntil: 'networkidle' });
       assert.equal(await page.evaluate(() => document.documentElement.dataset.saturation), 'gray');

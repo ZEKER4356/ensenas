@@ -29,22 +29,31 @@ const { chromium } = require(require.resolve('playwright', {
       await page.setViewportSize({ width, height: 850 });
       for (const path of paths) {
         await page.goto(`http://127.0.0.1:4173/${path}`, { waitUntil: 'networkidle' });
-        await page.locator('.site-navigation').waitFor();
+        await page.locator('.site-navigation').waitFor({ state: 'attached' });
+        const landingPhone = path === 'index.html' && width <= 700;
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
         assert.equal(overflow, false, `Desbordamiento en ${path} a ${width}px`);
         const menu = page.locator('.site-menu');
-        if (width < 1200) await page.locator('.site-menu-toggle').click();
+        if (width < 1200 && !landingPhone) await page.locator('.site-menu-toggle').click();
         assert.equal(await menu.locator('a').count(), 5);
         assert.equal(await menu.locator('a[href="admin.html"]').count(), 0);
         assert.equal(await page.locator('.site-tools a[href="admin.html"]').isVisible(), true);
-        assert.equal(await menu.locator('a').first().isVisible(), true);
-        if (width < 1200) {
+        assert.equal(await menu.locator('a').first().isVisible(), !landingPhone);
+        assert.equal(await page.locator('.brand-link').isVisible(), true);
+        if (width < 1200 && !landingPhone) {
           await page.keyboard.press('Escape');
           assert.equal(await menu.getAttribute('open'), null);
         }
         await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
         const panel = page.getByRole('region', { name: 'Accesibilidad', exact: true });
         assert.equal(await panel.isVisible(), true);
+        if (width <= 700) {
+          const box = await panel.boundingBox();
+          assert.deepEqual(box, { x: 0, y: 0, width, height: 850 }, 'Accesibilidad ocupa toda la pantalla móvil');
+          await page.locator('.a11y-body').evaluate(el => { el.scrollTop = el.scrollHeight; });
+          assert.equal(await page.getByRole('button', { name: 'Cerrar accesibilidad' }).isVisible(), true);
+          assert.equal(await page.getByRole('button', { name: /Restablecer configuración/ }).isVisible(), true);
+        }
         assert.equal(await page.getByRole('dialog').count(), 0);
         // El panel no vuelve inerte el contenido: permite seguir usando la página.
         assert.equal(await page.locator('main').first().evaluate(el => el.inert), false);

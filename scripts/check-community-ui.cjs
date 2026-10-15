@@ -31,7 +31,7 @@ const ORIGIN = 'http://127.0.0.1:4173';
       { id: 's2', significado: 'Gracias', descripcion: '', autor: 'Luis', autor_id: 'a2', video_url: `${ORIGIN}/test-video.webm`, estado: 'aprobado' }
     ];
     const signs = [...initialSigns];
-    const sources = ['nav.inicio', 'nav.admin', 'nav.catalogo', 'nav.comunidad', 'nav.equipo', 'community.enviar', 'community.login', 'community.registro', 'object.microbit', 'page.bienvenida'].map(clave => ({ clave, etiqueta: clave, video_url: 'https://media.example.test/video.webm', activo: true }));
+    const sources = ['nav.inicio', 'nav.admin', 'nav.catalogo', 'nav.sube-tu-sena', 'nav.comunidad', 'nav.leaderboard', 'nav.equipo', 'community.enviar', 'community.login', 'community.registro', 'object.microbit', 'page.bienvenida'].map(clave => ({ clave, etiqueta: clave, video_url: 'https://media.example.test/video.webm', activo: true }));
     let loggedIn = false, storageUploaded = false, failFinalization = false, uploadedMeaning = '';
     const externalRoute = async route => {
       if (route.request().url().startsWith('https://media.example.test/')) return route.fulfill({ contentType: 'video/webm', body: clip });
@@ -81,13 +81,26 @@ const ORIGIN = 'http://127.0.0.1:4173';
     };
     await page.route(`${ORIGIN}/**`, appRoute);
     // Configuración LSC: aparece solo donde existe video, sin interceptar el enlace.
-    await page.goto(`${ORIGIN}/index.html`); await page.waitForSelector('.welcome-paths .lsc-help-trigger');
+    await page.goto(`${ORIGIN}/index.html`); await page.waitForSelector('.welcome-paths [data-lsc-bound="nav.catalogo"]');
     assert.equal(await page.locator('.welcome-path').count(), 5);
+    assert.equal(await page.locator('.site-header .lsc-help-trigger, .welcome-paths .lsc-help-trigger, .lsc-target-group').count(), 0, 'Sin botones LSC laterales ni envoltorios que alteren el diseño');
     await page.setViewportSize({ width: 1366, height: 900 });
     const catalogLink = page.locator('.site-menu a[href="catalogo.html"]');
+    for (const link of await page.locator('.site-menu-links a').all()) {
+      await link.hover();
+      await page.waitForTimeout(500);
+      const box = await page.locator('#lsc-interface-player').boundingBox(), target = await link.boundingBox();
+      assert.ok(box && box.y >= target.y + target.height + 8, 'LSC debajo del enlace que se está explorando');
+      assert.ok(box.x >= 0 && box.x + box.width <= 1366, 'Intérprete dentro de la pantalla');
+      assert.equal(await page.locator('#lsc-interface-player h2').textContent(), await link.getAttribute('data-lsc-key'));
+    }
     await catalogLink.hover(); await page.waitForTimeout(600);
     assert.equal(await page.locator('#lsc-interface-player').isVisible(), true);
     assert.equal(await page.locator('#lsc-interface-player h2').textContent(), 'nav.catalogo');
+    assert.deepEqual(await page.locator('#lsc-interface-player video').evaluate(video => ({ loop: video.loop, muted: video.muted, controls: video.controls, pointer: getComputedStyle(video).pointerEvents })), { loop: true, muted: true, controls: false, pointer: 'none' }, 'Bucle silencioso sin controles ni pausa al tocar');
+    await page.locator('#lsc-interface-player video').evaluate(video => { window.testLoopCount = 0; let previous = video.currentTime; video.addEventListener('timeupdate', () => { if (video.currentTime + .2 < previous) window.testLoopCount++; previous = video.currentTime; }); });
+    await page.waitForFunction(() => window.testLoopCount > 0, null, { timeout: 10000 });
+    if (process.env.ENSENAS_SCREENSHOTS_DIR) await page.screenshot({ path: path.join(process.env.ENSENAS_SCREENSHOTS_DIR, 'lsc-nav-desktop.png') });
     await page.locator('#lsc-interface-player').hover(); await page.waitForTimeout(750);
     assert.equal(await page.locator('#lsc-interface-player').isVisible(), true, 'El panel puede mantenerse bajo el mouse');
     await page.keyboard.press('Escape'); await page.waitForTimeout(400);
@@ -96,6 +109,19 @@ const ORIGIN = 'http://127.0.0.1:4173';
     await catalogLink.focus(); await page.waitForTimeout(500);
     assert.equal(await page.locator('#lsc-interface-player').isVisible(), true, 'Interpretación con teclado');
     await page.keyboard.press('Escape');
+    await page.locator('.welcome-path[href="comunidad.html"]').hover(); await page.waitForTimeout(500);
+    assert.equal(await page.locator('#lsc-interface-player').isVisible(), true, 'Las tarjetas se interpretan sin botones adicionales');
+    const cardPanel = await page.locator('#lsc-interface-player').boundingBox();
+    assert.ok(cardPanel.y >= 0 && cardPanel.y + cardPanel.height <= 900);
+    await page.keyboard.press('Escape');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await catalogLink.hover(); await page.waitForTimeout(600);
+    assert.equal(await page.locator('#lsc-interface-player').isVisible(), false, 'Movimiento reducido no abre un bucle automático');
+    await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
+    await page.locator('#site-accessibility-panel [data-lsc-open="nav.catalogo"]').click();
+    assert.equal(await page.locator('#lsc-interface-player').isVisible(), true, 'Acceso manual disponible con movimiento reducido');
+    await page.keyboard.press('Escape');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     for (const width of [320, 360, 390, 430, 768, 1366]) {
       await page.setViewportSize({ width, height: 844 });
       for (const name of ['index.html', 'catalogo.html', 'comunidad.html', 'leaderboard.html']) {
@@ -104,20 +130,20 @@ const ORIGIN = 'http://127.0.0.1:4173';
       }
     }
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${ORIGIN}/index.html`); await page.waitForSelector('.welcome-paths .lsc-help-trigger');
-    await page.locator('.welcome-paths [data-lsc-open="nav.catalogo"]').click();
+    await page.goto(`${ORIGIN}/index.html`); await page.waitForSelector('.welcome-paths [data-lsc-bound="nav.catalogo"]');
+    await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
+    await page.locator('#site-accessibility-panel [data-lsc-open="nav.catalogo"]').click();
     assert.ok(page.url().endsWith('index.html')); assert.equal(await page.locator('#lsc-interface-player').isVisible(), true);
     await page.getByRole('button', { name: 'Cerrar interpretación LSC' }).click();
     await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
     await page.getByLabel('Interpretación LSC al explorar').uncheck();
-    await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();
-    await page.locator('.welcome-paths [data-lsc-open="nav.catalogo"]').click();
+    await page.locator('#site-accessibility-panel [data-lsc-open="nav.catalogo"]').click();
     assert.equal(await page.locator('#lsc-interface-player').isVisible(), true, 'El botón manual funciona sin apertura automática');
     await page.keyboard.press('Escape');
     // Cuenta y envío: un fallo de confirmación jamás se presenta como éxito.
     await page.goto(`${ORIGIN}/sube-tu-sena.html`, { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: 'Crear cuenta', exact: true }).click();
-    await page.waitForSelector('#community-auth-form [data-lsc-open="community.registro"]');
+    await page.waitForSelector('#community-auth-form [data-lsc-bound="community.registro"]');
     await page.getByLabel('Alias público').fill('Ana'); await page.getByLabel('Correo', { exact: true }).fill('ana@example.test');
     await page.getByLabel('Contraseña', { exact: true }).fill('valid-password'); await page.locator('#account-consent-label input').check();
     await page.locator('#community-auth-form [type=submit]').click();
@@ -175,14 +201,42 @@ const ORIGIN = 'http://127.0.0.1:4173';
     touch.on('pageerror', error => errors.push(error.message));
     await touch.route('https://**/*', externalRoute); await touch.route(`${ORIGIN}/**`, appRoute);
     await touch.goto(`${ORIGIN}/index.html`, { waitUntil: 'networkidle' });
+    for (const size of [{ width: 320, height: 844 }, { width: 430, height: 844 }, { width: 844, height: 390 }]) {
+      await touch.setViewportSize(size);
+      assert.equal(await touch.locator('.site-navigation').isVisible(), false);
+      await touch.getByRole('button', { name: 'Accesibilidad', exact: true }).tap();
+      const panel = touch.locator('#site-accessibility-panel');
+      assert.deepEqual(await panel.boundingBox(), { x: 0, y: 0, ...size });
+      await touch.locator('#site-text-size').selectOption('150');
+      await touch.locator('.a11y-body').evaluate(el => { el.scrollTop = el.scrollHeight; });
+      for (const selector of ['.a11y-close', '#site-reset-preferences']) {
+        assert.equal(await touch.locator(selector).evaluate(el => { const r = el.getBoundingClientRect(); return r.y >= 0 && r.bottom <= innerHeight && el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); }), true, 'Cerrar y restablecer accesibles incluso al ampliar texto y desplazar el contenido');
+      }
+      await touch.locator('.a11y-close').focus(); await touch.keyboard.press('Shift+Tab');
+      assert.equal(await touch.locator('#site-reset-preferences').evaluate(el => el === document.activeElement), true);
+      await touch.keyboard.press('Tab');
+      assert.equal(await touch.locator('.a11y-close').evaluate(el => el === document.activeElement), true);
+      await touch.locator('#site-reset-preferences').tap();
+      await touch.getByRole('button', { name: 'Cerrar accesibilidad' }).tap();
+      assert.equal(await touch.evaluate(() => document.documentElement.hasAttribute('data-accessibility-open')), false);
+    }
+    await touch.setViewportSize({ width: 390, height: 844 });
     assert.equal(await touch.evaluate(() => matchMedia('(hover: none)').matches), true);
     assert.equal(await touch.locator('#lsc-interface-player').isVisible(), false);
-    await touch.locator('.welcome-paths [data-lsc-open="nav.catalogo"]').tap();
+    assert.equal(await touch.locator('.site-navigation').isVisible(), false, 'Inicio móvil sin menú que tape la bienvenida');
+    await touch.getByRole('button', { name: 'Accesibilidad', exact: true }).tap();
+    assert.deepEqual(await touch.locator('#site-accessibility-panel').boundingBox(), { x: 0, y: 0, width: 390, height: 844 });
+    if (process.env.ENSENAS_SCREENSHOTS_DIR) await touch.screenshot({ path: path.join(process.env.ENSENAS_SCREENSHOTS_DIR, 'accessibility-fullscreen-mobile.png') });
+    await touch.locator('#site-accessibility-panel [data-lsc-open="nav.catalogo"]').tap();
     assert.equal(await touch.locator('#lsc-interface-player').isVisible(), true); assert.ok(touch.url().endsWith('index.html'));
     await touch.getByRole('button', { name: 'Cerrar interpretación LSC' }).tap();
     await touch.locator('.welcome-path[href="catalogo.html"]').tap();
     await touch.waitForURL('**/catalogo.html');
     assert.equal(await touch.locator('#lsc-interface-player').isVisible(), false, 'La navegación táctil no abre un hover accidental');
+    await touch.locator('.site-menu-toggle').tap();
+    const navLink = touch.locator('.site-menu-links a[href="comunidad.html"]');
+    assert.equal(await navLink.evaluate(el => { const r = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); }), true, 'Menú interior móvil encima del contenido, sin bloqueo por videos');
+    await navLink.tap(); await touch.waitForURL('**/comunidad.html');
     await touch.close(); assert.deepEqual(errors, [], 'Errores también en contexto táctil');
     console.log('OK: LSC por hover/teclado/control móvil, no desbordamiento, registro, subida con fallo/reintento, revisión, comunidad, ranking y asignación de señas. API y Storage simulados.');
   } finally { await browser.close(); }
