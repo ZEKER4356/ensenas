@@ -27,7 +27,7 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
     });
     await page.goto(`${ORIGIN}/index.html`);
     await page.waitForFunction(() => { const v = document.querySelector('#welcome-video'); return !v.paused && v.readyState >= 2; });
-    assert.deepEqual(await page.locator('#welcome-video').evaluate(v => ({ src: v.src, muted: v.muted, loop: v.loop, width: v.videoWidth, height: v.videoHeight })), { src: SOURCE, muted: true, loop: true, width: 1080, height: 1080 });
+    assert.deepEqual(await page.locator('#welcome-video').evaluate(v => ({ src: v.src, muted: v.muted, loop: v.loop, width: v.videoWidth, height: v.videoHeight })), { src: SOURCE, muted: true, loop: false, width: 1080, height: 1080 });
     for (const width of [320, 360, 390, 430, 768, 1366]) {
       await page.setViewportSize({ width, height: 844 });
       for (const theme of ['light', 'dark']) {
@@ -59,12 +59,44 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
     await page.locator('#site-reduce-motion').check();
     assert.equal(await page.locator('#welcome-video').evaluate(v => v.paused), true);
     assert.equal(await page.locator('#welcome-message-animated').textContent(), await page.locator('#welcome-message-full').textContent());
+    await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();
+    await page.locator('#welcome-pause').click();
+    await page.waitForFunction(() => !document.querySelector('#welcome-video').paused);
+    await page.locator('#welcome-pause').click();
+    assert.equal(await page.locator('#welcome-video').evaluate(v => v.paused), true, 'Puede pausar una reproducción manual incluso con movimiento reducido');
+    await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
     await page.locator('#site-reduce-motion').uncheck();
     await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();
     await page.locator('#welcome-replay').click();
     await page.waitForFunction(() => { const v = document.querySelector('#welcome-video'); return !v.paused && v.currentTime < 1; });
+    const duration = Number(await page.locator('.welcome-hero').getAttribute('data-text-duration-ms'));
+    assert.ok(duration >= 8000 && duration <= 8500, 'Texto calculado a ~8,2 s para el video de ~18,2 s');
+    // Pausar únicamente la pista de video simula buffering: el texto tiene reloj propio.
+    await page.locator('#welcome-video').evaluate(v => v.pause());
+    await page.evaluate(() => {
+      window.welcomeTextSamples = [];
+      new MutationObserver(() => window.welcomeTextSamples.push(document.querySelector('#welcome-title-animated').textContent.length + document.querySelector('#welcome-message-animated').textContent.length))
+        .observe(document.querySelector('.welcome-copy'), { childList: true, characterData: true, subtree: true });
+    });
+    const textStart = Date.now();
+    await page.waitForFunction(() => document.querySelector('#welcome-message-animated').textContent === document.querySelector('#welcome-message-full').textContent, null, { timeout: 12000 });
+    assert.ok(Date.now() - textStart < 10500, 'No depende del avance del video');
+    assert.equal(await page.locator('#welcome-video').evaluate(v => v.paused && v.currentTime < 1), true);
+    const samples = await page.evaluate(() => window.welcomeTextSamples);
+    assert.ok(samples.length > 100, 'Actualizaciones pequeñas por requestAnimationFrame, no saltos de timeupdate');
+    assert.ok(samples.every((value, index) => !index || value >= samples[index - 1]), 'El texto no retrocede');
+    await page.locator('#welcome-video').evaluate(v => v.play());
     await page.locator('#welcome-video').evaluate(v => { v.currentTime = v.duration - .2; });
-    await page.waitForFunction(() => document.querySelector('#welcome-video').currentTime < 1);
+    await page.waitForFunction(() => document.querySelector('#welcome-video').ended);
+    const holdStart = Date.now();
+    await page.waitForTimeout(2000);
+    assert.equal(await page.locator('#welcome-video').evaluate(v => v.ended && v.paused), true, 'Mantiene el último fotograma durante la tolerancia');
+    await page.locator('#welcome-pause').click(); await page.waitForTimeout(500);
+    assert.equal(await page.locator('#welcome-video').evaluate(v => v.ended), true, 'Pausa también congela la espera restante');
+    await page.locator('#welcome-pause').click();
+    await page.waitForFunction(() => !document.querySelector('#welcome-video').paused && document.querySelector('#welcome-video').currentTime < 1);
+    assert.ok(Date.now() - holdStart >= 5350, 'Espera 5 s más la pausa manual antes de repetir');
+    assert.equal(await page.locator('#welcome-message-animated').textContent(), await page.locator('#welcome-message-full').textContent(), 'El bucle del video no borra el texto completo');
     await page.waitForFunction(() => { const v = document.querySelector('#welcome-video'); return !v.seeking && v.currentTime > .25 && v.currentTime < 2; });
     for (const width of [390, 1366]) {
       await page.setViewportSize({ width, height: 844 });
@@ -87,6 +119,6 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
       await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();
     }
     assert.deepEqual(errors, []);
-    console.log('OK: bienvenida MP4 real 1080², 6 anchos, claro/oscuro, sin recortes/superposición, pausa/reinicio/bucle, salida de vista, movimiento reducido y texto ampliado. URL servida con copia local; HEAD público verificado aparte.');
+    console.log('OK: MP4 real 1080², texto independiente fluido ~8,2 s, permanencia del mensaje, espera de 5 s entre videos (pausable), 6 anchos, temas, pausa/reinicio, salida de vista, movimiento reducido y texto ampliado.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
