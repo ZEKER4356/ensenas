@@ -7,12 +7,19 @@ const ROOT = path.resolve(__dirname, '..'), ORIGIN = 'http://127.0.0.1:4173';
 const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/public/ensenas-media/landing/bienvenida-landing.mp4';
 (async () => {
   const clip = await fs.readFile(process.env.ENSENAS_WELCOME_FIXTURE || path.join(ROOT, 'videos-lsc/listos-para-subir/bienvenida-landing.mp4'));
+  const clips = new Map([[SOURCE, clip]]), sources = [];
+  for (const [key, file] of [['catalogo', 'catalogo'], ['sube-tu-sena', 'sube-tu-sena'], ['comunidad', 'comunidad'], ['leaderboard', 'leaderboard'], ['equipo', 'equipo-trabajo']]) {
+    const url = `https://media.example.test/${file}.mp4`;
+    clips.set(url, await fs.readFile(path.join(ROOT, 'videos-lsc/listos-para-subir/tarjetas', file + '.mp4')));
+    sources.push({ clave: 'nav.' + key, etiqueta: file, video_url: url, activo: true });
+  }
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   try {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     await page.route('https://**/*', route => {
-      if (route.request().url() !== SOURCE) return route.abort();
+      const clip = clips.get(route.request().url());
+      if (!clip) return route.abort();
       const range = /bytes=(\d+)-(\d*)/.exec(route.request().headers().range || '');
       if (!range) return route.fulfill({ body: clip, contentType: 'video/mp4', headers: { 'accept-ranges': 'bytes' } });
       const start = Number(range[1]), end = Math.min(clip.length - 1, range[2] ? Number(range[2]) : clip.length - 1);
@@ -20,7 +27,7 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
     });
     await page.route(`${ORIGIN}/**`, async route => {
       const pathname = new URL(route.request().url()).pathname;
-      if (pathname.startsWith('/api/')) return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ success: true, items: [] }) });
+      if (pathname.startsWith('/api/')) return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ success: true, items: route.request().url().includes('action=interpretaciones') ? sources : [] }) });
       const file = path.resolve(ROOT, '.' + decodeURIComponent(pathname)); assert.ok(file.startsWith(ROOT + path.sep));
       try { return route.fulfill({ body: await fs.readFile(file), contentType: { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png' }[path.extname(file)] || 'application/octet-stream' }); }
       catch (_) { return route.fulfill({ status: 404, body: '' }); }
@@ -35,8 +42,19 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
         const media = await page.locator('.welcome-video-card').boundingBox(), copy = await page.locator('.welcome-copy').boundingBox();
         assert.ok(media.x >= 0 && media.x + media.width <= width + 1);
         assert.equal(await page.locator('#welcome-video').evaluate(v => getComputedStyle(v).objectFit), 'contain');
-        assert.ok(width <= 700 ? media.y >= copy.y + copy.height : media.x >= copy.x + copy.width, 'Sin texto sobre rostro/manos');
+        if (width <= 700) {
+          assert.ok(copy.y >= media.y + media.width - 1, 'Cuadrado completo antes del texto, sin tapar rostro/manos');
+          assert.ok(copy.y + copy.height <= media.y + media.height + 1, 'Texto integrado sobre la extensión inferior del escenario');
+          const frame = await page.locator('#welcome-video').boundingBox();
+          assert.ok(Math.abs(frame.width - frame.height) < 1 && frame.y < copy.y, 'Video cuadrado, primero y sin recorte');
+        } else assert.ok(media.x >= copy.x + copy.width, 'PC conserva dos columnas');
+        const typingDuration = Number(await page.locator('.welcome-hero').getAttribute('data-text-duration-ms'));
+        assert.ok(width <= 700 ? typingDuration >= 12500 && typingDuration <= 13000 : typingDuration >= 8000 && typingDuration <= 8500, 'Móvil más lento sin alterar el ritmo de PC');
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+        if (width <= 700) {
+          const preview = await page.locator('.lsc-inline-media').first().boundingBox();
+          assert.ok(preview.width <= 161 && preview.width < media.width / 2, 'Tarjetas subordinadas al video principal');
+        }
       }
     }
     await page.setViewportSize({ width: 390, height: 844 });
@@ -70,7 +88,7 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
     await page.locator('#welcome-replay').click();
     await page.waitForFunction(() => { const v = document.querySelector('#welcome-video'); return !v.paused && v.currentTime < 1; });
     const duration = Number(await page.locator('.welcome-hero').getAttribute('data-text-duration-ms'));
-    assert.ok(duration >= 8000 && duration <= 8500, 'Texto calculado a ~8,2 s para el video de ~18,2 s');
+    assert.ok(duration >= 12500 && duration <= 13000, 'Texto móvil calculado a ~12,8 s para el video de ~18,2 s');
     // Pausar únicamente la pista de video simula buffering: el texto tiene reloj propio.
     await page.locator('#welcome-video').evaluate(v => v.pause());
     await page.evaluate(() => {
@@ -79,8 +97,12 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
         .observe(document.querySelector('.welcome-copy'), { childList: true, characterData: true, subtree: true });
     });
     const textStart = Date.now();
-    await page.waitForFunction(() => document.querySelector('#welcome-message-animated').textContent === document.querySelector('#welcome-message-full').textContent, null, { timeout: 12000 });
-    assert.ok(Date.now() - textStart < 10500, 'No depende del avance del video');
+    try { await page.waitForFunction(() => document.querySelector('#welcome-message-animated').textContent === document.querySelector('#welcome-message-full').textContent, null, { timeout: 16000 }); }
+    catch (error) {
+      console.log(await page.evaluate(() => ({ animated: document.querySelector('#welcome-message-animated').textContent, full: document.querySelector('#welcome-message-full').textContent, title: document.querySelector('#welcome-title-animated').textContent, duration: document.querySelector('.welcome-hero').dataset.textDurationMs, hero: document.querySelector('.welcome-hero').getBoundingClientRect().toJSON(), hidden: document.hidden, paused: document.querySelector('#welcome-pause').textContent, root: document.documentElement.outerHTML.slice(0, 450) })));
+      throw error;
+    }
+    assert.ok(Date.now() - textStart < 15500, 'No depende del avance del video');
     assert.equal(await page.locator('#welcome-video').evaluate(v => v.paused && v.currentTime < 1), true);
     const samples = await page.evaluate(() => window.welcomeTextSamples);
     assert.ok(samples.length > 100, 'Actualizaciones pequeñas por requestAnimationFrame, no saltos de timeupdate');
@@ -98,7 +120,7 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
     assert.ok(Date.now() - holdStart >= 5350, 'Espera 5 s más la pausa manual antes de repetir');
     assert.equal(await page.locator('#welcome-message-animated').textContent(), await page.locator('#welcome-message-full').textContent(), 'El bucle del video no borra el texto completo');
     await page.waitForFunction(() => { const v = document.querySelector('#welcome-video'); return !v.seeking && v.currentTime > .25 && v.currentTime < 2; });
-    for (const width of [390, 1366]) {
+    for (const width of [320, 390, 430, 1366]) {
       await page.setViewportSize({ width, height: 844 });
       await page.locator('#welcome-video').evaluate(async v => { v.pause(); v.currentTime = 5; await new Promise(resolve => v.addEventListener('seeked', resolve, { once: true })); });
       try { await page.waitForFunction(() => document.querySelector('#welcome-title-animated').textContent.length > 0, null, { timeout: 3000 }); }
@@ -114,11 +136,15 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
       await page.locator('#site-text-size').selectOption('150');
       await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'Texto ampliado sin desbordamiento');
+      if (width <= 700) {
+        const frame = await page.locator('#welcome-video').boundingBox(), copy = await page.locator('.welcome-copy').boundingBox();
+        assert.ok(copy.y >= frame.y + frame.height - 1, 'Ampliar texto no invade el espacio del intérprete');
+      }
       await page.getByRole('button', { name: 'Accesibilidad', exact: true }).click();
       await page.getByRole('button', { name: /Restablecer configuración/ }).click();
       await page.getByRole('button', { name: 'Cerrar accesibilidad' }).click();
     }
     assert.deepEqual(errors, []);
-    console.log('OK: MP4 real 1080², texto independiente fluido ~8,2 s, permanencia del mensaje, espera de 5 s entre videos (pausable), 6 anchos, temas, pausa/reinicio, salida de vista, movimiento reducido y texto ampliado.');
+    console.log('OK: MP4 real 1080², video primero y texto inferior integrado en móvil, texto independiente ~12,8 s móvil / ~8,2 s PC, espera de 5 s pausable, 6 anchos, temas, pausa/reinicio, salida de vista, movimiento reducido y texto ampliado.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

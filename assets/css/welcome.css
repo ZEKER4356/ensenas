@@ -1,6 +1,7 @@
 /* Colores del fondo, cristal y texto: claro inicial, oscuro por elección. */
 .welcome-page {
   --welcome-bg: #F5F2FB;
+  --welcome-mobile-surface: #FFFFFF;
   --welcome-text: #241B39;
   --welcome-muted: #514365;
   --welcome-soft: #645575;
@@ -21,6 +22,7 @@
 }
 html[data-theme="dark"] .welcome-page {
   --welcome-bg: #151126;
+  --welcome-mobile-surface: #171327;
   --welcome-text: #FFFFFF;
   --welcome-muted: #E6DDEE;
   --welcome-soft: #D5C8E4;
@@ -39,7 +41,7 @@ html[data-theme="dark"] .welcome-page {
   --welcome-logo-filter: brightness(0) invert(1);
   --welcome-accessible-brand: #FFD477;
 }
-/* Fondo compartido; la interpretación conserva su propio encuadre sin texto encima. */
+/* La interpretación conserva el encuadre completo; el texto tiene una zona propia. */
 .welcome-page { position: relative; isolation: isolate; min-height: 100svh; background: var(--welcome-guide); background-attachment: fixed; color: var(--welcome-text); }
 .welcome-video-card { width: min(100%, 400px); min-width: 0; justify-self: end; margin: 0; }
 .welcome-video-stage { position: relative; width: 100%; aspect-ratio: 1; background: #111827; border: 1px solid var(--welcome-border); border-radius: 22px; overflow: hidden; }
@@ -91,6 +93,7 @@ html[data-theme="dark"] .welcome-page {
 .welcome-path-action { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: auto; font-size: .65rem; font-weight: 600; color: var(--welcome-link); }
 .welcome-footer { padding: 16px 20px; color: var(--welcome-muted); background: var(--welcome-panel); border-top: 1px solid var(--welcome-border); font-size: .65rem; }
 html[data-high-contrast] .welcome-page {
+  --welcome-mobile-surface: var(--bg-surface);
   --welcome-text: var(--text-main);
   --welcome-muted: var(--text-main);
   --welcome-soft: var(--text-main);
@@ -110,11 +113,17 @@ html[data-accessible-colors] .welcome-brand-highlight { color: var(--welcome-acc
 }
 @media (max-width: 700px) {
   .welcome-main { padding: 18px 18px 24px; min-height: 0; }
-  .welcome-hero { grid-template-columns: minmax(0, 1fr); min-height: 0; gap: 12px; }
-  .welcome-copy { width: 100%; margin: 0; padding: 12px 0; }
-  .welcome-video-card { width: min(100%, 300px); justify-self: center; margin-bottom: 12px; }
-  .welcome-copy::before { inset: -60px -18px; }
-  .welcome-copy h1 { font-size: 2rem; margin-bottom: 16px; }
+  .welcome-hero { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; width: min(100%, 420px); margin-inline: auto; min-height: 0; gap: 0; border: 1px solid var(--welcome-border); border-radius: 22px; overflow: hidden; background: var(--welcome-mobile-surface); }
+  /* Reserva el cuadrado entero para rostro y manos. La copia se superpone a
+     la extensión inferior del escenario, no al espacio de interpretación. */
+  .welcome-hero::before { content: ''; grid-area: 1 / 1; aspect-ratio: 1; }
+  .welcome-video-card { grid-area: 1 / 1 / 3 / 2; align-self: stretch; width: 100%; height: 100%; justify-self: stretch; margin: 0; }
+  .welcome-video-stage { height: 100%; aspect-ratio: auto; border: 0; border-radius: 0; background: var(--welcome-mobile-surface); }
+  .welcome-video-stage video { position: absolute; top: 0; left: 0; width: 100%; height: auto; aspect-ratio: 1; }
+  .welcome-video-guide { bottom: auto; width: 100%; aspect-ratio: 1; }
+  .welcome-copy { grid-area: 2 / 1; align-self: stretch; z-index: 1; width: 100%; margin: 0; padding: 18px; background: var(--welcome-mobile-surface); }
+  .welcome-copy::before { inset: auto 0 100%; height: 28px; background: linear-gradient(to bottom, transparent, var(--welcome-mobile-surface)); }
+  .welcome-copy h1 { font-size: clamp(1.65rem, 6.8vw, 2rem); margin-bottom: 12px; }
   .welcome-message p { font-size: .82rem; line-height: 1.75; }
   .welcome-playback { margin-top: 14px; gap: 8px; }
   .welcome-video-label { font-size: .52rem; }

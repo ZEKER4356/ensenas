@@ -30,11 +30,18 @@
   function chooseInline() {
     clearTimeout(inlineTimer);
     if (!mobile.matches || !autoEnabled || reduced() || document.hidden || !panel.hidden || document.documentElement.hasAttribute('data-accessibility-open')) { stopInline(); return; }
+    // Las tarjetas compactas finales no siempre alcanzan el centro de pantalla.
+    // Acerca gradualmente el foco a la última al llegar al pie, sin añadir vacío.
+    const last = [...inlineClips.values()].at(-1);
+    const remaining = Math.max(0, document.documentElement.scrollHeight - innerHeight - scrollY);
+    const lastRect = last?.video.getBoundingClientRect();
+    const lastCenterAtEnd = lastRect ? lastRect.top + lastRect.height / 2 - remaining : innerHeight / 2;
+    const focusY = innerHeight / 2 + Math.max(0, Math.min(innerHeight - 16, lastCenterAtEnd) - innerHeight / 2 - remaining);
     const visible = [...inlineClips.values()].filter(clip => clip.ratio >= .5);
     for (const clip of visible) {
       const rect = clip.video.getBoundingClientRect();
       clip.center = rect.top + rect.height / 2;
-      clip.score = clip.ratio * .6 + .4 * Math.max(0, 1 - Math.abs(clip.center - innerHeight / 2) / (innerHeight / 2));
+      clip.score = clip.ratio * .6 + .4 * Math.max(0, 1 - Math.abs(clip.center - focusY) / (innerHeight / 2));
     }
     visible.sort((a, b) => b.score - a.score);
     let next = visible[0];

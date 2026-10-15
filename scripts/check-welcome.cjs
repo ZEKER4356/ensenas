@@ -47,7 +47,10 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
       assert.equal(await page.locator('#welcome-video').evaluate(el => getComputedStyle(el).objectFit), 'contain');
       assert.equal(await page.locator('.welcome-copy').evaluate(el => getComputedStyle(el).borderTopWidth), '0px', 'Sin caja alrededor del texto');
       assert.equal(await page.locator('.welcome-eyebrow').count(), 0);
-      if (width <= 700) assert.ok(videoBox.y >= textBox.y + textBox.height, 'En teléfono el video no queda detrás del texto');
+      if (width <= 700) {
+        assert.ok(videoBox.y < textBox.y && textBox.y >= videoBox.y + videoBox.width - 1, 'Video primero; texto sobre extensión inferior sin tapar las manos');
+        assert.ok(textBox.y + textBox.height <= videoBox.y + videoBox.height + 1, 'Texto integrado dentro del escenario');
+      }
       else assert.ok(videoBox.x >= textBox.x + textBox.width, 'En PC texto e intérprete separados');
       assert.ok((await page.locator('.welcome-path').first().boundingBox()).y < 850, 'Accesos próximos a la bienvenida');
       await page.locator('#welcome-pause').click();
@@ -100,7 +103,7 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
       await page.locator('.brand-link').click();
       assert.ok(page.url().endsWith('/index.html'));
     }
-    console.log('OK: bienvenida sin recortes ni superposición, título animado, accesos próximos, pausa, movimiento reducido y regreso por logo. Video remoto no disponible simulado.');
+    console.log('OK: bienvenida sin recortes, video primero y texto inferior integrado en móvil, título animado, accesos próximos, pausa, movimiento reducido y regreso por logo. Video remoto no disponible simulado.');
     console.log(shots);
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

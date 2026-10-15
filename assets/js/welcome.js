@@ -16,16 +16,30 @@
   const prefix = document.createTextNode(''), brand = document.createElement('span'), suffix = document.createTextNode('');
   brand.className = 'welcome-brand-highlight'; titleAnimated.replaceChildren(prefix, brand, suffix);
   const config = window.ENSENAS_WELCOME || {};
-  const source = matchMedia('(max-width: 700px)').matches && config.mobileVideoUrl ? config.mobileVideoUrl : config.videoUrl;
+  const mobileLayout = matchMedia('(max-width: 700px)');
+  const source = mobileLayout.matches && config.mobileVideoUrl ? config.mobileVideoUrl : config.videoUrl;
   const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
   const reduced = () => motionPreference.matches || document.documentElement.hasAttribute('data-reduce-motion');
   const available = () => !userPaused && !document.hidden && !document.documentElement.hasAttribute('data-accessibility-open');
   const canVideo = () => available() && videoInView && !reduced();
   const delay = Number.isFinite(config.replayDelaySeconds) ? Math.max(0, Math.min(30, config.replayDelaySeconds)) * 1000 : 5000;
   let hasVideo = false, userPaused = false, autoplayBlocked = false, videoInView = true, heroInView = true;
-  let textDuration = Math.max(6000, Math.min(10000, message.length * 40)), textElapsed = 0, textFrame = null, textTick = null, characters = -1;
+  let textDuration = 1, textElapsed = 0, textFrame = null, textTick = null, characters = -1;
   let holding = false, holdRemaining = delay, holdTimer = null, holdStarted = null;
   video.muted = true; video.loop = false;
+
+  function updateTextDuration() {
+    const mobile = mobileLayout.matches;
+    const estimate = Number.isFinite(video.duration) && video.duration > 0
+      ? video.duration * (mobile ? 700 : 450)
+      : message.length * (mobile ? 65 : 40);
+    const duration = mobile ? Math.max(10000, Math.min(14000, estimate)) : Math.max(6000, Math.min(10000, estimate));
+    // Cambiar de orientación no reinicia ni hace retroceder lo ya escrito.
+    textElapsed = Math.min(duration, textElapsed / textDuration * duration);
+    textDuration = duration;
+    hero.dataset.textDurationMs = String(Math.round(duration));
+  }
+  updateTextDuration();
 
   function draw(count) {
     const next = Math.max(0, Math.min(message.length, Math.floor(count)));
@@ -53,7 +67,7 @@
       textFrame = null;
       if (!available() || !heroInView || reduced()) { textTick = null; return; }
       if (textTick !== null) textElapsed = Math.min(textDuration, textElapsed + Math.min(100, now - textTick));
-      textTick = now; draw(message.length * textElapsed / textDuration);
+      textTick = now; draw(textElapsed >= textDuration ? message.length : message.length * textElapsed / textDuration);
       if (textElapsed < textDuration) textFrame = requestAnimationFrame(step);
       else textTick = null;
     }
@@ -93,11 +107,7 @@
       video.src = url.href;
       video.addEventListener('loadedmetadata', () => {
         hasVideo = true;
-        if (Number.isFinite(video.duration) && video.duration > 0) {
-          const duration = Math.max(6000, Math.min(10000, video.duration * 450));
-          textElapsed = Math.min(duration, textElapsed / textDuration * duration); textDuration = duration;
-          hero.dataset.textDurationMs = String(Math.round(textDuration));
-        }
+        updateTextDuration();
         hero.classList.add('has-welcome-video'); document.body.classList.add('has-welcome-video');
         video.hidden = false; guide.hidden = true;
         document.getElementById('welcome-video-caption').textContent = 'Bienvenida a EnSeñas en Lengua de Señas Colombiana.';
@@ -139,6 +149,7 @@
   });
   new MutationObserver(reconcile).observe(document.documentElement, { attributes: true, attributeFilter: ['data-reduce-motion'] });
   motionPreference.addEventListener('change', reconcile);
+  mobileLayout.addEventListener('change', updateTextDuration);
   document.addEventListener('visibilitychange', reconcile);
   document.addEventListener('ensenas:accessibility-toggle', reconcile);
   if ('IntersectionObserver' in window) {

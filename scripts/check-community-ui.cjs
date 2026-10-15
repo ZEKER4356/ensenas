@@ -204,17 +204,24 @@ const ORIGIN = 'http://127.0.0.1:4173';
     await touch.route('https://**/*', externalRoute); await touch.route(`${ORIGIN}/**`, appRoute);
     await touch.goto(`${ORIGIN}/index.html`, { waitUntil: 'networkidle' });
     assert.equal(await touch.locator('.lsc-inline-media video').count(), 5);
-    for (const key of ['nav.catalogo', 'nav.comunidad', 'nav.leaderboard', 'nav.equipo']) {
+    const seen = new Set();
+    const maxScroll = await touch.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+    for (let position = 0; position <= maxScroll + 40; position += 40) {
+      await touch.evaluate(top => scrollTo({ top, behavior: 'instant' }), Math.min(position, maxScroll));
+      await touch.waitForTimeout(260);
+      const active = await touch.locator('.welcome-path.is-lsc-active').evaluateAll(cards => cards[0]?.dataset.lscKey);
+      if (active) seen.add(active);
+      assert.ok(await touch.locator('.lsc-inline-media video').evaluateAll(videos => videos.filter(video => !video.paused).length) <= 1, 'Nunca se reproducen dos traducciones a la vez');
+    }
+    assert.deepEqual([...seen], ['nav.catalogo', 'nav.sube-tu-sena', 'nav.comunidad', 'nav.leaderboard', 'nav.equipo'], 'El scroll permite activar las cinco tarjetas, incluidas las últimas');
+    for (const key of seen) {
       const card = touch.locator(`.welcome-path[data-lsc-key="${key}"]`);
-      await card.locator('video').evaluate(el => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
-      try { await touch.waitForFunction(key => {
-        const selected = document.querySelector(`.welcome-path[data-lsc-key="${key}"] video`);
-        return selected && !selected.paused && selected.readyState >= 2;
-      }, key, { timeout: 10000 }); } catch (error) {
-        console.log({ key, errors, clips: await touch.locator('.lsc-inline-media video').evaluateAll(videos => videos.map(video => ({ key: video.closest('[data-lsc-key]').dataset.lscKey, src: video.src, paused: video.paused, ready: video.readyState, error: video.error?.message, rect: video.getBoundingClientRect().toJSON(), note: video.nextElementSibling.textContent }))), hidden: await touch.evaluate(() => document.hidden) }); throw error;
-      }
-      assert.equal(await touch.locator('.lsc-inline-media video').evaluateAll(videos => videos.filter(video => !video.paused).length), 1, 'Solo la traducción visible se reproduce');
+      assert.ok(await card.locator('video').evaluate(v => v.readyState >= 2 && !v.error), 'Cada interpretación carga sin errores');
       const box = await card.boundingBox(); assert.ok(box.width > 340, 'Tarjeta móvil de ancho completo');
+      const preview = await card.locator('video').boundingBox();
+      assert.ok(preview.width >= 104 && preview.width <= 161 && Math.abs(preview.width - preview.height) < 1, 'LSC compacto y cuadrado, no video gigante de ancho completo');
+      assert.ok(preview.width < (await touch.locator('.welcome-video-card').boundingBox()).width / 2, 'La bienvenida conserva la jerarquía visual');
+      assert.equal(await card.locator('video').evaluate(v => getComputedStyle(v).objectFit), 'contain');
       assert.equal(await touch.locator('#lsc-interface-player').isVisible(), false, 'Sin panel flotante ni acceso obligatorio por Accesibilidad');
     }
     if (process.env.ENSENAS_SCREENSHOTS_DIR) await touch.screenshot({ path: path.join(process.env.ENSENAS_SCREENSHOTS_DIR, 'lsc-inline-mobile.png') });
@@ -222,11 +229,17 @@ const ORIGIN = 'http://127.0.0.1:4173';
     await touch.waitForFunction(() => [...document.querySelectorAll('.lsc-inline-media video')].every(video => video.paused));
     for (const size of [{ width: 320, height: 844 }, { width: 430, height: 844 }, { width: 844, height: 390 }]) {
       await touch.setViewportSize(size);
+      assert.equal(await touch.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'Tarjetas adaptables sin desbordamiento');
       assert.equal(await touch.locator('.site-navigation').isVisible(), false);
       await touch.getByRole('button', { name: 'Accesibilidad', exact: true }).tap();
       const panel = touch.locator('#site-accessibility-panel');
       assert.deepEqual(await panel.boundingBox(), { x: 0, y: 0, ...size });
       await touch.locator('#site-text-size').selectOption('150');
+      assert.equal(await touch.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, 'Texto ampliado en tarjetas compactas sin desbordamiento');
+      for (const card of await touch.locator('.welcome-path').all()) {
+        const label = await card.locator('h3').boundingBox(), video = await card.locator('video').boundingBox();
+        assert.ok(label.x + label.width <= video.x, 'Texto ampliado y traducción no se superponen');
+      }
       await touch.locator('.a11y-body').evaluate(el => { el.scrollTop = el.scrollHeight; });
       for (const selector of ['.a11y-close', '#site-reset-preferences']) {
         assert.equal(await touch.locator(selector).evaluate(el => { const r = el.getBoundingClientRect(); return r.y >= 0 && r.bottom <= innerHeight && el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); }), true, 'Cerrar y restablecer accesibles incluso al ampliar texto y desplazar el contenido');
