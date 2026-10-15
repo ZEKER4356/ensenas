@@ -23,7 +23,7 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
       await page.setViewportSize({ width, height: 900 });
       await page.goto('http://127.0.0.1:4173/index.html', { waitUntil: 'networkidle' });
       assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'light', 'Tema claro por defecto');
-      const lightSurface = await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor);
+      const lightSurface = await page.locator('body').evaluate(el => getComputedStyle(el).backgroundImage);
       const lightText = await page.locator('.welcome-copy h1').evaluate(el => getComputedStyle(el).color);
       const lightCard = await page.locator('.welcome-path').first().evaluate(el => getComputedStyle(el).backgroundColor);
       assert.equal(await page.locator('.brand-official-logo').evaluate(el => getComputedStyle(el).filter), 'none', 'Logo normal en modo claro');
@@ -32,7 +32,7 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
         const color = getComputedStyle(document.querySelector('.welcome-path')).backgroundColor.match(/[\d.]+/g).slice(0, 3).map(Number);
         return color.every(channel => channel < 100);
       });
-      assert.notEqual(await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor), lightSurface);
+      assert.notEqual(await page.locator('body').evaluate(el => getComputedStyle(el).backgroundImage), lightSurface);
       assert.notEqual(await page.locator('.welcome-copy h1').evaluate(el => getComputedStyle(el).color), lightText);
       assert.notEqual(await page.locator('.welcome-path').first().evaluate(el => getComputedStyle(el).backgroundColor), lightCard);
       await page.reload({ waitUntil: 'networkidle' });
@@ -42,14 +42,13 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
       assert.equal(await page.locator('.welcome-path').count(), 5);
       const videoBox = await page.locator('.welcome-video-card').boundingBox();
       const textBox = await page.locator('.welcome-copy').boundingBox();
-      assert.equal(videoBox.x, 0, 'Fondo de video de borde a borde');
-      assert.equal(videoBox.y, 0);
-      assert.equal(videoBox.width, width);
-      assert.equal(await page.locator('.welcome-video-card').evaluate(el => getComputedStyle(el).position), 'fixed');
+      assert.ok(videoBox.x >= 0 && videoBox.x + videoBox.width <= width, 'Video dentro del ancho de pantalla');
+      assert.notEqual(await page.locator('.welcome-video-card').evaluate(el => getComputedStyle(el).position), 'fixed');
+      assert.equal(await page.locator('#welcome-video').evaluate(el => getComputedStyle(el).objectFit), 'contain');
       assert.equal(await page.locator('.welcome-copy').evaluate(el => getComputedStyle(el).borderTopWidth), '0px', 'Sin caja alrededor del texto');
       assert.equal(await page.locator('.welcome-eyebrow').count(), 0);
-      assert.ok(textBox.x >= videoBox.x && textBox.y >= videoBox.y, 'Texto superpuesto dentro del video');
-      assert.ok(textBox.y + textBox.height <= videoBox.y + videoBox.height + 1);
+      if (width <= 700) assert.ok(videoBox.y >= textBox.y + textBox.height, 'En teléfono el video no queda detrás del texto');
+      else assert.ok(videoBox.x >= textBox.x + textBox.width, 'En PC texto e intérprete separados');
       assert.ok((await page.locator('.welcome-path').first().boundingBox()).y < 850, 'Accesos próximos a la bienvenida');
       await page.locator('#welcome-pause').click();
       const pausedText = await page.locator('#welcome-message-animated').textContent();
@@ -101,7 +100,7 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
       await page.locator('.brand-link').click();
       assert.ok(page.url().endsWith('/index.html'));
     }
-    console.log('OK: video de fondo y texto superpuesto, título animado, accesos próximos, pausa, movimiento reducido y regreso por logo.');
+    console.log('OK: bienvenida sin recortes ni superposición, título animado, accesos próximos, pausa, movimiento reducido y regreso por logo. Video remoto no disponible simulado.');
     console.log(shots);
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

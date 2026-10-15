@@ -75,6 +75,14 @@ En escritorio, con un video activo, el reproductor aparece debajo del enlace o t
 
 En teléfonos, el inicio conserva el logo, tema, Accesibilidad y Admin; los cinco destinos se muestran como tarjetas de ancho completo. Cada tarjeta con LSC editorial incorpora su interpretación: se carga al activarse por visibilidad y solo una se reproduce a la vez, después de una pausa breve del desplazamiento. La selección combina visibilidad y cercanía al centro, evitando cambios por movimientos pequeños. No intercepta el enlace ni requiere abrir Accesibilidad. Movimiento reducido o desactivar la apertura automática detiene esos bucles; el acceso manual sigue disponible como alternativa. El menú sigue disponible en páginas interiores. Accesibilidad ocupa la pantalla móvil completa: solo su contenido central se desplaza y los controles de cerrar/restablecer permanecen accesibles. En escritorio sigue siendo un panel lateral.
 
+### Video grande de bienvenida
+
+La landing usa `assets/js/welcome-config.js` → `videoUrl`, no la clave contextual `page.bienvenida`. El MP4 editorial se sirve desde `ensenas-media/landing/bienvenida-landing.mp4`, con URL pública permanente, sin cambiar variables de Vercel. `mobileVideoUrl` es opcional; el mismo archivo cuadrado funciona sin recortes en ambas pantallas.
+
+El intérprete aparece junto al texto en PC y debajo de él en teléfonos, con `object-fit: contain`. Se reproduce silencioso y en bucle; los botones de bienvenida permiten pausar/repetir. Respeta movimiento reducido, pausa al salir de vista o abrir Accesibilidad y conserva el contenido escrito si el video falla o el navegador bloquea autoplay. Cambiar el archivo/configuración se valida primero en Preview; no publica automáticamente esta rama en `main`.
+
+`node scripts/check-welcome-video.cjs` comprueba el MP4 real, seis anchos, temas, pausa/reinicio/bucle y preferencias. Usa la copia optimizada local (no se añade al repositorio); puede indicarse otra ruta mediante `ENSENAS_WELCOME_FIXTURE`. La disponibilidad de la URL pública se comprueba aparte.
+
 ### Explicación de los objetos y RA
 
 El intérprete de los objetos conserva su velocidad original y controla el final de la explicación. Audio/TTS y LSC arrancan juntos desde Reproducir; si la narración acaba antes, la seña sigue hasta terminar. Si la narración es más larga, se detiene al finalizar el intérprete. No se estiran los medios para igualar duraciones: el equipo debe comprobar que ambos contenidos correspondan. Pausa y reanudación controlan ambas pistas; reiniciar vuelve al comienzo. Sin LSC válida se mantiene la explicación de audio/TTS.

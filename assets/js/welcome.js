@@ -31,9 +31,16 @@
   const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
   let hasVideo = false;
   let paused = false;
+  let userPaused = false;
+  let inView = true;
   let timer = null;
   let characters = 0;
   const reducedMotion = () => motionPreference.matches || document.documentElement.hasAttribute('data-reduce-motion');
+  const canAutoplay = () => !reducedMotion() && !userPaused && inView && !document.hidden && !document.documentElement.hasAttribute('data-accessibility-open');
+  video.muted = true;
+  function playVideo() {
+    video.play().catch(() => { paused = true; draw(message.length); updateButton(); });
+  }
   const cues = Array.isArray(config.cues) ? config.cues
     .filter(cue => Number.isFinite(cue.time) && cue.time >= 0 && Number.isFinite(cue.characters))
     .sort((a, b) => a.time - b.time) : [];
@@ -95,8 +102,9 @@
         video.hidden = false;
         guide.hidden = true;
         document.getElementById('welcome-video-caption').textContent = 'Bienvenida a EnSeñas en Lengua de Señas Colombiana.';
+        paused = video.paused;
         updateButton();
-        if (!reducedMotion() && !paused) video.play().catch(() => { paused = true; updateButton(); });
+        if (canAutoplay()) playVideo();
       }, { once: true });
       video.addEventListener('error', () => {
         hasVideo = false;
@@ -104,21 +112,25 @@
         document.body.classList.remove('has-welcome-video');
         video.hidden = true;
         guide.hidden = false;
+        guide.querySelector('.welcome-video-pending').textContent = 'Video no disponible';
+        guide.querySelector('p').textContent = 'No se pudo cargar la interpretación. Puedes leer la bienvenida y continuar navegando.';
         paused = false;
         updateButton();
         startText();
       });
       video.addEventListener('timeupdate', syncVideoText);
+      video.addEventListener('seeked', syncVideoText);
       video.addEventListener('play', () => { paused = false; updateButton(); });
-      video.addEventListener('pause', () => { paused = true; updateButton(); });
+      video.addEventListener('pause', () => { paused = true; syncVideoText(); updateButton(); });
     }
   }
   pauseButton.addEventListener('click', () => {
     paused = !paused;
+    userPaused = paused;
     updateButton();
     if (hasVideo) {
       if (paused) video.pause();
-      else video.play().catch(() => { paused = true; updateButton(); });
+      else playVideo();
     } else {
       if (paused) stopTimer();
       else startText();
@@ -126,11 +138,12 @@
   });
   replayButton.addEventListener('click', () => {
     paused = false;
+    userPaused = false;
     draw(0);
     updateButton();
     if (hasVideo) {
       video.currentTime = 0;
-      video.play().catch(() => { paused = true; updateButton(); });
+      playVideo();
     } else startText();
   });
   function updateMotion() {
@@ -138,7 +151,8 @@
       stopTimer();
       draw(message.length);
       if (hasVideo) video.pause();
-    } else startText();
+    } else if (hasVideo && canAutoplay()) playVideo();
+    else startText();
   }
   new MutationObserver(updateMotion).observe(document.documentElement, { attributes: true, attributeFilter: ['data-reduce-motion'] });
   motionPreference.addEventListener('change', updateMotion);
@@ -146,7 +160,19 @@
     if (document.hidden) {
       stopTimer();
       if (hasVideo) video.pause();
-    } else startText();
+    } else if (hasVideo && canAutoplay()) playVideo();
+    else startText();
+  });
+  if ('IntersectionObserver' in window) new IntersectionObserver(entries => {
+    inView = entries[0].isIntersecting && entries[0].intersectionRatio >= .15;
+    if (!hasVideo) return;
+    if (!inView) video.pause();
+    else if (canAutoplay()) playVideo();
+  }, { threshold: [0, .15] }).observe(document.querySelector('.welcome-video-card'));
+  document.addEventListener('ensenas:accessibility-toggle', event => {
+    if (!hasVideo) return;
+    if (event.detail.open) video.pause();
+    else if (canAutoplay()) playVideo();
   });
   window.addEventListener('pagehide', stopTimer);
   draw(0);
