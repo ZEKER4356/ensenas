@@ -48,7 +48,12 @@ function wav(seconds) {
     let audioSeconds = 1;
     await page.route(`${ORIGIN}/**`, async route => {
       const pathname = new URL(route.request().url()).pathname;
-      if (pathname === '/clip.webm') return route.fulfill({ body: clip, contentType: 'video/webm' });
+      if (pathname === '/clip.webm') {
+        const range = /bytes=(\d+)-(\d*)/.exec(route.request().headers().range || '');
+        if (!range) return route.fulfill({ body: clip, contentType: 'video/webm', headers: { 'accept-ranges': 'bytes' } });
+        const start = Number(range[1]), end = Math.min(clip.length - 1, range[2] ? Number(range[2]) : clip.length - 1);
+        return route.fulfill({ status: 206, body: clip.subarray(start, end + 1), contentType: 'video/webm', headers: { 'accept-ranges': 'bytes', 'content-range': `bytes ${start}-${end}/${clip.length}` } });
+      }
       if (pathname === '/audio.wav') return route.fulfill({ body: wav(audioSeconds), contentType: 'audio/wav' });
       if (pathname === '/objeto.html') return route.fulfill({ contentType: 'text/html; charset=utf-8', body: `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/community.css"><script src="assets/js/explanation-player.js"></script></head><body><main class="main-layout">${section}</main><script>window.ENSENAS_DATA={objectId:'prueba',videoLscUrl:'${ORIGIN}/clip.webm',audioUrl:'${ORIGIN}/audio.wav'};</script></body></html>` });
       const file = path.resolve(ROOT, '.' + pathname); assert.ok(file.startsWith(ROOT + path.sep));
@@ -108,7 +113,33 @@ function wav(seconds) {
     await page.locator('#btn-ar-audio-play').click();
     await page.waitForFunction(() => document.querySelector('#ar-overlay-video-lsc').ended);
     assert.equal(await page.locator('#ar-audio-element').evaluate(audio => audio.paused && audio.currentTime < audio.duration - 1), true, 'Final LSC detiene el audio largo');
+    await load();
+    assert.equal(await page.locator('#ar-floating-lsc').isVisible(), true, 'El intérprete está visible por defecto');
+    await page.locator('#btn-ar-audio-play').click();
+    await page.waitForFunction(() => document.querySelector('#ar-audio-element').currentTime > .2);
+    await page.locator('#btn-toggle-lsc-overlay').click();
+    assert.equal(await page.locator('#ar-floating-lsc').isVisible(), false);
+    assert.equal(await page.locator('#ar-audio-element').evaluate(audio => audio.paused), false, 'Cerrar intérprete no pausa MP3 real');
+    await page.waitForFunction(() => document.querySelector('#ar-audio-element').currentTime > .6);
+    await page.locator('#btn-ar-audio-play').click();
+    await page.locator('#btn-ar-audio-play').click();
+    assert.equal(await page.locator('#ar-floating-lsc').isVisible(), false, 'Pausa/play respeta la decisión de ocultarlo');
+    await page.locator('#btn-ar-audio-replay').click();
+    assert.equal(await page.locator('#ar-floating-lsc').isVisible(), false, 'Repetir tampoco lo abre');
+    await page.waitForFunction(() => document.querySelector('#ar-audio-element').currentTime > .4);
+    await page.locator('#btn-toggle-lsc-overlay').click();
+    await page.waitForFunction(() => !document.querySelector('#ar-overlay-video-lsc').paused);
+    const timing = await page.evaluate(() => ({ audio: document.querySelector('#ar-audio-element').currentTime, video: document.querySelector('#ar-overlay-video-lsc').currentTime }));
+    assert.ok(Math.abs(timing.audio - timing.video) < .25 && timing.video > .3, 'Reabrir retoma el punto correcto, no el principio');
+    await page.locator('#btn-toggle-lsc-overlay').click();
+    await page.waitForFunction(() => document.querySelector('#ar-audio-element').currentTime > 3.4);
+    await page.locator('#btn-toggle-lsc-overlay').click();
+    assert.equal(await page.locator('#ar-audio-element').evaluate(audio => audio.paused), false, 'Reabrir una LSC ya terminada no corta el audio restante');
+    try { await page.waitForFunction(() => { const video = document.querySelector('#ar-overlay-video-lsc'); return video.paused && Number.isFinite(video.duration) && video.currentTime >= video.duration - .1; }, null, { timeout: 5000 }); }
+    catch (error) { console.log(await page.locator('#ar-overlay-video-lsc').evaluate(video => ({ time: video.currentTime, duration: video.duration, paused: video.paused, seeking: video.seeking, error: video.error?.message }))); throw error; }
+    await page.waitForFunction(() => document.querySelector('#ar-audio-element').ended);
+    assert.equal(await page.locator('#btn-ar-audio-play').evaluate(el => el.classList.contains('is-playing')), false);
     assert.deepEqual(errors, []);
-    console.log('OK: medios reales, audio corto/largo, pausa/reanudar, intérprete grande sin recorte, colocación RA con inicio automático y reanclaje. 3D y cámara simulados; no certifica WebXR físico.');
+    console.log('OK: medios reales, audio corto/largo, cerrar LSC sin pausar audio, reapertura sincronizada, elección respetada en pausa/repetir, RA automática y reanclaje. 3D y cámara simulados.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -18,11 +18,17 @@ const COURSE = 'https://bloque10.unimagdalena.edu.co/courses/lsc-y-cultura-sorda
       try { await route.fulfill({ body: await fs.readFile(file), contentType: { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.webp': 'image/webp', '.png': 'image/png' }[path.extname(file)] || 'application/octet-stream' }); }
       catch (_) { await route.fulfill({ status: 404, body: '' }); }
     });
-    for (const width of [320, 390, 768, 1366]) {
+    for (const width of [320, 390, 768, 1200, 1366]) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto(ORIGIN + '/colaboradores.html');
       assert.equal(await page.locator('.team-grid-pillars .team-card').count(), 3);
       assert.equal(await page.locator('.team-grid-developers .team-card').count(), 5);
+      assert.equal(await page.locator('.team-avatar').count(), 8);
+      const circles = await page.locator('.team-avatar').evaluateAll(nodes => nodes.map(node => {
+        const box = node.getBoundingClientRect(); return { width: box.width, height: box.height, radius: getComputedStyle(node).borderRadius };
+      }));
+      assert.ok(circles.every(box => Math.abs(box.width - box.height) < 1 && box.radius === '50%'), 'Todos los retratos son circulares');
+      assert.ok(Math.max(...circles.map(box => box.width)) - Math.min(...circles.map(box => box.width)) < 1, 'Los ocho retratos tienen el mismo tamaño');
       for (const theme of ['light', 'dark']) {
         await page.evaluate(theme => window.EnsenasTheme.applyTheme(theme), theme);
         for (const size of ['100', '150']) {

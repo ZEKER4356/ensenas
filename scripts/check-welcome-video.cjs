@@ -60,6 +60,11 @@ const SOURCE = 'https://xpznsdwforvjnqnvmivz.supabase.co/storage/v1/object/publi
           assert.ok(preview.width <= 181 && preview.width < media.width / 2, 'Tarjetas mayores pero subordinadas al video principal');
           assert.ok((await page.locator('.welcome-path').first().boundingBox()).height >= 190, 'Tarjetas móviles más altas');
           assert.ok(await page.locator('.welcome-path p').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 13), 'Texto base de las tarjetas más legible');
+          assert.ok(await page.locator('.welcome-path h3').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 18), 'Título de acceso más grande');
+          const button = await page.locator('.welcome-path-action').first().boundingBox();
+          const card = await page.locator('.welcome-path').first().boundingBox();
+          assert.ok(button.height >= 48 && button.width >= card.width - 40, 'Acción con aspecto de botón ancho y área táctil suficiente');
+          assert.ok(await page.locator('.welcome-path-action').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize) >= 16 && getComputedStyle(el).color === 'rgb(255, 255, 255)' && getComputedStyle(el).backgroundColor !== 'rgba(0, 0, 0, 0)'), 'Botón de color sólido, letra grande y contrastada');
         }
       }
     }

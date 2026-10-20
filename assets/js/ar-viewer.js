@@ -73,6 +73,7 @@
   let isWebXrAr = false;
   let hasSurfaceHit = false;
   let activeVideoLsc = '';
+  let interpreterDismissed = false;
   let activeSignLearningVideo = '';
 
   // Estados de escaneo y anclaje (Floor Tracking)
@@ -462,11 +463,13 @@
     if (btnReanchorView) {
       btnReanchorView.addEventListener('click', startSurfaceScanning);
     }
-    // La persona puede ocultar el intérprete y pausar la explicación cuando quiera.
+    // Ocultar la imagen es independiente de pausar la explicación.
     if (btnToggleLscOverlay) {
       btnToggleLscOverlay.addEventListener('click', () => {
         if (!lscOverlay || !activeVideoLsc) return;
-        setInterpreterVisibility(lscOverlay.classList.contains('is-hidden'));
+        const visible = lscOverlay.classList.contains('is-hidden');
+        interpreterDismissed = !visible;
+        setInterpreterVisibility(visible);
       });
     }
   }
@@ -984,7 +987,7 @@
    * Lógica condicional de reproducción de explicación
    */
   function playExplanationAudio(options) {
-    if (activeVideoLsc) setInterpreterVisibility(true);
+    if (activeVideoLsc) setInterpreterVisibility(!interpreterDismissed);
     explanationPlayer?.play(options);
   }
 
@@ -1085,12 +1088,11 @@
     if (btnToggleLscOverlay) {
       btnToggleLscOverlay.classList.toggle('is-active-overlay', shouldShow);
       btnToggleLscOverlay.setAttribute('aria-expanded', String(shouldShow));
+      btnToggleLscOverlay.title = shouldShow ? 'Ocultar intérprete sin detener el audio' : 'Mostrar intérprete LSC';
       const textSpan = btnToggleLscOverlay.querySelector('.btn-text');
       if (textSpan) textSpan.textContent = shouldShow ? 'Cerrar intérprete' : 'Intérprete LSC';
     }
-    if (lscVideo) {
-      if (!shouldShow) pauseExplanationAudio();
-    }
+    explanationPlayer?.setInterpreterVisible(shouldShow);
   }
 
   function showMultimediaControls() {
@@ -1101,7 +1103,7 @@
     if (floatingAudio) floatingAudio.classList.toggle('is-hidden', !(targetAudio || targetText || activeVideoLsc));
     // LSC se habilita por defecto cuando hay un video real. Quien no lo necesite
     // puede cerrarlo con el mismo botón, pero nunca se muestra un recuadro vacío.
-    if (activeVideoLsc) setInterpreterVisibility(true);
+    if (activeVideoLsc) setInterpreterVisibility(!interpreterDismissed);
   }
 
   /* ========================================================================

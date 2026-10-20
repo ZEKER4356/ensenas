@@ -40,6 +40,7 @@ async function json(action, status = 200) {
     const team = await (await request('/colaboradores')).text();
     assert.match(team, /id="pillars-title">Pilares/);
     assert.match(team, /id="developers-title">Desarrolladores/);
+    assert.equal((team.match(/class="team-avatar(?:\s[^"]*)?"/g) || []).length, 8, 'Ocho retratos circulares');
     const portraits = [...team.matchAll(/src="(assets\/images\/equipo\/[^\"]+\.webp)"/g)].map(match => match[1]);
     assert.equal(portraits.length, 8);
     await Promise.all([...portraits, 'assets/images/curso-lsc-cultura-sorda.webp'].map(async image => {
@@ -53,6 +54,16 @@ async function json(action, status = 200) {
     assert.match(navigation, /https:\/\/bloque10\.unimagdalena\.edu\.co\/courses\/lsc-y-cultura-sorda\//);
     assert.match(navigation, /site-course-rail/);
     assert.ok(!navigation.includes('site-course-toggle'), 'La miniatura no debe estar oculta tras un botón');
+  });
+  await check('botones visibles de bienvenida y control independiente del intérprete', async () => {
+    const style = await (await request('/assets/css/welcome.css')).text();
+    assert.match(style, /\.welcome-path-action[^}]+background: var\(--color-primary\)/);
+    const player = await (await request('/assets/js/explanation-player.js')).text();
+    assert.match(player, /function setInterpreterVisible\(visible\)/);
+    assert.match(player, /function completeInterpreterSeek\(\)/);
+    const viewer = await (await request('/assets/js/ar-viewer.js')).text();
+    assert.match(viewer, /interpreterDismissed/);
+    assert.match(viewer, /explanationPlayer\?\.setInterpreterVisible\(shouldShow\)/);
   });
   await check('catálogo y recursos de objetos', async () => {
     const response = await request('/api/objetos'); assert.equal(response.status, 200);

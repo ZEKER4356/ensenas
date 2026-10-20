@@ -1,6 +1,6 @@
 # Retratos del equipo
 
-Imágenes WebP optimizadas desde las fotografías aportadas en `img/equipo-de-trabajo/`. Las fotos originales se conservan sin cambios. Los encuadres completos se presentan sobre una superficie adaptable al tema.
+Imágenes WebP optimizadas desde las fotografías aportadas en `img/equipo-de-trabajo/`. Las fotos originales se conservan sin cambios. La página presenta avatares circulares del mismo tamaño, con encuadre individual por CSS para conservar los rostros visibles.
 
 Elizabeth: fondo retirado mediante la herramienta integrada de edición de imágenes. Instrucción utilizada: aislar únicamente a la mujer del primer plano con cabello rizado, gafas y blusa gris; retirar aula y otras personas; conservar identidad, expresión, cabello, ropa y joyas; exportar con transparencia. No se alteraron las demás fotografías mediante generación de imágenes.
 
