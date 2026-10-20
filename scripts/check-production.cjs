@@ -36,6 +36,23 @@ async function json(action, status = 200) {
     assert.equal(config.app_url, ORIGIN, 'PUBLIC_APP_URL debe coincidir con el dominio público');
     assert.equal(config.email_signup, false, 'Mantener correo/contraseña cerrado mientras no haya SMTP');
   });
+  await check('equipo, crédito del intérprete y curso de Bloque 10', async () => {
+    const team = await (await request('/colaboradores')).text();
+    assert.match(team, /id="pillars-title">Pilares/);
+    assert.match(team, /id="developers-title">Desarrolladores/);
+    const portraits = [...team.matchAll(/src="(assets\/images\/equipo\/[^\"]+\.webp)"/g)].map(match => match[1]);
+    assert.equal(portraits.length, 8);
+    await Promise.all([...portraits, 'assets/images/curso-lsc-cultura-sorda.webp'].map(async image => {
+      const response = await request('/' + image); assert.equal(response.status, 200);
+      assert.match(response.headers.get('content-type') || '', /image\/webp/);
+      assert.ok((await response.arrayBuffer()).byteLength > 1000);
+    }));
+    const landing = await (await request('/')).text();
+    assert.match(landing, /Profesor Edward Ignacio Rojas Díaz/);
+    const navigation = await (await request('/assets/js/site-navigation.js')).text();
+    assert.match(navigation, /https:\/\/bloque10\.unimagdalena\.edu\.co\/courses\/lsc-y-cultura-sorda\//);
+    assert.match(navigation, /site-course-inline/);
+  });
   await check('catálogo y recursos de objetos', async () => {
     const response = await request('/api/objetos'); assert.equal(response.status, 200);
     const objects = await response.json(); assert.ok(Array.isArray(objects) && objects.length > 0);

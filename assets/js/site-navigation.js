@@ -78,4 +78,32 @@
   menu.addEventListener('toggle', () => {
     if (menu.open && !desktop.matches) document.dispatchEvent(new CustomEvent('ensenas:navigation-open'));
   });
+
+  // Recurso externo opcional. En las fichas queda fuera del visor y sus controles.
+  if (!['admin', '404'].includes(page)) {
+    const objectPage = document.body.classList.contains('experience-page');
+    const course = document.createElement('aside');
+    course.className = 'site-course' + (objectPage ? ' site-course-inline' : '');
+    course.setAttribute('aria-label', 'Curso de Lengua de Señas Colombiana');
+    course.innerHTML = '<details class="site-course-details"><summary class="site-course-toggle">Aprende LSC <span aria-hidden="true">＋</span></summary>' +
+      '<div class="site-course-body"><div class="site-course-heading"><span>Continúa aprendiendo</span><button type="button" class="site-course-close" aria-label="Cerrar información del curso">×</button></div>' +
+      '<img src="assets/images/curso-lsc-cultura-sorda.webp" alt="LSC y Cultura Sorda, curso en Bloque 10" width="624" height="399" loading="lazy" decoding="async">' +
+      '<div class="site-course-copy"><p class="site-course-university">Bloque 10 · Universidad del Magdalena</p><h2>LSC y Cultura Sorda</h2><p>Con el profesor Edward Ignacio Rojas Díaz, intérprete de EnSeñas.</p>' +
+      '<a class="site-course-link" href="https://bloque10.unimagdalena.edu.co/courses/lsc-y-cultura-sorda/" target="_blank" rel="noopener noreferrer">Acceder al curso <span aria-hidden="true">↗</span></a><small>Se abre en otra pestaña. El acceso al curso requiere iniciar sesión en Bloque 10.</small></div></div></details>';
+    const footer = document.querySelector('.site-footer');
+    if (footer) footer.before(course); else document.body.appendChild(course);
+    if (!objectPage) document.body.classList.add('has-course-access');
+    const details = course.querySelector('details');
+    const toggle = course.querySelector('summary');
+    const close = (restoreFocus = false) => {
+      if (!details.open) return;
+      details.open = false;
+      if (restoreFocus) toggle.focus();
+    };
+    course.querySelector('.site-course-close').addEventListener('click', () => close(true));
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') close(course.contains(document.activeElement)); });
+    document.addEventListener('click', event => { if (!course.contains(event.target)) close(); });
+    document.addEventListener('ensenas:navigation-open', () => close());
+    document.addEventListener('ensenas:accessibility-toggle', event => { if (event.detail.open) close(); });
+  }
 })();

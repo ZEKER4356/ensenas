@@ -16,7 +16,8 @@
     "test:navigation": "node scripts/check-navigation.cjs",
     "test:welcome": "node scripts/check-welcome.cjs",
     "test:welcome-video": "node scripts/check-welcome-video.cjs",
-    "test:social": "node scripts/check-social-preview.cjs"
+    "test:social": "node scripts/check-social-preview.cjs",
+    "test:team-course": "node scripts/check-team-course.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

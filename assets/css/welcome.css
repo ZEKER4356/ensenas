@@ -79,6 +79,8 @@ html[data-theme="dark"] .welcome-page {
 .welcome-message-reserve { opacity: 0; }
 #welcome-message-animated { position: absolute; inset: 0; }
 #welcome-title-animated.is-typing::after, #welcome-message-animated.is-typing::after { content: '|'; color: var(--welcome-brand-start); font-weight: 400; }
+.welcome-interpreter-credit { font-size: .8rem; line-height: 1.6; margin: 16px 0 0; color: var(--welcome-muted); }
+.welcome-interpreter-credit a { color: var(--welcome-text); font-weight: 600; text-decoration-color: var(--welcome-border); text-underline-offset: 4px; }
 .welcome-playback { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 18px; }
 .welcome-text-button { min-height: 40px; padding: 8px 12px; color: var(--welcome-text); background: var(--welcome-panel); border: 1px solid var(--welcome-border); border-radius: 100px; font: inherit; font-size: .65rem; cursor: pointer; }
 .welcome-text-button:hover { background: var(--welcome-panel-hover); }
