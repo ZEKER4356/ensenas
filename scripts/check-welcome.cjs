@@ -52,7 +52,8 @@ const { chromium } = require(require.resolve('playwright', { paths: [process.env
         assert.ok(textBox.y + textBox.height <= videoBox.y + videoBox.height + 1, 'Texto integrado dentro del escenario');
       }
       else assert.ok(videoBox.x >= textBox.x + textBox.width, 'En PC texto e intérprete separados');
-      assert.ok((await page.locator('.welcome-path').first().boundingBox()).y < 850, 'Accesos próximos a la bienvenida');
+      const courseHeight = width < 1200 ? (await page.locator('.site-course').boundingBox()).height + 48 : 0;
+      assert.ok((await page.locator('.welcome-path').first().boundingBox()).y < 850 + courseHeight, 'Accesos próximos a la bienvenida, tras la tarjeta visible del curso en móvil');
       await page.locator('#welcome-pause').click();
       const pausedText = await page.locator('#welcome-message-animated').textContent();
       await page.waitForTimeout(180);

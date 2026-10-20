@@ -51,7 +51,8 @@ async function json(action, status = 200) {
     assert.match(landing, /Profesor Edward Ignacio Rojas Díaz/);
     const navigation = await (await request('/assets/js/site-navigation.js')).text();
     assert.match(navigation, /https:\/\/bloque10\.unimagdalena\.edu\.co\/courses\/lsc-y-cultura-sorda\//);
-    assert.match(navigation, /site-course-inline/);
+    assert.match(navigation, /site-course-rail/);
+    assert.ok(!navigation.includes('site-course-toggle'), 'La miniatura no debe estar oculta tras un botón');
   });
   await check('catálogo y recursos de objetos', async () => {
     const response = await request('/api/objetos'); assert.equal(response.status, 200);
